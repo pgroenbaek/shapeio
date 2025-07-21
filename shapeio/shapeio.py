@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import codecs
 
 
@@ -43,3 +42,32 @@ def _detect_encoding(filepath: str) -> str:
             if not b[1]:
                 return 'utf-16-le'
         return 'utf-8'
+
+
+def dump(obj, fp):
+    pass
+
+def dumps(obj):
+    pass
+
+def load(fp):
+    pass
+
+def loads(s):
+    pass
+
+
+class ShapeDecoder:
+    def __init__(self):
+        pass
+
+    def decode(self, s, _w=None):
+        pass
+
+
+class ShapeEncoder:
+    def __init__(self):
+        pass
+
+    def encode(self, o):
+        pass
