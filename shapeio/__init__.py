@@ -22,10 +22,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 __version__ = '0.1.0b0'
 __all__ = [
-    
+    'shape', 'load', 'loads', 'dump', 'dumps', 'ShapeDecoder', 'ShapeEncoder'
 ]
+
 
 __author__ = 'Peter Grønbæk Andersen <peter@grnbk.io>'
 
-
-#from .shapeio import 
+from . import shape
+from .shapeio import load, loads, dump, dumps
+from .shapeio import ShapeDecoder, ShapeEncoder
