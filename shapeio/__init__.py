@@ -1,7 +1,8 @@
 """
 ShapeIO
 
-This module provides ...
+This module provides functions to decode MSTS/ORTS shape files into Python
+objects and to encode them back into the shape file format.
 
 
 Copyright (C) 2025 Peter Grønbæk Andersen <peter@grnbk.io>
@@ -24,7 +25,6 @@ __version__ = '0.1.0b0'
 __all__ = [
     'shape', 'load', 'loads', 'dump', 'dumps', 'ShapeDecoder', 'ShapeEncoder'
 ]
-
 
 __author__ = 'Peter Grønbæk Andersen <peter@grnbk.io>'
 
