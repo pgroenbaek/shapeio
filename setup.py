@@ -5,6 +5,7 @@ setup(
     version="0.1.0b0",
     packages=find_packages(),
     install_requires=[
+        "numpy"
     ],
     author="Peter Grønbæk Andersen",
     author_email="peter@grnbk.io",

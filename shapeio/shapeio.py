@@ -18,10 +18,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import codecs
+import subprocess
 
-
-def _detect_encoding(filepath: str) -> str:
-    with open(filepath, 'rb') as f:
+def _detect_encoding(fp: str) -> str:
+    with open(fp, 'rb') as f:
         b = f.read(4)
         bstartswith = b.startswith
         if bstartswith((codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE)):
@@ -47,21 +47,48 @@ def _detect_encoding(filepath: str) -> str:
 def dump(obj, fp):
     pass
 
+
 def dumps(obj):
     pass
+
 
 def load(fp):
     pass
 
+
 def loads(s):
     pass
+
+
+def is_compressed(fp: str) -> Optional[bool]:
+    with open(fp, 'r', encoding=_detect_encoding(fp)) as f:
+        try:
+            header = f.read(32)
+            if header.startswith("SIMISA@@@@@@@@@@JINX0s1t______"):
+                return False
+            elif header == "":
+                return None
+        except UnicodeDecodeError:
+            pass
+        
+        return True
+
+
+def compress(fp: str, ffeditc_path: str) -> None:
+    if not self.is_compressed():
+        subprocess.call([ffeditc_path, fp, "/o:" + fp])
+
+
+def decompress(fp: str, ffeditc_path: str) -> None:
+    if self.is_compressed():
+        subprocess.call([ffeditc_path, fp, "/u", "/o:" + fp])
 
 
 class ShapeDecoder:
     def __init__(self):
         pass
 
-    def decode(self, s, _w=None):
+    def decode(self, s):
         pass
 
 
@@ -71,3 +98,5 @@ class ShapeEncoder:
 
     def encode(self, o):
         pass
+
+
