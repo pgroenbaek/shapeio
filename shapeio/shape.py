@@ -35,6 +35,9 @@ class Shape:
         matrices: List[Matrix],
         images: List[Image],
         light_materials: int,
+        light_model_cfgs: List[LightModelCfg],
+        vtx_states: List[VtxState],
+        prim_states: List[PrimState]
     ):
         self.shape_header = shape_header
         self.volumes = volumes
@@ -152,3 +155,63 @@ class Texture:
         self.filter_mode = filter_mode
         self.mipmap_lod_bias = mipmap_lod_bias
         self.border_colour = border_colour
+
+class LightModelCfg:
+    def __init__(self,
+        flags: str,
+        uv_ops: List[UVOpCopy]
+    ):
+        self.flags = flags
+        self.uv_ops = uv_ops
+
+class UVOpCopy:
+    def __init__(self,
+        texture_address_mode: int,
+        source_uv_index: int
+    ):
+        self.texture_address_mode = texture_address_mode
+        self.source_uv_index = source_uv_index
+
+class VtxState:
+    def __init__(self,
+        flags: str,
+        matrix_index: int,
+        light_material_index: int,
+        light_model_cfg_index: int,
+        light_flags: str
+    ):
+        self.flags = flags
+        self.matrix_index = matrix_index
+        self.light_material_index = light_material_index
+        self.light_model_cfg_index = light_model_cfg_index
+        self.light_flags = light_flags
+
+class PrimState:
+    def __init__(self,
+        name: str,
+        flags: str,
+        unknown1: int,
+        texture_index: TextureIndex,
+        unknown2: int,
+        unknown3: int,
+        unknown4: int,
+        unknown5: int,
+        unknown6: int
+    ):
+        self.name = name
+        self.flags = flags
+        self.unknown1 = unknown1
+        self.texture_index = texture_index
+        self.unknown2 = unknown2
+        self.unknown3 = unknown3
+        self.unknown4 = unknown4
+        self.unknown5 = unknown5
+        self.unknown6 = unknown6
+
+class TextureIndex:
+    def __init__(self,
+        unknown1: int,
+        texture_index: int
+    ):
+        self.unknown1 = unknown1
+        self.texture_index = texture_index

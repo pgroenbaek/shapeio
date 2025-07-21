@@ -6,7 +6,7 @@
 
 This Python module provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format. It allows you to make any kind of edit to a shape file.
 
-When modifying shapes, there are no safeguards beyond the data structure itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
+When modifying shapes using this module, there are no safeguards other than the data structure itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 
 ## Installation
 
