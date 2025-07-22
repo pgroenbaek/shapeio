@@ -16,33 +16,43 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
 import pytest
 
 from shapeio.shape import Point
 from shapeio.decoder import _PointParser
 from shapeio.encoder import _PointSerializer
 
-serializer = _PointSerializer()
-parser = _PointParser()
 
-def test_serialize_point():
+@pytest.fixture
+def serializer():
+    return _PointSerializer()
+
+
+@pytest.fixture
+def parser():
+    return _PointParser()
+
+
+def test_serialize_point(serializer):
     point = Point(1.0, 2.0, 3.0)
     assert serializer.serialize(point) == "point ( 1.0 2.0 3.0 )"
 
-def test_parse_point():
+
+def test_parse_point(parser):
     text = "point ( 1.0 2.0 3.0 )"
     point = parser.parse(text)
     assert point.x == 1.0
     assert point.y == 2.0
     assert point.z == 3.0
 
-def test_parse_point_with_whitespace():
+
+def test_parse_point_with_whitespace(parser):
     text = "  point (   -1.5  0.0   42.75 )  "
     point = parser.parse(text)
     assert point.x == -1.5
     assert point.y == 0.0
     assert point.z == 42.75
+
 
 @pytest.mark.parametrize("bad_input", [
     "point ( 1.0 2.0 )",          # Too few components
@@ -50,6 +60,14 @@ def test_parse_point_with_whitespace():
     "poin ( 1.0 2.0 3.0 )",       # Incorrect keyword
     "point 1.0 2.0 3.0",          # Missing parentheses
 ])
-def test_parse_invalid_point_raises(bad_input):
+def test_parse_invalid_point_raises(parser, bad_input):
     with pytest.raises(ValueError):
         parser.parse(bad_input)
+
+
+def test_serialize_point_with_depth_and_tabs():
+    serializer = _PointSerializer(indent=1, use_tabs=True)
+    point = Point(1.0, 2.0, 3.0)
+    result = serializer.serialize(point, depth=2)
+    expected = "\t\tpoint ( 1.0 2.0 3.0 )"
+    assert result == expected

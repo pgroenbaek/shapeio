@@ -25,16 +25,16 @@ from shapeio.encoder import _PointsListSerializer, _PointSerializer
 
 
 @pytest.fixture
-def points_list_parser():
+def parser():
     return _PointsListParser()
 
 
 @pytest.fixture
-def points_list_serializer():
+def serializer():
     return _PointsListSerializer()
 
 
-def test_serialize_points_list(points_list_serializer):
+def test_serialize_points_list(serializer):
     points = [
         Point(1.0, 2.0, 3.0),
         Point(4.0, 5.0, 6.0)
@@ -45,31 +45,31 @@ def test_serialize_points_list(points_list_serializer):
         "    point ( 4.0 5.0 6.0 )\n"
         ")"
     )
-    output = points_list_serializer.serialize(points, depth=0)
+    output = serializer.serialize(points, depth=0)
     assert output == expected
 
 
-def test_parse_points_list(points_list_parser):
+def test_parse_points_list(parser):
     text = """
     points ( 2
         point ( 1.0 2.0 3.0 )
         point ( 4.0 5.0 6.0 )
     )
     """
-    points = points_list_parser.parse(text)
+    points = parser.parse(text)
     assert len(points) == 2
     assert points[0].x == 1.0
     assert points[1].z == 6.0
 
 
-def test_parse_points_list_with_indentation_and_whitespace(points_list_parser):
+def test_parse_points_list_with_indentation_and_whitespace(parser):
     text = """
         points ( 2
             point ( -1.0   0.0    3.5 )
             point ( 4.0 5.5 6.75 )
         )
     """
-    points = points_list_parser.parse(text)
+    points = parser.parse(text)
     assert len(points) == 2
     assert points[0].x == -1.0
     assert points[1].z == 6.75
@@ -83,9 +83,9 @@ def test_parse_points_list_with_indentation_and_whitespace(points_list_parser):
     "points ( 2\n    point ( 1.0 2.0 3.0 )\n)",  # Count mismatch
     "pints ( 1\n    point ( 1.0 2.0 3.0 )\n)",  # Misspelled keyword
 ])
-def test_parse_invalid_points_list_raises(points_list_parser, bad_text):
+def test_parse_invalid_points_list_raises(parser, bad_text):
     with pytest.raises(ValueError):
-        points_list_parser.parse(bad_text)
+        parser.parse(bad_text)
 
 
 def test_serialize_with_depth_and_tabs():
@@ -104,10 +104,7 @@ def test_serialize_with_depth_and_tabs():
     assert result == expected
 
 
-def test_round_trip_parse_and_serialize():
-    parser = _PointsListParser()
-    serializer = _PointsListSerializer()
-
+def test_round_trip_parse_and_serialize(parser, serializer):
     input_text = """
     points ( 2
         point ( 10.0 20.0 30.0 )
