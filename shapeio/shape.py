@@ -37,7 +37,8 @@ class Shape:
         light_materials: int,
         light_model_cfgs: List[LightModelCfg],
         vtx_states: List[VtxState],
-        prim_states: List[PrimState]
+        prim_states: List[PrimState],
+        lod_controls: List[LodControl]
     ):
         self.shape_header = shape_header
         self.volumes = volumes
@@ -51,6 +52,10 @@ class Shape:
         self.matrices = matrices
         self.images = images
         self.light_materials = light_materials
+        self.light_model_cfgs = light_model_cfgs
+        self.vtx_states = vtx_states
+        self.prim_states = prim_states
+        self.lod_controls = lod_controls
 
 class ShapeHeader:
     def __init__(self,
@@ -92,8 +97,8 @@ class NamedFilterMode:
 
 class Point:
     def __init__(self,
-        x: float
-        y: float
+        x: float,
+        y: float,
         z: float
     ):
         self.x = x
@@ -102,7 +107,7 @@ class Point:
 
 class UVPoint:
     def __init__(self,
-        u: float
+        u: float,
         v: float
     ):
         self.u = u
@@ -215,3 +220,126 @@ class TextureIndex:
     ):
         self.unknown1 = unknown1
         self.texture_index = texture_index
+
+class LodControl:
+    def __init__(self,
+        distance_level_bias: int,
+        distance_levels: List[DistanceLevel]
+    ):
+        self.distance_level_bias = distance_level_bias
+        self.distance_levels = distance_levels
+
+class DistanceLevel:
+    def __init__(self,
+        header: DistanceLevelHeader,
+        sub_objects: List[SubObject]
+    ):
+        self.header = header
+        self.sub_objects = sub_objects
+
+class DistanceLevelHeader:
+    def __init__(self,
+        dlevel_selection: int,
+        hierarchy: List[int]
+    ):
+        self.dlevel_selection = dlevel_selection
+        self.hierarchy = hierarchy
+
+class SubObject:
+    def __init__(self,
+        header: SubObjectHeader
+    ):
+        self.header = header
+
+class SubObjectHeader:
+    def __init__(self,
+        flags: str,
+        sort_vector_idx: int,
+        volume_idx: int,
+        source_vtx_fmt_flag: str,
+        destination_vtx_fmt_flag: str,
+        geometry_info: GeometryInfo,
+        subobject_shaders: SubObjectShaders,
+        subobject_light_cfgs: SubObjectLightCfgs,
+        unknown1: int
+    ):
+        self.flags = flags
+        self.sort_vector_idx = sort_vector_idx
+        self.volume_idx = volume_idx
+        self.source_vtx_fmt_flag = source_vtx_fmt_flag
+        self.destination_vtx_fmt_flag = destination_vtx_fmt_flag
+        self.geometry_info = geometry_info
+        self.subobject_shaders = subobject_shaders
+        self.subobject_light_cfgs = subobject_light_cfgs
+        self.unknown1 = unknown1
+
+class GeometryInfo:
+    def __init__(self,
+        num_face_normals: int,
+        tx_light_commands: int,
+        node_x_tx_light_commands: int,
+        num_trilist_indexes: int,
+        line_list_indexes: int,
+        node_x_trilist_indexes: int,
+        num_trilists: int,
+        num_line_lists: int,
+        num_pt_lists: int,
+        node_x_trilists: int,
+        geometry_nodes: List[GeometryNode],
+        geometry_node_map: List[int]
+    ):
+        self.num_face_normals = num_face_normals
+        self.tx_light_commands = tx_light_commands
+        self.node_x_tx_light_commands = node_x_tx_light_commands
+        self.num_trilist_indexes = num_trilist_indexes
+        self.line_list_indexes = line_list_indexes
+        self.node_x_trilist_indexes = node_x_trilist_indexes
+        self.num_trilists = num_trilists
+        self.num_line_lists = num_line_lists
+        self.num_pt_lists = num_pt_lists
+        self.node_x_trilists = node_x_trilists
+        self.geometry_nodes = geometry_nodes
+        self.geometry_node_map = geometry_node_map
+
+class GeometryNode:
+    def __init__(self,
+        tx_light_commands: int,
+        node_x_tx_light_commands: int,
+        num_trilists: int,
+        num_line_lists: int,
+        num_pt_lists: int,
+        cullable_prims: CullablePrims
+    ):
+        self.tx_light_commands = tx_light_commands
+        self.node_x_tx_light_commands = node_x_tx_light_commands
+        self.num_trilists = num_trilists
+        self.num_line_lists = num_line_lists
+        self.num_pt_lists = num_pt_lists
+        self.cullable_prims = cullable_prims
+
+class CullablePrims:
+    def __init__(self,
+        num_prims: int,
+        num_flat_sections: int,
+        num_prim_indexes: int
+    ):
+        self.num_prims = num_prims
+        self.num_flat_sections = num_flat_sections
+        self.num_prim_indexes = num_prim_indexes
+
+class SubObjectShaders:
+    def __init__(self,
+        shader_indexes: List[int]
+    ):
+        self.shader_indexes = shader_indexes
+
+class SubObjectLightCfgs:
+    def __init__(self,
+        light_cfg_indexes: List[int]
+    ):
+        self.light_cfg_indexes = light_cfg_indexes
+
+# https://www.digital-rails.com/files/MSTS%20shape%20file%20format.txt
+
+# TODO: Lod Controls
+# TODO: Animation Nodes
