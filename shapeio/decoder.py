@@ -19,6 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import re
 from abc import ABC, abstractmethod
+from typing import List
 
 from . import shape
 
@@ -31,13 +32,13 @@ class ShapeDecoder:
         return _ShapeParser().parse(text)
 
 
-class Parser(ABC):
+class _Parser(ABC):
     @abstractmethod
     def parse(self, text: str) -> object:
         pass
 
 
-class _VectorParser(Parser):
+class _VectorParser(_Parser):
     VECTOR_PATTERN = re.compile(r'vector\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.Vector:
@@ -49,7 +50,7 @@ class _VectorParser(Parser):
         return shape.Vector(x, y, z)
 
 
-class _PointParser(Parser):
+class _PointParser(_Parser):
     POINT_PATTERN = re.compile(r'point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.Point:
@@ -61,7 +62,7 @@ class _PointParser(Parser):
         return shape.Point(x, y, z)
 
 
-class _UVPointParser(Parser):
+class _UVPointParser(_Parser):
     UVPOINT_PATTERN = re.compile(r'uv_point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.UVPoint:
@@ -73,14 +74,14 @@ class _UVPointParser(Parser):
         return shape.UVPoint(u, v)
 
 
-class _PointsListParser(Parser):
+class _PointsListParser(_Parser):
     POINT_PARSER = _PointParser()
     POINTS_LIST_PATTERN = re.compile(
         r'points\s*\(\s*(\d+)\s*((?:point\s*\([^)]*\)\s*)+)\)', re.DOTALL
     )
     POINT_BLOCK_PATTERN = _PointParser.POINT_PATTERN
 
-    def parse(self, text: str) -> list[shape.Point]:
+    def parse(self, text: str) -> List[shape.Point]:
         text = text.strip()
         match = self.POINTS_LIST_PATTERN.match(text)
         if not match:

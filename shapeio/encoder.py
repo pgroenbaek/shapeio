@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from abc import ABC, abstractmethod
+from typing import List
 
 from . import shape
 
@@ -33,55 +34,46 @@ class ShapeEncoder:
         return header + text
 
 
-class Serializer(ABC):
-    @abstractmethod
-    def serialize(self, obj) -> str:
-        pass
-
-
-class _VectorSerializer(Serializer):
+class _Serializer(ABC):
     def __init__(self, indent: int = 4, use_tabs: bool = False):
         char = "\t" if use_tabs else " "
         self.indent_unit = char * indent
 
+    def get_indent(self, depth: int = 0) -> str:
+        return self.indent_unit * depth
+
+    @abstractmethod
+    def serialize(self, obj, depth: int = 0) -> str:
+        pass
+
+
+class _VectorSerializer(_Serializer):
     def serialize(self, vector: shape.Vector, depth: int = 0) -> str:
-        indent = self.indent_unit * depth
+        indent = self.get_indent(depth)
 
         return f"{indent}vector ( {vector.x} {vector.y} {vector.z} )"
 
 
-class _PointSerializer(Serializer):
-    def __init__(self, indent: int = 4, use_tabs: bool = False):
-        char = "\t" if use_tabs else " "
-        self.indent_unit = char * indent
-
+class _PointSerializer(_Serializer):
     def serialize(self, point: shape.Point, depth: int = 0) -> str:
-        indent = self.indent_unit * depth
+        indent = self.get_indent(depth)
 
         return f"{indent}point ( {point.x} {point.y} {point.z} )"
 
 
-class _UVPointSerializer(Serializer):
-    def __init__(self, indent: int = 4, use_tabs: bool = False):
-        char = "\t" if use_tabs else " "
-        self.indent_unit = char * indent
-
+class _UVPointSerializer(_Serializer):
     def serialize(self, uv_point: shape.UVPoint, depth: int = 0) -> str:
-        indent = self.indent_unit * depth
-        
+        indent = self.get_indent(depth)
+
         return f"{indent}uv_point ( {uv_point.u} {uv_point.v} )"
 
 
-class _PointsListSerializer(Serializer):
+class _PointsListSerializer(_Serializer):
     POINT_SERIALIZER = _PointSerializer()
 
-    def __init__(self, indent: int = 4, use_tabs: bool = False):
-        char = "\t" if use_tabs else " "
-        self.indent_unit = char * indent
-
-    def serialize(self, points: list[shape.Point], depth: int = 0) -> str:
-        base_indent = self.indent_unit * depth
-        inner_indent = self.indent_unit * (depth + 1)
+    def serialize(self, points: List[shape.Point], depth: int = 0) -> str:
+        base_indent = self.get_indent(depth)
+        inner_indent = self.get_indent(depth + 1)
 
         lines = [f"{base_indent}points ( {len(points)}"]
         for point in points:
