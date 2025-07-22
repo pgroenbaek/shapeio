@@ -33,5 +33,5 @@ __author__ = 'Peter Grønbæk Andersen <peter@grnbk.io>'
 from . import shape
 from .shapeio import load, loads, dump, dumps
 from .shapeio import is_compressed, compress, decompress
-from .shapeio.decoder import ShapeDecoder
-from .shapeio.encoder import ShapeEncoder
+from .decoder import ShapeDecoder
+from .encoder import ShapeEncoder

@@ -17,9 +17,25 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+from abc import ABC
+
+from . import shape
+
+
 class ShapeDecoder:
     def __init__(self):
         pass
 
-    def decode(self, s):
+    def decode(self, text: str) -> shape.Shape:
+        return _ShapeParser().parse(text)
+
+
+class _Parser(ABC):
+    @abstractmethod
+    def parse(self, text: str) -> obj:
+        pass
+
+
+class _ShapeParser(Parser):
+    def parse(self, text: str) -> shape.Shape:
         pass

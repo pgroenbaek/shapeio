@@ -17,11 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+from . import shape
 
 class ShapeEncoder:
     def __init__(self):
         pass
 
-    def encode(self, o):
-        pass
+    def encode(self, obj: shape.Shape) -> str:
+        return _ShapeSerializer().serialize(obj)
 
