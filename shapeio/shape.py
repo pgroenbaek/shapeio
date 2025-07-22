@@ -454,6 +454,100 @@ class NormalIdx:
         self.index = index
         self.unknown2 = unknown2
 
-# https://www.digital-rails.com/files/MSTS%20shape%20file%20format.txt
+class Animation:
+    def __init__(self,
+        frame_count: int,
+        frame_rate: int,
+        animation_nodes: List[AnimationNode]
+    ):
+        self.frame_count = frame_count
+        self.frame_rate = frame_rate
+        self.animation_nodes = animation_nodes
 
-# TODO: Animation Nodes
+class AnimationNode:
+    def __init__(self,
+        name: str,
+        controllers: List[Controller]
+    ):
+        self.name = name
+        self.controllers = controllers
+
+class KeyPosition(ABC):
+    def __init__(self,
+        frame: int,
+    ):
+        self.frame = frame
+
+class Controller(ABC):
+    def __init__(self,
+        keyframes: List[KeyPosition]
+    ):
+        self.keyframes = keyframes
+
+class TCBRot(Controller):
+    def __init__(self,
+        keyframes: List[KeyPosition]
+    ):
+        self.keyframes = keyframes
+
+class SlerpRot(KeyPosition):
+    def __init__(self,
+        frame: int,
+        x: float,
+        y: float,
+        z: float,
+        w: float
+    ):
+        super().__init__(frame)
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+
+class LinearPos(Controller):
+    def __init__(self,
+        keyframes: List[KeyPosition]
+    ):
+        self.keyframes = keyframes
+
+class LinearKey(KeyPosition):
+    def __init__(self,
+        frame: int,
+        x: float,
+        y: float,
+        z: float
+    ):
+        super().__init__(frame)
+        self.x = x
+        self.y = y
+        self.z = z
+
+class TCBPos(Controller):
+    def __init__(self,
+        keyframes: List[KeyPosition]
+    ):
+        self.keyframes = keyframes
+
+class TCBKey(KeyPosition):
+    def __init__(self,
+        frame: int,
+        x: float,
+        y: float,
+        z: float,
+        w: float,
+        tension: float,
+        continuity: float,
+        bias: float,
+        ease_in: float,
+        ease_out: float,
+    ):
+        super().__init__(frame)
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+        self.tension = tension
+        self.continuity = continuity
+        self.bias = bias
+        self.ease_in = ease_in
+        self.ease_out = ease_out
