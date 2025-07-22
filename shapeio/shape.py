@@ -257,7 +257,7 @@ class PrimState:
         name: str,
         flags: str,
         shader_index: int,
-        texture_indexes: List[int],
+        texture_indices: List[int],
         z_bias: float,
         vtx_state_index: int,
         alpha_test_mode: int,
@@ -267,7 +267,7 @@ class PrimState:
         self.name = name
         self.flags = flags
         self.shader_index = shader_index
-        self.texture_indexes = texture_indexes
+        self.texture_indices = texture_indices
         self.z_bias = z_bias
         self.vtx_state_index = vtx_state_index
         self.alpha_test_mode = alpha_test_mode
@@ -276,18 +276,24 @@ class PrimState:
 
 class LodControl:
     def __init__(self,
-        distance_level_bias: int,
+        distance_levels_header: DistanceLevelsHeader,
         distance_levels: List[DistanceLevel]
     ):
         self.distance_level_bias = distance_level_bias
         self.distance_levels = distance_levels
 
+class DistanceLevelsHeader:
+    def __init__(self,
+        dlevel_bias: int
+    ):
+        self.dlevel_bias = dlevel_bias
+
 class DistanceLevel:
     def __init__(self,
-        header: DistanceLevelHeader,
+        distance_level_header: DistanceLevelHeader,
         sub_objects: List[SubObject]
     ):
-        self.header = header
+        self.distance_level_header = distance_level_header
         self.sub_objects = sub_objects
 
 class DistanceLevelHeader:
@@ -300,12 +306,12 @@ class DistanceLevelHeader:
 
 class SubObject:
     def __init__(self,
-        header: SubObjectHeader,
+        sub_object_header: SubObjectHeader,
         vertices: List[Vertex],
         vertex_sets: List[VertexSet],
-        primitives: List[Union[PrimStateIndex, IndexedTrilist]]
+        primitives: List[Primitive]
     ):
-        self.header = header
+        self.sub_object_header = sub_object_header
         self.vertices = vertices
         self.vertex_sets = vertex_sets
         self.primitives = primitives
@@ -313,90 +319,78 @@ class SubObject:
 class SubObjectHeader:
     def __init__(self,
         flags: str,
-        sort_vector_idx: int,
-        volume_idx: int,
-        source_vtx_fmt_flag: str,
-        destination_vtx_fmt_flag: str,
+        sort_vector_index: int,
+        volume_index: int,
+        source_vtx_fmt_flags: str,
+        destination_vtx_fmt_flags: str,
         geometry_info: GeometryInfo,
-        subobject_shaders: SubObjectShaders,
-        subobject_light_cfgs: SubObjectLightCfgs,
-        unknown1: int
+        subobject_shaders: List[int],
+        subobject_light_cfgs: List[int],
+        subobject_id: int
     ):
         self.flags = flags
-        self.sort_vector_idx = sort_vector_idx
-        self.volume_idx = volume_idx
-        self.source_vtx_fmt_flag = source_vtx_fmt_flag
-        self.destination_vtx_fmt_flag = destination_vtx_fmt_flag
+        self.sort_vector_index = sort_vector_index
+        self.volume_index = volume_index
+        self.source_vtx_fmt_flags = source_vtx_fmt_flags
+        self.destination_vtx_fmt_flags = destination_vtx_fmt_flags
         self.geometry_info = geometry_info
         self.subobject_shaders = subobject_shaders
         self.subobject_light_cfgs = subobject_light_cfgs
-        self.unknown1 = unknown1
+        self.subobject_id = subobject_id
 
 class GeometryInfo:
     def __init__(self,
-        num_face_normals: int,
-        tx_light_commands: int,
-        node_x_tx_light_commands: int,
-        num_trilist_indexes: int,
-        line_list_indexes: int,
-        node_x_trilist_indexes: int,
-        num_trilists: int,
-        num_line_lists: int,
-        num_pt_lists: int,
+        face_normals: int,
+        tx_light_cmds: int,
+        node_x_tx_light_cmds: int,
+        trilist_indices: int,
+        line_list_indices: int,
+        node_x_trilist_indices: int,
+        trilists: int,
+        line_lists: int,
+        pt_lists: int,
         node_x_trilists: int,
         geometry_nodes: List[GeometryNode],
         geometry_node_map: List[int]
     ):
-        self.num_face_normals = num_face_normals
-        self.tx_light_commands = tx_light_commands
-        self.node_x_tx_light_commands = node_x_tx_light_commands
-        self.num_trilist_indexes = num_trilist_indexes
-        self.line_list_indexes = line_list_indexes
-        self.node_x_trilist_indexes = node_x_trilist_indexes
-        self.num_trilists = num_trilists
-        self.num_line_lists = num_line_lists
-        self.num_pt_lists = num_pt_lists
+        self.face_normals = face_normals
+        self.tx_light_cmds = tx_light_cmds
+        self.node_x_tx_light_cmds = node_x_tx_light_cmds
+        self.trilist_indices = trilist_indices
+        self.line_list_indices = line_list_indices
+        self.node_x_trilist_indices = node_x_trilist_indices
+        self.trilists = trilists
+        self.line_lists = line_lists
+        self.pt_lists = pt_lists
         self.node_x_trilists = node_x_trilists
         self.geometry_nodes = geometry_nodes
         self.geometry_node_map = geometry_node_map
 
 class GeometryNode:
     def __init__(self,
-        tx_light_commands: int,
-        node_x_tx_light_commands: int,
-        num_trilists: int,
-        num_line_lists: int,
-        num_pt_lists: int,
+        tx_light_cmds: int,
+        node_x_tx_light_cmds: int,
+        trilists: int,
+        line_lists: int,
+        pt_lists: int,
         cullable_prims: CullablePrims
     ):
-        self.tx_light_commands = tx_light_commands
-        self.node_x_tx_light_commands = node_x_tx_light_commands
-        self.num_trilists = num_trilists
-        self.num_line_lists = num_line_lists
-        self.num_pt_lists = num_pt_lists
+        self.tx_light_cmds = tx_light_cmds
+        self.node_x_tx_light_cmds = node_x_tx_light_cmds
+        self.trilists = trilists
+        self.line_lists = line_lists
+        self.pt_lists = pt_lists
         self.cullable_prims = cullable_prims
 
 class CullablePrims:
     def __init__(self,
         num_prims: int,
         num_flat_sections: int,
-        num_prim_indexes: int
+        num_prim_indices: int
     ):
         self.num_prims = num_prims
         self.num_flat_sections = num_flat_sections
-        self.num_prim_indexes = num_prim_indexes
-
-class SubObjectShaders:
-    def __init__(self,
-        shader_indexes: List[int]
-    ):
-        self.shader_indexes = shader_indexes
-
-class SubObjectLightCfgs:
-    def __init__(self,
-        light_cfg_indexes: List[int]
-    ):
-        self.light_cfg_indexes = light_cfg_indexes
+        self.num_prim_indices = num_prim_indices
 
 class Vertex:
     def __init__(self,
@@ -405,7 +399,7 @@ class Vertex:
         normal_index: int,
         colour1: str,
         colour2: str,
-        vertex_uvs: VertexUVs
+        vertex_uvs: List[int]
     ):
         self.flags = flags
         self.point_index = point_index
@@ -413,12 +407,6 @@ class Vertex:
         self.colour1 = colour1
         self.colour2 = colour2
         self.vertex_uvs = vertex_uvs
-
-class VertexUVs:
-    def __init__(self,
-        indexes: List[int]
-    ):
-        self.indexes = indexes
 
 class VertexSet:
     def __init__(self,
@@ -430,21 +418,41 @@ class VertexSet:
         self.vtx_start_index = vtx_start_index
         self.vtx_count = vtx_count
 
+class Primitive:
+    def __init__(self,
+        prim_state_index: int,
+        indexed_trilist: IndexedTrilist
+    ):
+        self.prim_state_index = prim_state_index
+        self.indexed_trilist = indexed_trilist
+
 class IndexedTrilist:
     def __init__(self,
-        vertex_indexes: List[int],
-        normal_indexes: List[int],
+        vertex_indexes: List[VertexIdx],
+        normal_indexes: List[NormalIdx],
         flags: List[str]
     ):
         self.vertex_indexes = vertex_indexes
         self.normal_indexes = normal_indexes
         self.flags = flags
 
-class PrimStateIndex:
+class VertexIdx:
     def __init__(self,
-        prim_state_index: int,
+        vertex1_index: int,
+        vertex2_index: int,
+        vertex3_index: int
     ):
-        self.prim_state_index = prim_state_index
+        self.vertex1_index = vertex1_index
+        self.vertex2_index = vertex2_index
+        self.vertex3_index = vertex3_index
+
+class NormalIdx:
+    def __init__(self,
+        index: int,
+        unknown2: int
+    ):
+        self.index = index
+        self.unknown2 = unknown2
 
 # https://www.digital-rails.com/files/MSTS%20shape%20file%20format.txt
 
