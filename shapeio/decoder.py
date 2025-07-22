@@ -19,9 +19,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import re
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, TypeVar, Generic, Pattern
 
 from . import shape
+
+T = TypeVar('T')
 
 
 class ShapeDecoder:
@@ -32,9 +34,9 @@ class ShapeDecoder:
         return _ShapeParser().parse(text)
 
 
-class _Parser(ABC):
+class _Parser(ABC, Generic[T]):
     @abstractmethod
-    def parse(self, text: str) -> object:
+    def parse(self, text: str) -> T:
         pass
 
 
@@ -86,26 +88,51 @@ class _ColourParser(_Parser):
         return shape.Colour(a, r, g, b)
 
 
-class _PointsListParser(_Parser):
-    POINT_PARSER = _PointParser()
-    POINTS_LIST_PATTERN = re.compile(
-        r'points\s*\(\s*(\d+)\s*((?:point\s*\([^)]*\)\s*)+)\)', re.DOTALL
-    )
-    POINT_BLOCK_PATTERN = _PointParser.POINT_PATTERN
+class _MatrixParser(_Parser):
+    MATRIX_PATTERN = re.compile(r'matrix\s+(\S+)\s*\(\s*([-+eE\d\.]+(?:\s+[-+eE\d\.]+){11})\s*\)')
 
-    def parse(self, text: str) -> List[shape.Point]:
-        text = text.strip()
-        match = self.POINTS_LIST_PATTERN.match(text)
+    def parse(self, text: str) -> shape.Matrix:
+        match = self.MATRIX_PATTERN.match(text.strip())
         if not match:
-            raise ValueError(f"Invalid points block: '{text}'")
+            raise ValueError(f"Invalid matrix format: '{text}'")
+
+        name = match.group(1)
+        values = list(map(float, match.group(2).split()))
+        if len(values) != 12:
+            raise ValueError(f"Expected 12 values, got {len(values)}")
+        
+        return shape.Matrix(name, *values)
+
+
+class _ListParser(_Parser[List[T]]):
+    def __init__(self,
+        list_name: str,
+        item_name: str,
+        item_parser: _Parser[T],
+        item_pattern: Pattern,
+    ):
+        self.list_name = list_name
+        self.item_name = item_name
+        self.item_parser = item_parser
+        self.item_pattern = item_pattern
+
+        list_pattern_str = (
+            rf'{re.escape(list_name)}\s*\(\s*(\d+)\s*'
+            rf'((?:{re.escape(item_name)}\s*\([^)]*\)\s*)+)\)'
+        )
+        self.list_pattern = re.compile(list_pattern_str, re.DOTALL)
+
+    def parse(self, text: str) -> List[T]:
+        text = text.strip()
+        match = self.list_pattern.match(text)
+        if not match:
+            raise ValueError(f"Invalid {self.list_name} block: '{text}'")
 
         count = int(match.group(1))
         body = match.group(2)
 
-        matches = list(self.POINT_BLOCK_PATTERN.finditer(body))
+        matches = list(self.item_pattern.finditer(body))
         if len(matches) != count:
-            raise ValueError(f"Expected {count} points, but found {len(matches)}")
+            raise ValueError(f"Expected {count} {self.list_name}, but found {len(matches)}")
 
-        return [self.POINT_PARSER.parse(m.group(0)) for m in matches]
-
-
+        return [self.item_parser.parse(m.group(0)) for m in matches]

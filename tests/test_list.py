@@ -20,18 +20,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from shapeio.shape import Point
-from shapeio.decoder import _PointsListParser, _PointParser
-from shapeio.encoder import _PointsListSerializer, _PointSerializer
+from shapeio.decoder import _ListParser, _PointParser
+from shapeio.encoder import _ListSerializer, _PointSerializer
 
 
 @pytest.fixture
 def parser():
-    return _PointsListParser()
-
+    return _ListParser(
+        list_name="points",
+        item_name="point",
+        item_parser=_PointParser(),
+        item_pattern=_PointParser.POINT_PATTERN,
+    )
 
 @pytest.fixture
 def serializer():
-    return _PointsListSerializer()
+    return _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer()
+    )
 
 
 def test_serialize_points_list(serializer):
@@ -74,7 +81,6 @@ def test_parse_points_list_with_indentation_and_whitespace(parser):
     assert points[0].x == -1.0
     assert points[1].z == 6.75
 
-
 @pytest.mark.parametrize("bad_text", [
     "",  # Empty
     "points ()",  # No count
@@ -89,7 +95,12 @@ def test_parse_invalid_points_list_raises(parser, bad_text):
 
 
 def test_serialize_with_depth_and_tabs():
-    serializer = _PointsListSerializer(indent=1, use_tabs=True)
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        indent=1,
+        use_tabs=True
+    )
     points = [
         Point(1.0, 2.0, 3.0),
         Point(4.0, 5.0, 6.0)
