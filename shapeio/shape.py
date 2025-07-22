@@ -60,7 +60,7 @@ class Shape:
         self.vtx_states = vtx_states
         self.prim_states = prim_states
         self.lod_controls = lod_controls
-        self.animations = animations
+        self.animations = animations or []
 
 class ShapeHeader:
     def __init__(self,
@@ -200,15 +200,13 @@ class UVOpCopy(UVOp):
 
 class UVOpReflectMapFull(UVOp):
     def __init__(self,
-        texture_address_mode: int,
-        source_uv_index: int
+        texture_address_mode: int
     ):
         super().__init__(texture_address_mode)
 
 class UVOpReflectMap(UVOp):
     def __init__(self,
-        texture_address_mode: int,
-        source_uv_index: int
+        texture_address_mode: int
     ):
         super().__init__(texture_address_mode)
 
@@ -279,7 +277,7 @@ class LodControl:
         distance_levels_header: DistanceLevelsHeader,
         distance_levels: List[DistanceLevel]
     ):
-        self.distance_level_bias = distance_level_bias
+        self.distance_levels_header = distance_levels_header
         self.distance_levels = distance_levels
 
 class DistanceLevelsHeader:
@@ -488,7 +486,7 @@ class TCBRot(Controller):
     def __init__(self,
         keyframes: List[KeyPosition]
     ):
-        self.keyframes = keyframes
+        super().__init__(keyframes)
 
 class SlerpRot(KeyPosition):
     def __init__(self,
@@ -508,7 +506,7 @@ class LinearPos(Controller):
     def __init__(self,
         keyframes: List[KeyPosition]
     ):
-        self.keyframes = keyframes
+        super().__init__(keyframes)
 
 class LinearKey(KeyPosition):
     def __init__(self,
@@ -526,7 +524,7 @@ class TCBPos(Controller):
     def __init__(self,
         keyframes: List[KeyPosition]
     ):
-        self.keyframes = keyframes
+        super().__init__(keyframes)
 
 class TCBKey(KeyPosition):
     def __init__(self,
@@ -539,7 +537,7 @@ class TCBKey(KeyPosition):
         continuity: float,
         bias: float,
         ease_in: float,
-        ease_out: float,
+        ease_out: float
     ):
         super().__init__(frame)
         self.x = x
