@@ -74,6 +74,18 @@ class _UVPointParser(_Parser):
         return shape.UVPoint(u, v)
 
 
+class _ColourParser(_Parser):
+    COLOUR_PATTERN = re.compile(r'colour\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+
+    def parse(self, text: str) -> shape.Colour:
+        match = self.COLOUR_PATTERN.match(text.strip())
+        if not match:
+            raise ValueError(f"Invalid colour format: '{text}'")
+
+        a, r, g, b = map(float, match.groups())
+        return shape.Colour(a, r, g, b)
+
+
 class _PointsListParser(_Parser):
     POINT_PARSER = _PointParser()
     POINTS_LIST_PATTERN = re.compile(

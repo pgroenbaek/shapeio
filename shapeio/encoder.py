@@ -68,6 +68,13 @@ class _UVPointSerializer(_Serializer):
         return f"{indent}uv_point ( {uv_point.u} {uv_point.v} )"
 
 
+class _ColourSerializer(_Serializer):
+    def serialize(self, colour: shape.Colour, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return f"{indent}colour ( {colour.a} {colour.r} {colour.g} {colour.b} )"
+
+
 class _PointsListSerializer(_Serializer):
     POINT_SERIALIZER = _PointSerializer()
 
@@ -81,3 +88,4 @@ class _PointsListSerializer(_Serializer):
         lines.append(f"{base_indent})")
 
         return "\n".join(lines)
+

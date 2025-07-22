@@ -41,8 +41,8 @@ def test_serialize_points_list(serializer):
     ]
     expected = (
         "points ( 2\n"
-        "    point ( 1.0 2.0 3.0 )\n"
-        "    point ( 4.0 5.0 6.0 )\n"
+        "\tpoint ( 1.0 2.0 3.0 )\n"
+        "\tpoint ( 4.0 5.0 6.0 )\n"
         ")"
     )
     output = serializer.serialize(points, depth=0)
