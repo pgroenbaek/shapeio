@@ -40,7 +40,7 @@ class _Parser(ABC, Generic[T]):
         pass
 
 
-class _VectorParser(_Parser):
+class _VectorParser(_Parser[shape.Vector]):
     VECTOR_PATTERN = re.compile(r'vector\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.Vector:
@@ -52,7 +52,7 @@ class _VectorParser(_Parser):
         return shape.Vector(x, y, z)
 
 
-class _PointParser(_Parser):
+class _PointParser(_Parser[shape.Point]):
     POINT_PATTERN = re.compile(r'point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.Point:
@@ -64,7 +64,7 @@ class _PointParser(_Parser):
         return shape.Point(x, y, z)
 
 
-class _UVPointParser(_Parser):
+class _UVPointParser(_Parser[shape.UVPoint]):
     UVPOINT_PATTERN = re.compile(r'uv_point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.UVPoint:
@@ -76,7 +76,7 @@ class _UVPointParser(_Parser):
         return shape.UVPoint(u, v)
 
 
-class _ColourParser(_Parser):
+class _ColourParser(_Parser[shape.Colour]):
     COLOUR_PATTERN = re.compile(r'colour\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
     def parse(self, text: str) -> shape.Colour:
@@ -88,7 +88,7 @@ class _ColourParser(_Parser):
         return shape.Colour(a, r, g, b)
 
 
-class _MatrixParser(_Parser):
+class _MatrixParser(_Parser[shape.Matrix]):
     MATRIX_PATTERN = re.compile(r'matrix\s+(\S+)\s*\(\s*([-+eE\d\.]+(?:\s+[-+eE\d\.]+){11})\s*\)')
 
     def parse(self, text: str) -> shape.Matrix:
