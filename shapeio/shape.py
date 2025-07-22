@@ -18,27 +18,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import numpy as np
-from typing import List, Union
+from abc import ABC
+from typing import List, Optional
 
 
 class Shape:
     def __init__(self,
         shape_header: ShapeHeader,
         volumes: List[VolumeSphere],
-        shader_names: List[NamedShader],
-        texture_filter_names: List[NamedFilterMode],
+        shader_names: List[str],
+        texture_filter_names: List[str],
         points: List[Point],
         uv_points: List[UVPoint],
         normals: List[Vector],
         sort_vectors: List[Vector],
-        colours: int,
+        colours: List[Colour],
         matrices: List[Matrix],
-        images: List[Image],
-        light_materials: int,
+        images: List[str],
+        textures: List[Texture],
+        light_materials: List[LightMaterial],
         light_model_cfgs: List[LightModelCfg],
         vtx_states: List[VtxState],
         prim_states: List[PrimState],
-        lod_controls: List[LodControl]
+        lod_controls: List[LodControl],
+        animations: Optional[List[Animation]] = None
     ):
         self.shape_header = shape_header
         self.volumes = volumes
@@ -51,19 +54,21 @@ class Shape:
         self.colours = colours
         self.matrices = matrices
         self.images = images
+        self.textures = textures
         self.light_materials = light_materials
         self.light_model_cfgs = light_model_cfgs
         self.vtx_states = vtx_states
         self.prim_states = prim_states
         self.lod_controls = lod_controls
+        self.animations = animations
 
 class ShapeHeader:
     def __init__(self,
-        flag1: str,
-        flag2: str
+        flags1: str,
+        flags2: str
     ):
-        self.flag1 = flag1
-        self.flag2 = flag2
+        self.flags1 = flags1
+        self.flags2 = flags2
 
 class VolumeSphere:
     def __init__(self,
@@ -83,18 +88,6 @@ class Vector:
         self.y = y
         self.z = z
 
-class NamedShader:
-    def __init__(self,
-        name: str
-    ):
-        self.name = name
-
-class NamedFilterMode:
-    def __init__(self,
-        name: str
-    ):
-        self.name = name
-
 class Point:
     def __init__(self,
         x: float,
@@ -113,47 +106,53 @@ class UVPoint:
         self.u = u
         self.v = v
 
+class Colour:
+    def __init__(self,
+        a: float,
+        r: float,
+        g: float,
+        b: float
+    ):
+        self.a = a
+        self.r = r
+        self.g = g
+        self.b = b
+
 class Matrix:
     def __init__(self,
         name: str,
-        m11: float,
-        m12: float,
-        m13: float,
-        m21: float,
-        m22: float,
-        m23: float,
-        m31: float,
-        m32: float,
-        m33: float,
-        m41: float,
-        m42: float,
-        m43: float
+        ax: float,
+        ay: float,
+        az: float,
+        bx: float,
+        by: float,
+        bz: float,
+        cx: float,
+        cy: float,
+        cz: float,
+        dx: float,
+        dy: float,
+        dz: float,
     ):
         self.name = name
-        self.m11 = m11
-        self.m12 = m12
-        self.m13 = m13
-        self.m21 = m21
-        self.m22 = m22
-        self.m23 = m23
-        self.m31 = m31
-        self.m32 = m32
-        self.m33 = m33
-        self.m41 = m41
-        self.m42 = m42
-        self.m43 = m43
-
-class Image:
-    def __init__(self,
-        name: str
-    ):
-        self.name = name
+        self.ax = ax
+        self.ay = ay
+        self.az = az
+        self.bx = bx
+        self.by = by
+        self.bz = bz
+        self.cx = cx
+        self.cy = cy
+        self.cz = cz
+        self.dx = dx
+        self.dy = dy
+        self.dz = dz
 
 class Texture:
     def __init__(self,
         image_index: int,
         filter_mode: int,
-        mipmap_lod_bias: int,
+        mipmap_lod_bias: float,
         border_colour: str
     ):
         self.image_index = image_index
@@ -161,21 +160,81 @@ class Texture:
         self.mipmap_lod_bias = mipmap_lod_bias
         self.border_colour = border_colour
 
+class LightMaterial:
+    def __init__(self,
+        flags: str,
+        diff_colour_index: int,
+        amb_colour_index: int,
+        spec_colour_index: int,
+        emissive_colour_index: int,
+        spec_power: float
+    ):
+        self.flags = flags
+        self.diff_colour_index = diff_colour_index
+        self.amb_colour_index = amb_colour_index
+        self.spec_colour_index = spec_colour_index
+        self.emissive_colour_index = emissive_colour_index
+        self.spec_power = spec_power
+
 class LightModelCfg:
     def __init__(self,
         flags: str,
-        uv_ops: List[UVOpCopy]
+        uv_ops: List[UVOp]
     ):
         self.flags = flags
         self.uv_ops = uv_ops
 
-class UVOpCopy:
+class UVOp(ABC):
+    def __init__(self,
+        texture_address_mode: int
+    ):
+        self.texture_address_mode = texture_address_mode
+
+class UVOpCopy(UVOp):
     def __init__(self,
         texture_address_mode: int,
         source_uv_index: int
     ):
-        self.texture_address_mode = texture_address_mode
+        super().__init__(texture_address_mode)
         self.source_uv_index = source_uv_index
+
+class UVOpReflectMapFull(UVOp):
+    def __init__(self,
+        texture_address_mode: int,
+        source_uv_index: int
+    ):
+        super().__init__(texture_address_mode)
+
+class UVOpReflectMap(UVOp):
+    def __init__(self,
+        texture_address_mode: int,
+        source_uv_index: int
+    ):
+        super().__init__(texture_address_mode)
+
+class UVOpUniformScale(UVOp):
+    def __init__(self,
+        texture_address_mode: int,
+        source_uv_index: int,
+        unknown3: int,
+        unknown4: int
+    ):
+        super().__init__(texture_address_mode)
+        self.source_uv_index = source_uv_index
+        self.unknown3 = unknown3
+        self.unknown4 = unknown4
+
+class UVOpNonUniformScale(UVOp):
+    def __init__(self,
+        texture_address_mode: int,
+        source_uv_index: int,
+        unknown3: int,
+        unknown4: int
+    ):
+        super().__init__(texture_address_mode)
+        self.source_uv_index = source_uv_index
+        self.unknown3 = unknown3
+        self.unknown4 = unknown4
 
 class VtxState:
     def __init__(self,
@@ -183,43 +242,37 @@ class VtxState:
         matrix_index: int,
         light_material_index: int,
         light_model_cfg_index: int,
-        light_flags: str
+        light_flags: str,
+        matrix2_index: Optional[int] = None
     ):
         self.flags = flags
         self.matrix_index = matrix_index
         self.light_material_index = light_material_index
         self.light_model_cfg_index = light_model_cfg_index
         self.light_flags = light_flags
+        self.matrix2_index = matrix2_index
 
 class PrimState:
     def __init__(self,
         name: str,
         flags: str,
-        unknown1: int,
-        texture_index: TextureIndex,
-        unknown2: int,
-        unknown3: int,
-        unknown4: int,
-        unknown5: int,
-        unknown6: int
+        shader_index: int,
+        texture_indexes: List[int],
+        z_bias: float,
+        vtx_state_index: int,
+        alpha_test_mode: int,
+        light_cfg_index: int,
+        z_buffer_mode: int
     ):
         self.name = name
         self.flags = flags
-        self.unknown1 = unknown1
-        self.texture_index = texture_index
-        self.unknown2 = unknown2
-        self.unknown3 = unknown3
-        self.unknown4 = unknown4
-        self.unknown5 = unknown5
-        self.unknown6 = unknown6
-
-class TextureIndex:
-    def __init__(self,
-        unknown1: int,
-        texture_index: int
-    ):
-        self.unknown1 = unknown1
-        self.texture_index = texture_index
+        self.shader_index = shader_index
+        self.texture_indexes = texture_indexes
+        self.z_bias = z_bias
+        self.vtx_state_index = vtx_state_index
+        self.alpha_test_mode = alpha_test_mode
+        self.light_cfg_index = light_cfg_index
+        self.z_buffer_mode = z_buffer_mode
 
 class LodControl:
     def __init__(self,
