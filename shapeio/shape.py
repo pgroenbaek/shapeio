@@ -18,7 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import numpy as np
-from typing import List
+from typing import List, Union
 
 
 class Shape:
@@ -247,9 +247,15 @@ class DistanceLevelHeader:
 
 class SubObject:
     def __init__(self,
-        header: SubObjectHeader
+        header: SubObjectHeader,
+        vertices: List[Vertex],
+        vertex_sets: List[VertexSet],
+        primitives: List[Union[PrimStateIndex, IndexedTrilist]]
     ):
         self.header = header
+        self.vertices = vertices
+        self.vertex_sets = vertex_sets
+        self.primitives = primitives
 
 class SubObjectHeader:
     def __init__(self,
@@ -339,7 +345,54 @@ class SubObjectLightCfgs:
     ):
         self.light_cfg_indexes = light_cfg_indexes
 
+class Vertex:
+    def __init__(self,
+        flags: str,
+        point_index: int,
+        normal_index: int,
+        colour1: str,
+        colour2: str,
+        vertex_uvs: VertexUVs
+    ):
+        self.flags = flags
+        self.point_index = point_index
+        self.normal_index = normal_index
+        self.colour1 = colour1
+        self.colour2 = colour2
+        self.vertex_uvs = vertex_uvs
+
+class VertexUVs:
+    def __init__(self,
+        indexes: List[int]
+    ):
+        self.indexes = indexes
+
+class VertexSet:
+    def __init__(self,
+        vtx_state: int,
+        vtx_start_index: int,
+        vtx_count: int
+    ):
+        self.vtx_state = vtx_state
+        self.vtx_start_index = vtx_start_index
+        self.vtx_count = vtx_count
+
+class IndexedTrilist:
+    def __init__(self,
+        vertex_indexes: List[int],
+        normal_indexes: List[int],
+        flags: List[str]
+    ):
+        self.vertex_indexes = vertex_indexes
+        self.normal_indexes = normal_indexes
+        self.flags = flags
+
+class PrimStateIndex:
+    def __init__(self,
+        prim_state_index: int,
+    ):
+        self.prim_state_index = prim_state_index
+
 # https://www.digital-rails.com/files/MSTS%20shape%20file%20format.txt
 
-# TODO: Lod Controls
 # TODO: Animation Nodes
