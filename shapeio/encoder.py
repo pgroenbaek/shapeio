@@ -40,15 +40,52 @@ class Serializer(ABC):
 
 
 class _VectorSerializer(Serializer):
-    def serialize(self, vector: shape.Vector) -> str:
-        return f"vector ( {vector.x} {vector.y} {vector.z} )"
+    def __init__(self, indent: int = 4, use_tabs: bool = False):
+        char = "\t" if use_tabs else " "
+        self.indent_unit = char * indent
+
+    def serialize(self, vector: shape.Vector, depth: int = 0) -> str:
+        indent = self.indent_unit * depth
+
+        return f"{indent}vector ( {vector.x} {vector.y} {vector.z} )"
 
 
 class _PointSerializer(Serializer):
-    def serialize(self, point: shape.Point) -> str:
-        return f"point ( {point.x} {point.y} {point.z} )"
+    def __init__(self, indent: int = 4, use_tabs: bool = False):
+        char = "\t" if use_tabs else " "
+        self.indent_unit = char * indent
+
+    def serialize(self, point: shape.Point, depth: int = 0) -> str:
+        indent = self.indent_unit * depth
+
+        return f"{indent}point ( {point.x} {point.y} {point.z} )"
 
 
 class _UVPointSerializer(Serializer):
-    def serialize(self, uv_point: shape.UVPoint) -> str:
-        return f"uv_point ( {uv_point.u} {uv_point.v} )"
+    def __init__(self, indent: int = 4, use_tabs: bool = False):
+        char = "\t" if use_tabs else " "
+        self.indent_unit = char * indent
+
+    def serialize(self, uv_point: shape.UVPoint, depth: int = 0) -> str:
+        indent = self.indent_unit * depth
+        
+        return f"{indent}uv_point ( {uv_point.u} {uv_point.v} )"
+
+
+class _PointsListSerializer(Serializer):
+    POINT_SERIALIZER = _PointSerializer()
+
+    def __init__(self, indent: int = 4, use_tabs: bool = False):
+        char = "\t" if use_tabs else " "
+        self.indent_unit = char * indent
+
+    def serialize(self, points: list[shape.Point], depth: int = 0) -> str:
+        base_indent = self.indent_unit * depth
+        inner_indent = self.indent_unit * (depth + 1)
+
+        lines = [f"{base_indent}points ( {len(points)}"]
+        for point in points:
+            lines.append(f"{inner_indent}{self.POINT_SERIALIZER.serialize(point)}")
+        lines.append(f"{base_indent})")
+
+        return "\n".join(lines)

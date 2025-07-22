@@ -72,3 +72,27 @@ class _UVPointParser(Parser):
         u, v = map(float, match.groups())
         return shape.UVPoint(u, v)
 
+
+class _PointsListParser(Parser):
+    POINT_PARSER = _PointParser()
+    POINTS_LIST_PATTERN = re.compile(
+        r'points\s*\(\s*(\d+)\s*((?:point\s*\([^)]*\)\s*)+)\)', re.DOTALL
+    )
+    POINT_BLOCK_PATTERN = _PointParser.POINT_PATTERN
+
+    def parse(self, text: str) -> list[shape.Point]:
+        text = text.strip()
+        match = self.POINTS_LIST_PATTERN.match(text)
+        if not match:
+            raise ValueError(f"Invalid points block: '{text}'")
+
+        count = int(match.group(1))
+        body = match.group(2)
+
+        matches = list(self.POINT_BLOCK_PATTERN.finditer(body))
+        if len(matches) != count:
+            raise ValueError(f"Expected {count} points, but found {len(matches)}")
+
+        return [self.POINT_PARSER.parse(m.group(0)) for m in matches]
+
+
