@@ -20,6 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import codecs
 import subprocess
 
+
 def _detect_encoding(fp: str) -> str:
     with open(fp, 'rb') as f:
         b = f.read(4)
@@ -82,21 +83,4 @@ def compress(fp: str, ffeditc_path: str) -> None:
 def decompress(fp: str, ffeditc_path: str) -> None:
     if self.is_compressed():
         subprocess.call([ffeditc_path, fp, "/u", "/o:" + fp])
-
-
-class ShapeDecoder:
-    def __init__(self):
-        pass
-
-    def decode(self, s):
-        pass
-
-
-class ShapeEncoder:
-    def __init__(self):
-        pass
-
-    def encode(self, o):
-        pass
-
 

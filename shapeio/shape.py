@@ -549,3 +549,4 @@ class Shape:
         self.prim_states = prim_states
         self.lod_controls = lod_controls
         self.animations = animations or []
+

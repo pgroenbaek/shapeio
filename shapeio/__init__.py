@@ -23,11 +23,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 __version__ = '0.1.0b0'
 __all__ = [
-    'shape', 'load', 'loads', 'dump', 'dumps', 'ShapeDecoder', 'ShapeEncoder'
+    'shape', 'load', 'loads', 'dump', 'dumps',
+    'is_compressed', 'compress', 'decompress',
+    'ShapeDecoder', 'ShapeEncoder'
 ]
 
 __author__ = 'Peter Grønbæk Andersen <peter@grnbk.io>'
 
 from . import shape
 from .shapeio import load, loads, dump, dumps
-from .shapeio import ShapeDecoder, ShapeEncoder
+from .shapeio import is_compressed, compress, decompress
+from .shapeio.decoder import ShapeDecoder
+from .shapeio.encoder import ShapeEncoder
