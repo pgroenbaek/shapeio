@@ -35,7 +35,7 @@ class ShapeEncoder:
 
 
 class _Serializer(ABC):
-    def __init__(self, indent: int = 4, use_tabs: bool = False):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
         char = "\t" if use_tabs else " "
         self.indent_unit = char * indent
 
