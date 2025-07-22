@@ -17,7 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+from abc import ABC
+
 from . import shape
+
 
 class ShapeEncoder:
     def __init__(self):
@@ -26,3 +29,13 @@ class ShapeEncoder:
     def encode(self, obj: shape.Shape) -> str:
         return _ShapeSerializer().serialize(obj)
 
+
+class _Serializer(ABC):
+    @abstractmethod
+    def serialize(self, obj) -> str:
+        pass
+
+
+class _ShapeSerializer(Serializer):
+    def serialize(self, obj: shape.Shape) -> str:
+        pass
