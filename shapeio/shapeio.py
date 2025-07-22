@@ -19,6 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import codecs
 import subprocess
+from typing import Optional
 
 
 def _detect_encoding(fp: str) -> str:

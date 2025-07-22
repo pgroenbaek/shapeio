@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from abc import ABC
+import re
+from abc import ABC, abstractmethod
 
 from . import shape
 
@@ -30,12 +31,44 @@ class ShapeDecoder:
         return _ShapeParser().parse(text)
 
 
-class _Parser(ABC):
+class Parser(ABC):
     @abstractmethod
-    def parse(self, text: str) -> obj:
+    def parse(self, text: str) -> object:
         pass
 
 
-class _ShapeParser(Parser):
-    def parse(self, text: str) -> shape.Shape:
-        pass
+class _VectorParser(Parser):
+    VECTOR_PATTERN = re.compile(r'vector\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+
+    def parse(self, text: str) -> shape.Vector:
+        match = self.VECTOR_PATTERN.match(text.strip())
+        if not match:
+            raise ValueError(f"Invalid vector format: '{text}'")
+
+        x, y, z = map(float, match.groups())
+        return shape.Vector(x, y, z)
+
+
+class _PointParser(Parser):
+    POINT_PATTERN = re.compile(r'point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+
+    def parse(self, text: str) -> shape.Point:
+        match = self.POINT_PATTERN.match(text.strip())
+        if not match:
+            raise ValueError(f"Invalid point format: '{text}'")
+
+        x, y, z = map(float, match.groups())
+        return shape.Point(x, y, z)
+
+
+class _UVPointParser(Parser):
+    UVPOINT_PATTERN = re.compile(r'uv_point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+
+    def parse(self, text: str) -> shape.UVPoint:
+        match = self.UVPOINT_PATTERN.match(text.strip())
+        if not match:
+            raise ValueError(f"Invalid uv_point format: '{text}'")
+
+        u, v = map(float, match.groups())
+        return shape.UVPoint(u, v)
+

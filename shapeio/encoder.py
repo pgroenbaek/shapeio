@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from . import shape
 
@@ -27,15 +27,28 @@ class ShapeEncoder:
         pass
 
     def encode(self, obj: shape.Shape) -> str:
-        return _ShapeSerializer().serialize(obj)
+        header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
+        text = _ShapeSerializer().serialize(obj)
+
+        return header + text
 
 
-class _Serializer(ABC):
+class Serializer(ABC):
     @abstractmethod
     def serialize(self, obj) -> str:
         pass
 
 
-class _ShapeSerializer(Serializer):
-    def serialize(self, obj: shape.Shape) -> str:
-        pass
+class _VectorSerializer(Serializer):
+    def serialize(self, vector: shape.Vector) -> str:
+        return f"vector ( {vector.x} {vector.y} {vector.z} )"
+
+
+class _PointSerializer(Serializer):
+    def serialize(self, point: shape.Point) -> str:
+        return f"point ( {point.x} {point.y} {point.z} )"
+
+
+class _UVPointSerializer(Serializer):
+    def serialize(self, uv_point: shape.UVPoint) -> str:
+        return f"uv_point ( {uv_point.u} {uv_point.v} )"
