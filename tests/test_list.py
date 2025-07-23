@@ -43,13 +43,13 @@ def serializer():
 
 def test_serialize_points_list(serializer):
     points = [
-        Point(1.0, 2.0, 3.0),
-        Point(4.0, 5.0, 6.0)
+        Point(1.2, 2.2, 3.2),
+        Point(4.0, 5.4, 6.0)
     ]
     expected = (
         "points ( 2\n"
-        "\tpoint ( 1.0 2.0 3.0 )\n"
-        "\tpoint ( 4.0 5.0 6.0 )\n"
+        "\tpoint ( 1.2 2.2 3.2 )\n"
+        "\tpoint ( 4 5.4 6 )\n"
         ")"
     )
     output = serializer.serialize(points, depth=0)
@@ -102,28 +102,29 @@ def test_serialize_with_depth_and_tabs():
         use_tabs=True
     )
     points = [
-        Point(1.0, 2.0, 3.0),
-        Point(4.0, 5.0, 6.0)
+        Point(1.2, 2.4, 3.6),
+        Point(4.8, 5.0, 6.0)
     ]
     result = serializer.serialize(points, depth=2)
     expected = (
         "\t\tpoints ( 2\n"
-        "\t\t\tpoint ( 1.0 2.0 3.0 )\n"
-        "\t\t\tpoint ( 4.0 5.0 6.0 )\n"
+        "\t\t\tpoint ( 1.2 2.4 3.6 )\n"
+        "\t\t\tpoint ( 4.8 5 6 )\n"
         "\t\t)"
     )
+    print(repr(result))
     assert result == expected
 
 
 def test_round_trip_parse_and_serialize(parser, serializer):
     input_text = """
     points ( 2
-        point ( 10.0 20.0 30.0 )
-        point ( -1.0 -2.0 -3.0 )
+        point ( 10.7 20.7 30.7 )
+        point ( -1.0 -2.0 -3.3 )
     )
     """
     points = parser.parse(input_text)
     output = serializer.serialize(points, depth=0)
     assert "points ( 2" in output
-    assert "point ( 10.0 20.0 30.0 )" in output
-    assert "point ( -1.0 -2.0 -3.0 )" in output
+    assert "point ( 10.7 20.7 30.7 )" in output
+    assert "point ( -1 -2 -3.3 )" in output

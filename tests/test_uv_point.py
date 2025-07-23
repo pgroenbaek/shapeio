@@ -35,8 +35,8 @@ def parser():
 
 
 def test_serialize_uv_point(serializer):
-    uv_point = UVPoint(1.0, 2.0)
-    assert serializer.serialize(uv_point) == "uv_point ( 1.0 2.0 )"
+    uv_point = UVPoint(1.2, 2.0)
+    assert serializer.serialize(uv_point) == "uv_point ( 1.2 2 )"
 
 
 def test_parse_uv_point(parser):

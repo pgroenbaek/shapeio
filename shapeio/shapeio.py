@@ -77,11 +77,11 @@ def is_compressed(fp: str) -> Optional[bool]:
 
 
 def compress(fp: str, ffeditc_path: str) -> None:
-    if not self.is_compressed():
+    if not is_compressed():
         subprocess.call([ffeditc_path, fp, "/o:" + fp])
 
 
 def decompress(fp: str, ffeditc_path: str) -> None:
-    if self.is_compressed():
+    if is_compressed():
         subprocess.call([ffeditc_path, fp, "/u", "/o:" + fp])
 

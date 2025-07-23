@@ -53,28 +53,28 @@ class _VectorSerializer(_Serializer[shape.Vector]):
     def serialize(self, vector: shape.Vector, depth: int = 0) -> str:
         indent = self.get_indent(depth)
 
-        return f"{indent}vector ( {vector.x} {vector.y} {vector.z} )"
+        return f"{indent}vector ( {vector.x:.6g} {vector.y:.6g} {vector.z:.6g} )"
 
 
 class _PointSerializer(_Serializer[shape.Point]):
     def serialize(self, point: shape.Point, depth: int = 0) -> str:
         indent = self.get_indent(depth)
 
-        return f"{indent}point ( {point.x} {point.y} {point.z} )"
+        return f"{indent}point ( {point.x:.6g} {point.y:.6g} {point.z:.6g} )"
 
 
 class _UVPointSerializer(_Serializer[shape.UVPoint]):
     def serialize(self, uv_point: shape.UVPoint, depth: int = 0) -> str:
         indent = self.get_indent(depth)
 
-        return f"{indent}uv_point ( {uv_point.u} {uv_point.v} )"
+        return f"{indent}uv_point ( {uv_point.u:.6g} {uv_point.v:.6g} )"
 
 
 class _ColourSerializer(_Serializer[shape.Colour]):
     def serialize(self, colour: shape.Colour, depth: int = 0) -> str:
         indent = self.get_indent(depth)
 
-        return f"{indent}colour ( {colour.a} {colour.r} {colour.g} {colour.b} )"
+        return f"{indent}colour ( {colour.a:.6g} {colour.r:.6g} {colour.g:.6g} {colour.b:.6g} )"
 
 
 class _MatrixSerializer(_Serializer[shape.Matrix]):
@@ -86,7 +86,7 @@ class _MatrixSerializer(_Serializer[shape.Matrix]):
             matrix.cx, matrix.cy, matrix.cz,
             matrix.dx, matrix.dy, matrix.dz
         )
-        values_str = ' '.join(f"{v}" for v in values)
+        values_str = ' '.join(f"{v:.6g}" for v in values)
 
         return f"{indent}matrix {matrix.name} ( {values_str} )"
 
@@ -103,13 +103,13 @@ class _ListSerializer(_Serializer[List[T]]):
         self.item_serializer = item_serializer
 
     def serialize(self, items: List[T], depth: int = 0) -> str:
-        base_indent = self.get_indent(depth)
-        inner_indent = self.get_indent(depth + 1)
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
 
-        lines = [f"{base_indent}{self.list_name} ( {len(items)}"]
+        lines = [f"{indent}{self.list_name} ( {len(items)}"]
         for item in items:
-            lines.append(f"{inner_indent}{self.item_serializer.serialize(item)}")
-        lines.append(f"{base_indent})")
+            lines.append(f"{self.item_serializer.serialize(item, depth=inner_depth)}")
+        lines.append(f"{indent})")
 
         return "\n".join(lines)
 

@@ -35,8 +35,8 @@ def parser():
 
 
 def test_serialize_colour(serializer):
-    colour = Colour(1.0, 2.0, 3.0, 4.0)
-    assert serializer.serialize(colour) == "colour ( 1.0 2.0 3.0 4.0 )"
+    colour = Colour(1.0, 2.2, 3.2, 4.5)
+    assert serializer.serialize(colour) == "colour ( 1 2.2 3.2 4.5 )"
 
 
 def test_parse_colour(parser):
@@ -70,7 +70,7 @@ def test_parse_invalid_colour_raises(parser, bad_input):
 
 def test_serialize_colour_with_depth_and_tabs():
     serializer = _ColourSerializer(indent=1, use_tabs=True)
-    colour = Colour(1.0, 2.0, 3.0, 4.0)
+    colour = Colour(1.0, 2.2, 3.4, 4.3)
     result = serializer.serialize(colour, depth=2)
-    expected = "\t\tcolour ( 1.0 2.0 3.0 4.0 )"
+    expected = "\t\tcolour ( 1 2.2 3.4 4.3 )"
     assert result == expected

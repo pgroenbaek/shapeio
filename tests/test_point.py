@@ -35,8 +35,8 @@ def parser():
 
 
 def test_serialize_point(serializer):
-    point = Point(1.0, 2.0, 3.0)
-    assert serializer.serialize(point) == "point ( 1.0 2.0 3.0 )"
+    point = Point(1.2, 2.0, 3.0)
+    assert serializer.serialize(point) == "point ( 1.2 2 3 )"
 
 
 def test_parse_point(parser):
@@ -68,7 +68,7 @@ def test_parse_invalid_point_raises(parser, bad_input):
 
 def test_serialize_point_with_depth_and_tabs():
     serializer = _PointSerializer(indent=1, use_tabs=True)
-    point = Point(1.0, 2.0, 3.0)
+    point = Point(1.2, 2, 3)
     result = serializer.serialize(point, depth=2)
-    expected = "\t\tpoint ( 1.0 2.0 3.0 )"
+    expected = "\t\tpoint ( 1.2 2 3 )"
     assert result == expected

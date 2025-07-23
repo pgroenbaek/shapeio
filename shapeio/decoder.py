@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import re
+import regex
 from abc import ABC, abstractmethod
 from typing import List, TypeVar, Generic, Pattern
 

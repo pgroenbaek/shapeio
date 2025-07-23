@@ -32,6 +32,9 @@ class Vector:
         self.y = y
         self.z = z
 
+    def __repr__(self):
+        return f"Vector(x={self.x}, y={self.y}, z={self.z})"
+
 class Point:
     def __init__(self,
         x: float,
@@ -42,6 +45,9 @@ class Point:
         self.y = y
         self.z = z
 
+    def __repr__(self):
+        return f"Point(x={self.x}, y={self.y}, z={self.z})"
+
 class UVPoint:
     def __init__(self,
         u: float,
@@ -49,6 +55,9 @@ class UVPoint:
     ):
         self.u = u
         self.v = v
+
+    def __repr__(self):
+        return f"UVPoint(u={self.u}, v={self.v})"
 
 class Colour:
     def __init__(self,
@@ -62,23 +71,16 @@ class Colour:
         self.g = g
         self.b = b
 
-# TODO: Reached here ----------------------
+    def __repr__(self):
+        return f"Colour(a={self.a}, r={self.r}, g={self.g}, b={self.b})"
 
 class Matrix:
     def __init__(self,
         name: str,
-        ax: float,
-        ay: float,
-        az: float,
-        bx: float,
-        by: float,
-        bz: float,
-        cx: float,
-        cy: float,
-        cz: float,
-        dx: float,
-        dy: float,
-        dz: float,
+        ax: float, ay: float, az: float,
+        bx: float, by: float, bz: float,
+        cx: float, cy: float, cz: float,
+        dx: float, dy: float, dz: float,
     ):
         self.name = name
         self.ax = ax
@@ -93,6 +95,19 @@ class Matrix:
         self.dx = dx
         self.dy = dy
         self.dz = dz
+
+    def __repr__(self):
+        return (
+            "Matrix(\n"
+            f"  name='{self.name}',\n"
+            f"  ax={self.ax}, ay={self.ay}, az={self.az},\n"
+            f"  bx={self.bx}, by={self.by}, bz={self.bz},\n"
+            f"  cx={self.cx}, cy={self.cy}, cz={self.cz},\n"
+            f"  dx={self.dx}, dy={self.dy}, dz={self.dz}\n"
+            ")"
+        )
+
+# TODO: Reached here ----------------------
 
 class VertexIdx:
     def __init__(self,

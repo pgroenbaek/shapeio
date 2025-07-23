@@ -40,13 +40,13 @@ def test_serialize_matrix(serializer):
         1.0, 0.0, 0.0,
         0.0, 1.0, 0.0,
         0.0, 0.0, 1.0,
-        10.0, 20.0, 30.0
+        10.2, 20.0, 30.6
     )
     expected = (
-        "matrix transform ( 1.0 0.0 0.0 "
-        "0.0 1.0 0.0 "
-        "0.0 0.0 1.0 "
-        "10.0 20.0 30.0 )"
+        "matrix transform ( 1 0 0 "
+        "0 1 0 "
+        "0 0 1 "
+        "10.2 20 30.6 )"
     )
     assert serializer.serialize(matrix) == expected
 

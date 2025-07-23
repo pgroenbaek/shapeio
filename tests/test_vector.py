@@ -35,12 +35,12 @@ def parser():
 
 
 def test_serialize_vector(serializer):
-    vector = Vector(1.0, 2.0, 3.0)
-    assert serializer.serialize(vector) == "vector ( 1.0 2.0 3.0 )"
+    vector = Vector(1.2, 2.0, 3.0)
+    assert serializer.serialize(vector) == "vector ( 1.2 2 3 )"
 
 
 def test_parse_vector(parser):
-    text = "vector ( 1.0 2.0 3.0 )"
+    text = "vector ( 1 2.0 3.0 )"
     vector = parser.parse(text)
     assert vector.x == 1.0
     assert vector.y == 2.0
@@ -68,7 +68,7 @@ def test_parse_invalid_vector_raises(parser, bad_input):
 
 def test_serialize_vector_with_depth_and_tabs():
     serializer = _VectorSerializer(indent=1, use_tabs=True)
-    vector = Vector(1.0, 2.0, 3.0)
+    vector = Vector(1.2, 2.0, 3.0)
     result = serializer.serialize(vector, depth=1)
-    expected = "\tvector ( 1.0 2.0 3.0 )"
+    expected = "\tvector ( 1.2 2 3 )"
     assert result == expected
