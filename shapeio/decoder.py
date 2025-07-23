@@ -151,7 +151,7 @@ class _ShapeParser(_Parser[shape.Shape]):
 
     def parse(self, text: str) -> shape.Shape:
         points = self._parse_points_block(text)
-        
+
         return shape.Shape(
             shape_header=None,
             volumes=[],

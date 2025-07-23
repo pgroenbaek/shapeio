@@ -20,8 +20,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from shapeio.shape import Shape
-from shapeio.decoder import _ShapeParser
-from shapeio.encoder import _ShapeSerializer
+from shapeio.decoder import ShapeDecoder
+from shapeio.encoder import ShapeEncoder
 
 
 def load_shape(filepath: str) -> str:
@@ -34,16 +34,6 @@ def save_shape(filepath: str, content: str) -> None:
         f.write(content)
 
 
-@pytest.fixture
-def serializer():
-    return _ShapeSerializer()
-
-
-@pytest.fixture
-def parser():
-    return _ShapeParser()
-
-
 @pytest.fixture(scope="module")
 def global_storage():
     data = {
@@ -52,8 +42,18 @@ def global_storage():
     return data
 
 
-def test_parse_serialize_shape_roundtrip(global_storage, serializer, parser):
-    shape = parser.parse(global_storage["shape"])
-    text = serializer.serialize(shape)
+@pytest.fixture
+def decoder():
+    return ShapeDecoder()
+
+
+@pytest.fixture
+def encoder():
+    return ShapeEncoder()
+
+
+def test_parse_serialize_shape_roundtrip(global_storage, decoder, encoder):
+    shape = decoder.decode(global_storage["shape"])
+    text = encoder.encode(shape)
     save_shape("./tests/data/DK10f_A1tPnt5dLft_serialized.s", text)
 

@@ -26,12 +26,13 @@ T = TypeVar('T')
 
 
 class ShapeEncoder:
-    def __init__(self):
-        pass
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        self.indent = indent
+        self.use_tabs = use_tabs
 
     def encode(self, obj: shape.Shape) -> str:
         header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
-        text = _ShapeSerializer().serialize(obj)
+        text = _ShapeSerializer(indent=self.indent, use_tabs=self.use_tabs).serialize(obj)
 
         return header + text
 
