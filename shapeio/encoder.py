@@ -127,13 +127,13 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             ),
         }
 
-    def serialize(self, obj: shape.Shape, depth: int = 0) -> str:
+    def serialize(self, shape: shape.Shape, depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
         lines = [f"{indent}shape ("]
         for name, serializer in self.serializers.items():
-            items = getattr(obj, name, [])
+            items = getattr(shape, name, [])
             lines.append(serializer.serialize(items, depth=inner_depth))
         lines.append(f"{indent})")
 

@@ -21,6 +21,10 @@ import codecs
 import subprocess
 from typing import Optional
 
+from . import shape
+from .decoder import ShapeDecoder
+from .encoder import ShapeEncoder
+
 
 def _detect_encoding(filepath: str) -> str:
     with open(filepath, 'rb') as f:
@@ -70,7 +74,7 @@ def dumps(shape: shape.Shape, indent: int = 1, use_tabs: bool = True) -> str:
 
 def loads(shape_string: str) -> shape.Shape:
     decoder = ShapeDecoder()
-    return decoder.decode(s)
+    return decoder.decode(shape_string)
 
 
 def is_compressed(filepath: str) -> Optional[bool]:
