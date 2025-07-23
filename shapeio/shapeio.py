@@ -22,8 +22,8 @@ import subprocess
 from typing import Optional
 
 
-def _detect_encoding(fp: str) -> str:
-    with open(fp, 'rb') as f:
+def _detect_encoding(filepath: str) -> str:
+    with open(filepath, 'rb') as f:
         b = f.read(4)
         bstartswith = b.startswith
         if bstartswith((codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE)):
@@ -46,24 +46,35 @@ def _detect_encoding(fp: str) -> str:
         return 'utf-8'
 
 
-def dump(obj, fp):
-    pass
+def dump(shape: shape.Shape, filepath: str, indent: int = 1, use_tabs: bool = True) -> None:
+    encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
+    text = encoder.encode(shape)
+    with open(filepath, 'w', encoding='utf-16-le') as f:
+        f.write(text)
 
 
-def dumps(obj):
-    pass
+def load(filepath: str) -> shape.Shape:
+    if is_compressed(filepath):
+        raise ValueError("""Cannot load shape while the file is compressed. Please use the 'decompress(ffeditc_path: str)' method or decompress it manually.""")
+    encoding = _detect_encoding(filepath)
+    with open(filepath, 'r', encoding=encoding) as f:
+        text = f.read()
+    decoder = ShapeDecoder()
+    return decoder.decode(text)
 
 
-def load(fp):
-    pass
+def dumps(shape: shape.Shape, indent: int = 1, use_tabs: bool = True) -> str:
+    encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
+    return encoder.encode(shape)
 
 
-def loads(s):
-    pass
+def loads(shape_string: str) -> shape.Shape:
+    decoder = ShapeDecoder()
+    return decoder.decode(s)
 
 
-def is_compressed(fp: str) -> Optional[bool]:
-    with open(fp, 'r', encoding=_detect_encoding(fp)) as f:
+def is_compressed(filepath: str) -> Optional[bool]:
+    with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
         try:
             header = f.read(32)
             if header.startswith("SIMISA@@@@@@@@@@JINX0s1t______"):
@@ -76,12 +87,12 @@ def is_compressed(fp: str) -> Optional[bool]:
         return True
 
 
-def compress(fp: str, ffeditc_path: str) -> None:
+def compress(filepath: str, ffeditc_path: str) -> None:
     if not is_compressed():
-        subprocess.call([ffeditc_path, fp, "/o:" + fp])
+        subprocess.call([ffeditc_path, filepath, "/o:" + filepath])
 
 
-def decompress(fp: str, ffeditc_path: str) -> None:
+def decompress(filepath: str, ffeditc_path: str) -> None:
     if is_compressed():
-        subprocess.call([ffeditc_path, fp, "/u", "/o:" + fp])
+        subprocess.call([ffeditc_path, filepath, "/u", "/o:" + filepath])
 
