@@ -66,9 +66,9 @@ def test_parse_invalid_point_raises(parser, bad_input):
         parser.parse(bad_input)
 
 
-def test_serialize_point_with_depth_and_tabs():
-    serializer = _PointSerializer(indent=1, use_tabs=True)
+def test_serialize_point_with_depth_and_spaces():
+    serializer = _PointSerializer(indent=2, use_tabs=False)
     point = Point(1.2, 2, 3)
     result = serializer.serialize(point, depth=2)
-    expected = "\t\tpoint ( 1.2 2 3 )"
+    expected = "    point ( 1.2 2 3 )"
     assert result == expected

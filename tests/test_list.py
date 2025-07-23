@@ -94,12 +94,12 @@ def test_parse_invalid_points_list_raises(parser, bad_text):
         parser.parse(bad_text)
 
 
-def test_serialize_with_depth_and_tabs():
+def test_serialize_with_depth_and_spaces():
     serializer = _ListSerializer(
         list_name="points",
-        item_serializer=_PointSerializer(),
-        indent=1,
-        use_tabs=True
+        item_serializer=_PointSerializer(indent=2, use_tabs=False),
+        indent=2,
+        use_tabs=False
     )
     points = [
         Point(1.2, 2.4, 3.6),
@@ -107,10 +107,10 @@ def test_serialize_with_depth_and_tabs():
     ]
     result = serializer.serialize(points, depth=2)
     expected = (
-        "\t\tpoints ( 2\n"
-        "\t\t\tpoint ( 1.2 2.4 3.6 )\n"
-        "\t\t\tpoint ( 4.8 5 6 )\n"
-        "\t\t)"
+        "    points ( 2\n"
+        "      point ( 1.2 2.4 3.6 )\n"
+        "      point ( 4.8 5 6 )\n"
+        "    )"
     )
     print(repr(result))
     assert result == expected

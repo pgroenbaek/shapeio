@@ -66,9 +66,9 @@ def test_parse_invalid_vector_raises(parser, bad_input):
         parser.parse(bad_input)
 
 
-def test_serialize_vector_with_depth_and_tabs():
-    serializer = _VectorSerializer(indent=1, use_tabs=True)
+def test_serialize_vector_with_depth_and_spaces():
+    serializer = _VectorSerializer(indent=2, use_tabs=False)
     vector = Vector(1.2, 2.0, 3.0)
     result = serializer.serialize(vector, depth=1)
-    expected = "\tvector ( 1.2 2 3 )"
+    expected = "  vector ( 1.2 2 3 )"
     assert result == expected

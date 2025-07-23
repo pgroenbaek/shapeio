@@ -72,7 +72,7 @@ shape (
 shape = shapeio.loads(shape_text)
 ```
 
-### Check if a shape file is compressed on disk
+### Check if a shape is compressed on disk
 
 ```python
 import shapeio
@@ -86,7 +86,7 @@ else:
     print("Could not determine (possibly empty file)")
 ```
 
-### Compress or decompress a shape file on disk
+### Compress or decompress a shape on disk
 
 ```python
 import shapeio

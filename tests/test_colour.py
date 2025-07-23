@@ -68,9 +68,9 @@ def test_parse_invalid_colour_raises(parser, bad_input):
         parser.parse(bad_input)
 
 
-def test_serialize_colour_with_depth_and_tabs():
-    serializer = _ColourSerializer(indent=1, use_tabs=True)
+def test_serialize_colour_with_depth_and_spaces():
+    serializer = _ColourSerializer(indent=2, use_tabs=False)
     colour = Colour(1.0, 2.2, 3.4, 4.3)
     result = serializer.serialize(colour, depth=2)
-    expected = "\t\tcolour ( 1 2.2 3.4 4.3 )"
+    expected = "    colour ( 1 2.2 3.4 4.3 )"
     assert result == expected

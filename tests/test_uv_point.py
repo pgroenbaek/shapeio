@@ -65,9 +65,9 @@ def test_parse_invalid_uv_point_raises(parser, bad_input):
         parser.parse(bad_input)
 
 
-def test_serialize_uvpoint_with_depth_and_tabs():
-    serializer = _UVPointSerializer(indent=1, use_tabs=True)
+def test_serialize_uvpoint_with_depth_and_spaces():
+    serializer = _UVPointSerializer(indent=2, use_tabs=False)
     uv_point = UVPoint(0.1, 0.2)
     result = serializer.serialize(uv_point, depth=3)
-    expected = "\t\t\tuv_point ( 0.1 0.2 )"
+    expected = "      uv_point ( 0.1 0.2 )"
     assert result == expected

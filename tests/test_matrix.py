@@ -86,8 +86,8 @@ def test_parse_invalid_matrix_raises(parser, bad_input):
         parser.parse(bad_input)
 
 
-def test_serialize_matrix_with_depth_and_tabs():
-    serializer = _MatrixSerializer(indent=1, use_tabs=True)
+def test_serialize_matrix_with_depth_and_spaces():
+    serializer = _MatrixSerializer(indent=2, use_tabs=False)
     matrix = Matrix(
         "m", 1, 2, 3,
         4, 5, 6,
@@ -95,5 +95,5 @@ def test_serialize_matrix_with_depth_and_tabs():
         10, 11, 12
     )
     result = serializer.serialize(matrix, depth=2)
-    expected = "\t\tmatrix m ( 1 2 3 4 5 6 7 8 9 10 11 12 )"
+    expected = "    matrix m ( 1 2 3 4 5 6 7 8 9 10 11 12 )"
     assert result == expected
