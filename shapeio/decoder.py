@@ -137,3 +137,49 @@ class _ListParser(_Parser[List[T]]):
             raise ValueError(f"Expected {count} {self.list_name}, but found {len(matches)}")
 
         return [self.item_parser.parse(m.group(0)) for m in matches]
+
+
+class _ShapeParser(_Parser[shape.Shape]):
+    def __init__(self):
+        self._point_parser = _PointParser()
+        self._points_parser = _ListParser(
+            list_name="points",
+            item_name="point",
+            item_parser=self._point_parser,
+            item_pattern=self._point_parser.POINT_PATTERN
+        )
+
+    def parse(self, text: str) -> shape.Shape:
+        points = self._parse_points_block(text)
+        
+        return shape.Shape(
+            shape_header=None,
+            volumes=[],
+            shader_names=[],
+            texture_filter_names=[],
+            points=points,
+            uv_points=[],
+            normals=[],
+            sort_vectors=[],
+            colours=[],
+            matrices=[],
+            images=[],
+            textures=[],
+            light_materials=[],
+            light_model_cfgs=[],
+            vtx_states=[],
+            prim_states=[],
+            lod_controls=[],
+            animations=[]
+        )
+
+    def _parse_points_block(self, text: str) -> List[shape.Point]:
+        points_block_pattern = regex.compile(
+            r'points\s*\(\s*\d+\s*(?:point\s*\((?:[^()]+|(?R))*\)\s*)+\)',
+            regex.DOTALL
+        )
+        match = points_block_pattern.search(text)
+        if not match:
+            raise ValueError("No valid 'points' block found in shape file.")
+
+        return self._points_parser.parse(match.group(0))

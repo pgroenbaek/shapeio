@@ -114,3 +114,27 @@ class _ListSerializer(_Serializer[List[T]]):
         return "\n".join(lines)
 
 
+class _ShapeSerializer(_Serializer[shape.Shape]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self.serializers = {
+            "points": _ListSerializer(
+                list_name="points",
+                item_serializer=_PointSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+        }
+
+    def serialize(self, obj: shape.Shape, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        lines = [f"{indent}shape ("]
+        for name, serializer in self.serializers.items():
+            items = getattr(obj, name, [])
+            lines.append(serializer.serialize(items, depth=inner_depth))
+        lines.append(f"{indent})")
+
+        return "\n".join(lines)
+
