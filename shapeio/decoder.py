@@ -118,10 +118,10 @@ class _ListParser(_Parser[List[T]]):
         self.item_pattern = item_pattern
 
         list_pattern_str = (
-            rf'{re.escape(list_name)}\s*\(\s*(\d+)\s*'
-            rf'((?:{re.escape(item_name)}\s*\([^)]*\)\s*)+)\)'
+            rf'{regex.escape(list_name)}\s*\(\s*(\d+)\s*'
+            rf'(?P<items>(?:{regex.escape(item_name)}\s*\((?:[^()]+|(?R))*\)\s*)+)\)'
         )
-        self.list_pattern = re.compile(list_pattern_str, re.DOTALL)
+        self.list_pattern = regex.compile(list_pattern_str, regex.DOTALL)
 
     def parse(self, text: str) -> List[T]:
         text = text.strip()
