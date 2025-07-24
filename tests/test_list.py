@@ -128,3 +128,83 @@ def test_round_trip_parse_and_serialize(parser, serializer):
     assert "points ( 2" in output
     assert "point ( 10.7 20.7 30.7 )" in output
     assert "point ( -1 -2 -3.3 )" in output
+
+
+def test_serialize_items_per_line_1_no_newline_after_header_no_newline_before_closing():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        items_per_line=1,
+        newline_after_header=False,
+        newline_before_closing=False,
+        indent=1,
+        use_tabs=True,
+    )
+    points = [Point(1, 2, 3), Point(4, 5, 6), Point(7, 8, 9)]
+    expected = (
+        "points ( 3 point ( 1 2 3 ) point ( 4 5 6 ) point ( 7 8 9 ) )"
+    )
+    output = serializer.serialize(points)
+    assert output == expected
+
+
+def test_serialize_items_per_line_2_newline_after_header():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        items_per_line=2,
+        newline_after_header=True,
+        newline_before_closing=True,
+    )
+    points = [Point(1, 2, 3), Point(4, 5, 6), Point(7, 8, 9), Point(10, 11, 12)]
+    expected = (
+        "points ( 4\n"
+        "\tpoint ( 1 2 3 ) point ( 4 5 6 )\n"
+        "\tpoint ( 7 8 9 ) point ( 10 11 12 )\n"
+        ")"
+    )
+    output = serializer.serialize(points)
+    assert output == expected
+
+
+def test_serialize_items_per_line_3_no_newline_after_header_no_newline_before_closing():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        items_per_line=3,
+        newline_after_header=False,
+        newline_before_closing=False,
+        indent=1,
+        use_tabs=True,
+    )
+    points = [
+        Point(1, 2, 3), Point(4, 5, 6), Point(7, 8, 9),
+        Point(10, 11, 12), Point(13, 14, 15), Point(16, 17, 18),
+        Point(19, 20, 21)
+    ]
+    expected = (
+        "points ( 7 "
+        "point ( 1 2 3 ) point ( 4 5 6 ) point ( 7 8 9 )\n"
+        "\tpoint ( 10 11 12 ) point ( 13 14 15 ) point ( 16 17 18 )\n"
+        "\tpoint ( 19 20 21 ) )"
+    )
+    output = serializer.serialize(points)
+    assert output == expected
+
+
+def test_serialize_newline_after_header_false_newline_before_closing_true():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        items_per_line=1,
+        newline_after_header=False,
+        newline_before_closing=True,
+    )
+    points = [Point(1, 2, 3), Point(4, 5, 6)]
+    expected = (
+        "points ( 2 point ( 1 2 3 )\n"
+        "\tpoint ( 4 5 6 )\n"
+        ")"
+    )
+    output = serializer.serialize(points)
+    assert output == expected

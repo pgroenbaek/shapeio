@@ -93,24 +93,62 @@ class _MatrixSerializer(_Serializer[shape.Matrix]):
 
 
 class _ListSerializer(_Serializer[List[T]]):
-    def __init__(self,
+    def __init__(
+        self,
         list_name: str,
         item_serializer: _Serializer[T],
         indent: int = 1,
-        use_tabs: bool = True
+        use_tabs: bool = True,
+        items_per_line: int = 1,
+        newline_after_header: bool = True,
+        newline_before_closing: bool = True,
     ):
         super().__init__(indent, use_tabs)
         self.list_name = list_name
         self.item_serializer = item_serializer
+        self.items_per_line = items_per_line
+        self.newline_after_header = newline_after_header
+        self.newline_before_closing = newline_before_closing
 
     def serialize(self, items: List[T], depth: int = 0) -> str:
         indent = self.get_indent(depth)
-        inner_depth = depth + 1
+        inner_indent = self.get_indent(depth + 1)
 
-        lines = [f"{indent}{self.list_name} ( {len(items)}"]
-        for item in items:
-            lines.append(f"{self.item_serializer.serialize(item, depth=inner_depth)}")
-        lines.append(f"{indent})")
+        lines = []
+
+        # Header line with name and count.
+        header = f"{indent}{self.list_name} ( {len(items)}"
+
+        if self.newline_after_header:
+            lines.append(header)
+        else:
+            header += " "
+            lines.append(header.rstrip())
+
+        # Items in the list broken up by items_per_line.
+        current_line = []
+
+        for i, item in enumerate(items):
+            rendered = self.item_serializer.serialize(item, depth=0).strip()
+            current_line.append(rendered)
+
+            is_last_item = i == len(items) - 1
+            should_wrap = (len(current_line) == self.items_per_line) or is_last_item
+
+            if should_wrap:
+                line_str = ' '.join(current_line)
+                if self.newline_after_header:
+                    lines.append(f"{inner_indent}{line_str}")
+                else:
+                    lines[-1] += line_str if is_last_item else line_str + " "
+                current_line = []
+
+        # Closing parenthesis.
+        closing = f"{indent})" if self.newline_before_closing else ")"
+        if self.newline_before_closing:
+            lines.append(closing)
+        else:
+            lines[-1] += f" {closing}"
 
         return "\n".join(lines)
 

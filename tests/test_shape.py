@@ -52,7 +52,7 @@ def encoder():
     return ShapeEncoder()
 
 
-def test_parse_serialize_shape_roundtrip(global_storage, decoder, encoder):
+def test_round_trip_decode_and_encode(global_storage, decoder, encoder):
     shape = decoder.decode(global_storage["shape"])
     text = encoder.encode(shape)
     save_shape("./tests/data/DK10f_A1tPnt5dLft_serialized.s", text)
