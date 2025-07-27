@@ -16,6 +16,24 @@ See also:
 
 ## Installation
 
+### Install from PyPI
+
+TODO
+
+### Install from wheel
+
+If you have downloaded a `.whl` file from the [Releases](https://github.com/pgroenbaek/shapeio/releases) page, install it with:
+
+```sh
+pip install path/to/shapeio‑<version>‑py3‑none‑any.whl
+```
+
+Replace `<version>` with the actual version number in the filename. For example:
+
+```sh
+pip install path/to/shapeio-0.5.0b0-py3-none-any.whl
+```
+
 ### Install from source
 
 ```sh
