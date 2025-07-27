@@ -119,26 +119,29 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
             Please use the 'decompress(ffeditc_path: str)' function or decompress it manually.""")
 
     pattern = re.compile(search_exp)
+    encoding = _detect_encoding(filepath)
 
-    with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
+    with open(filepath, 'r', encoding=encoding) as f:
         text = f.read()
     
     new_text = pattern.sub(replace_str, text)
     
-    with open(filepath, 'w', encoding=_detect_encoding(filepath)) as f:
+    with open(filepath, 'w', encoding=encoding) as f:
         f.write(new_text)
 
 
 def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None:
     if is_shape(filepath) and is_compressed(filepath):
-        raise ValueError("Cannot replace text in a compressed shape. Decompress the shape first.")
+        raise ValueError("""Cannot replace text in a compressed shape.
+            Please use the 'decompress(ffeditc_path: str)' function or decompress it manually.""")
 
     pattern = re.compile(search_exp, re.IGNORECASE)
+    encoding = _detect_encoding(filepath)
 
-    with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
+    with open(filepath, 'r', encoding=encoding) as f:
         text = f.read()
     
     new_text = pattern.sub(replace_str, text)
     
-    with open(filepath, 'w', encoding=_detect_encoding(filepath)) as f:
+    with open(filepath, 'w', encoding=encoding) as f:
         f.write(new_text)
