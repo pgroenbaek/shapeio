@@ -38,8 +38,7 @@ pip install path/to/shapeio-0.5.0b0-py3-none-any.whl
 
 ```sh
 git clone https://github.com/pgroenbaek/shapeio.git
-cd shapeio
-pip install --upgrade .
+pip install --upgrade ./shapeio
 ```
 
 ## Usage
