@@ -6,7 +6,7 @@
 
 This Python module provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format.
 
-The API is very similar to that of the `json` package and includes functions for handling shape compression and decompression.
+The API is very similar to that of the `json` module and includes functions for handling shape compression and decompression.
 
 When modifying shapes using this module, there are no safeguards other than the data structure itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 

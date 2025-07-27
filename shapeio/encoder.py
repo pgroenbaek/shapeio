@@ -30,9 +30,9 @@ class ShapeEncoder:
         self.indent = indent
         self.use_tabs = use_tabs
 
-    def encode(self, obj: shape.Shape) -> str:
+    def encode(self, shape: shape.Shape) -> str:
         header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
-        text = _ShapeSerializer(indent=self.indent, use_tabs=self.use_tabs).serialize(obj)
+        text = _ShapeSerializer(indent=self.indent, use_tabs=self.use_tabs).serialize(shape)
 
         return header + text
 

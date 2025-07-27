@@ -112,7 +112,6 @@ def test_serialize_with_depth_and_spaces():
         "      point ( 4.8 5 6 )\n"
         "    )"
     )
-    print(repr(result))
     assert result == expected
 
 
