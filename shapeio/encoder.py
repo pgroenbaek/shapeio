@@ -76,6 +76,19 @@ class _VectorSerializer(_Serializer[shape.Vector]):
         return f"{indent}vector ( {vector.x:.6g} {vector.y:.6g} {vector.z:.6g} )"
 
 
+class _VolumeSphereSerializer(_Serializer[shape.VolumeSphere]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._vector_serializer = _VectorSerializer()
+
+    def serialize(self, volume_sphere: shape.VolumeSphere, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_indent = self.get_indent(depth + 1)
+        vector_str = self._vector_serializer.serialize(volume_sphere.vector)
+
+        return f"{indent}vol_sphere (\n{inner_indent}{vector_str} {volume_sphere.radius:.6g}\n{indent})"
+
+
 class _PointSerializer(_Serializer[shape.Point]):
     def serialize(self, point: shape.Point, depth: int = 0) -> str:
         indent = self.get_indent(depth)
@@ -130,8 +143,7 @@ class _TextureSerializer(_Serializer[shape.Texture]):
 
 
 class _ListSerializer(_Serializer[List[T]]):
-    def __init__(
-        self,
+    def __init__(self,
         list_name: str,
         item_serializer: _Serializer[T],
         indent: int = 1,
@@ -167,7 +179,8 @@ class _ListSerializer(_Serializer[List[T]]):
 
         current_line = []
         for i, item in enumerate(items):
-            rendered = self.item_serializer.serialize(item, depth=0).strip()
+            inner_depth = depth + 1
+            rendered = self.item_serializer.serialize(item, depth=inner_depth).strip()
             current_line.append(rendered)
 
             is_last_item = i == len(items) - 1
@@ -194,8 +207,14 @@ class _ListSerializer(_Serializer[List[T]]):
 class _ShapeSerializer(_Serializer[shape.Shape]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
-        self.serializers = {
+        self._serializers = {
             "shape_header": _ShapeHeaderSerializer(indent, use_tabs),
+            "volumes": _ListSerializer(
+                list_name="volumes",
+                item_serializer=_VolumeSphereSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
             "shader_names": _ListSerializer(
                 list_name="shader_names",
                 item_serializer=_NamedShaderSerializer(indent, use_tabs),
@@ -263,7 +282,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         inner_depth = depth + 1
 
         lines = [f"{indent}shape ("]
-        for name, serializer in self.serializers.items():
+        for name, serializer in self._serializers.items():
             items = getattr(shape, name, [])
             lines.append(serializer.serialize(items, depth=inner_depth))
         lines.append(f"{indent})")

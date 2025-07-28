@@ -130,6 +130,24 @@ class _VectorParser(_Parser[shape.Vector]):
         return shape.Vector(x, y, z)
 
 
+class _VolumeSphereParser(_Parser[shape.VolumeSphere]):
+    PATTERN = re.compile(r"vol_sphere\s*\(\s*(vector\s*\([^()]*\))\s+(-?\d+(?:\.\d+)?)\s*\)", re.IGNORECASE)
+    
+    def __init__(self):
+        self._vector_parser = _VectorParser()
+
+    def parse(self, text: str) -> shape.VolumeSphere:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid vol_sphere format: '{text}'")
+
+        vector_text = match.group(1)
+        radius = float(match.group(2))
+
+        vector = self._vector_parser.parse(vector_text)
+        return shape.VolumeSphere(vector, radius)
+
+
 class _PointParser(_Parser[shape.Point]):
     PATTERN = re.compile(r'point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
@@ -255,6 +273,12 @@ class _ListParser(_Parser[List[T]]):
 class _ShapeParser(_Parser[shape.Shape]):
     def __init__(self):
         self._shape_header_parser = _ShapeHeaderParser()
+        self._volume_sphere_parser = _VolumeSphereParser()
+        self._volumes_parser = _ListParser(
+            list_name="volumes",
+            item_parser=self._volume_sphere_parser,
+            item_pattern=self._volume_sphere_parser.PATTERN
+        )
         self._named_shader_parser = _NamedShaderParser()
         self._shader_names_parser = _ListParser(
             list_name="shader_names",
@@ -317,6 +341,7 @@ class _ShapeParser(_Parser[shape.Shape]):
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
+        volumes = self._parse_block(text, "volumes", self._volumes_parser)
         shader_names = self._parse_block(text, "shader_names", self._shader_names_parser)
         texture_filter_names = self._parse_block(text, "texture_filter_names", self._named_filter_names_parser)
         points = self._parse_block(text, "points", self._points_parser)
@@ -330,7 +355,7 @@ class _ShapeParser(_Parser[shape.Shape]):
 
         return shape.Shape(
             shape_header=shape_header,
-            volumes=[],
+            volumes=volumes,
             shader_names=shader_names,
             texture_filter_names=texture_filter_names,
             points=points,
