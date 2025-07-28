@@ -29,10 +29,10 @@ T = TypeVar('T')
 
 class ShapeDecoder:
     def __init__(self):
-        pass
+        self.parser = _ShapeParser()
 
     def decode(self, text: str) -> shape.Shape:
-        return _ShapeParser().parse(text)
+        return self.parser.parse(text)
 
 
 class _Parser(ABC, Generic[T]):
@@ -148,9 +148,25 @@ class _ShapeParser(_Parser[shape.Shape]):
             item_parser=self._point_parser,
             item_pattern=self._point_parser.POINT_PATTERN
         )
+        self._uv_point_parser = _UVPointParser()
+        self._uv_points_parser = _ListParser(
+            list_name="uv_points",
+            item_name="uv_point",
+            item_parser=self._uv_point_parser,
+            item_pattern=self._uv_point_parser.UVPOINT_PATTERN
+        )
+        self._vector_parser = _VectorParser()
+        self._normals_parser = _ListParser(
+            list_name="normals",
+            item_name="vector",
+            item_parser=self._vector_parser,
+            item_pattern=self._vector_parser.VECTOR_PATTERN
+        )
 
     def parse(self, text: str) -> shape.Shape:
         points = self._parse_points_block(text)
+        uv_points = self._parse_uv_points_block(text)
+        normals = self._parse_normals_block(text)
 
         return shape.Shape(
             shape_header=None,
@@ -158,8 +174,8 @@ class _ShapeParser(_Parser[shape.Shape]):
             shader_names=[],
             texture_filter_names=[],
             points=points,
-            uv_points=[],
-            normals=[],
+            uv_points=uv_points,
+            normals=normals,
             sort_vectors=[],
             colours=[],
             matrices=[],
@@ -183,3 +199,25 @@ class _ShapeParser(_Parser[shape.Shape]):
             raise ValueError("No valid 'points' block found in shape file.")
 
         return self._points_parser.parse(match.group(0))
+    
+    def _parse_uv_points_block(self, text: str) -> List[shape.UVPoint]:
+        uv_points_block_pattern = regex.compile(
+            r'uv_points\s*\(\s*\d+\s*(?:uv_point\s*\((?:[^()]+|(?R))*\)\s*)+\)',
+            regex.DOTALL
+        )
+        match = uv_points_block_pattern.search(text)
+        if not match:
+            raise ValueError("No valid 'uv_points' block found in shape file.")
+
+        return self._uv_points_parser.parse(match.group(0))
+    
+    def _parse_normals_block(self, text: str) -> List[shape.Vector]:
+        normals_block_pattern = regex.compile(
+            r'normals\s*\(\s*\d+\s*(?:vector\s*\((?:[^()]+|(?R))*\)\s*)+\)',
+            regex.DOTALL
+        )
+        match = normals_block_pattern.search(text)
+        if not match:
+            raise ValueError("No valid 'normals' block found in shape file.")
+
+        return self._normals_parser.parse(match.group(0))

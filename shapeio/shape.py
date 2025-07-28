@@ -35,6 +35,15 @@ class Vector:
     def __repr__(self):
         return f"Vector(x={self.x}, y={self.y}, z={self.z})"
 
+    def to_numpy(self) -> np.ndarray:
+        return np.array([self.x, self.y, self.z])
+
+    @classmethod
+    def from_numpy(cls, array: np.ndarray):
+        if array.shape != (3,):
+            raise ValueError("Input array must have shape (3,).")
+        return cls(array[0], array[1], array[2])
+
 class Point:
     def __init__(self,
         x: float,
@@ -48,6 +57,15 @@ class Point:
     def __repr__(self):
         return f"Point(x={self.x}, y={self.y}, z={self.z})"
 
+    def to_numpy(self) -> np.ndarray:
+        return np.array([self.x, self.y, self.z])
+
+    @classmethod
+    def from_numpy(cls, array: np.ndarray):
+        if array.shape != (3,):
+            raise ValueError("Input array must have shape (3,).")
+        return cls(array[0], array[1], array[2])
+
 class UVPoint:
     def __init__(self,
         u: float,
@@ -58,6 +76,15 @@ class UVPoint:
 
     def __repr__(self):
         return f"UVPoint(u={self.u}, v={self.v})"
+
+    def to_numpy(self) -> np.ndarray:
+        return np.array([self.u, self.v])
+
+    @classmethod
+    def from_numpy(cls, array: np.ndarray):
+        if array.shape != (2,):
+            raise ValueError("Input array must have shape (2,).")
+        return cls(array[0], array[1])
 
 class Colour:
     def __init__(self,

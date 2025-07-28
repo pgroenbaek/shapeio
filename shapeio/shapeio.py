@@ -17,11 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
 import re
 import codecs
 import shutil
+import fnmatch
 import subprocess
-from typing import Optional
+from typing import Optional, List
 
 from . import shape
 from .decoder import ShapeDecoder
@@ -52,7 +54,30 @@ def _detect_encoding(filepath: str) -> str:
         return 'utf-8'
 
 
-def dump(shape: shape.Shape, filepath: str, indent: int = 1, use_tabs: bool = True) -> None:
+def find_directory_files(
+    directory: str,
+    match_files: List[str],
+    ignore_files: List[str]
+) -> List[str]:
+
+    files = []
+
+    for file_name in os.listdir(directory):
+        if any([fnmatch.fnmatch(file_name, x) for x in match_files]):
+            if any([fnmatch.fnmatch(file_name, x) for x in ignore_files]):
+                continue
+            files.append(file_name)
+
+    return files
+
+
+def dump(
+    shape: shape.Shape,
+    filepath: str,
+    indent: int = 1,
+    use_tabs: bool = True
+) -> None:
+
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
     text = encoder.encode(shape)
 
@@ -72,7 +97,12 @@ def load(filepath: str) -> shape.Shape:
     return decoder.decode(text)
 
 
-def dumps(shape: shape.Shape, indent: int = 1, use_tabs: bool = True) -> str:
+def dumps(
+    shape: shape.Shape,
+    indent: int = 1,
+    use_tabs: bool = True
+) -> str:
+
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
     return encoder.encode(shape)
 

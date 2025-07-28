@@ -27,12 +27,11 @@ T = TypeVar('T')
 
 class ShapeEncoder:
     def __init__(self, indent: int = 1, use_tabs: bool = True):
-        self.indent = indent
-        self.use_tabs = use_tabs
+        self.serializer = _ShapeSerializer(indent=indent, use_tabs=use_tabs)
 
     def encode(self, shape: shape.Shape) -> str:
         header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
-        text = _ShapeSerializer(indent=self.indent, use_tabs=self.use_tabs).serialize(shape)
+        text = self.serializer.serialize(shape)
 
         return header + text
 
@@ -115,8 +114,6 @@ class _ListSerializer(_Serializer[List[T]]):
         inner_indent = self.get_indent(depth + 1)
 
         lines = []
-
-        # Header line with name and count.
         header = f"{indent}{self.list_name} ( {len(items)}"
 
         if self.newline_after_header:
@@ -125,7 +122,6 @@ class _ListSerializer(_Serializer[List[T]]):
             header += " "
             lines.append(header.rstrip())
 
-        # Items in the list broken up by items_per_line.
         current_line = []
 
         for i, item in enumerate(items):
@@ -143,7 +139,6 @@ class _ListSerializer(_Serializer[List[T]]):
                     lines[-1] += line_str if is_last_item else line_str + " "
                 current_line = []
 
-        # Closing parenthesis.
         closing = f"{indent})" if self.newline_before_closing else ")"
         if self.newline_before_closing:
             lines.append(closing)
@@ -160,6 +155,18 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             "points": _ListSerializer(
                 list_name="points",
                 item_serializer=_PointSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "uv_points": _ListSerializer(
+                list_name="uv_points",
+                item_serializer=_UVPointSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "normals": _ListSerializer(
+                list_name="normals",
+                item_serializer=_VectorSerializer(indent, use_tabs),
                 indent=indent,
                 use_tabs=use_tabs
             ),
