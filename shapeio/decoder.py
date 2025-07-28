@@ -68,7 +68,7 @@ class _Parser(ABC, Generic[T]):
 
         raise ValueError(f"Unbalanced parentheses in '{block_name}' block")
 
-    def _parse_block(self, text: str, block_name: str, parser: "_Parser") -> T:
+    def _parse_block(self, text: str, block_name: str, parser: "_Parser[T]") -> T:
         block_text = self._find_block(text, block_name)
         if block_text is None:
             raise ValueError(f"No valid '{block_name}' block found in shape file.")
