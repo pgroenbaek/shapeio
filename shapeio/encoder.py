@@ -121,6 +121,7 @@ class _ListSerializer(_Serializer[List[T]]):
         items_per_line: int = 1,
         newline_after_header: bool = True,
         newline_before_closing: bool = True,
+        newlines_for_empty_list: bool = False,
     ):
         super().__init__(indent, use_tabs)
         self.list_name = list_name
@@ -128,22 +129,25 @@ class _ListSerializer(_Serializer[List[T]]):
         self.items_per_line = items_per_line
         self.newline_after_header = newline_after_header
         self.newline_before_closing = newline_before_closing
+        self.newlines_for_empty_list = newlines_for_empty_list
 
     def serialize(self, items: List[T], depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(depth + 1)
-
-        lines = []
         header = f"{indent}{self.list_name} ( {len(items)}"
 
-        if self.newline_after_header:
+        lines = []
+
+        list_not_empty = len(items) != 0
+        newline_after_header_if_not_empty = self.newline_after_header and list_not_empty
+
+        if newline_after_header_if_not_empty or self.newlines_for_empty_list:
             lines.append(header)
         else:
-            header += " "
-            lines.append(header.rstrip())
+            extra_space_if_not_empty = " " if list_not_empty else ""
+            lines.append(header.rstrip() + extra_space_if_not_empty)
 
         current_line = []
-
         for i, item in enumerate(items):
             rendered = self.item_serializer.serialize(item, depth=0).strip()
             current_line.append(rendered)
@@ -159,11 +163,12 @@ class _ListSerializer(_Serializer[List[T]]):
                     lines[-1] += line_str if is_last_item else line_str + " "
                 current_line = []
 
-        closing = f"{indent})" if self.newline_before_closing else ")"
-        if self.newline_before_closing:
-            lines.append(closing)
+        newline_before_closing_if_not_empty = self.newline_before_closing and list_not_empty
+
+        if newline_before_closing_if_not_empty or self.newlines_for_empty_list:
+            lines.append(f"{indent})")
         else:
-            lines[-1] += f" {closing}"
+            lines[-1] += " )"
 
         return "\n".join(lines)
 
@@ -206,6 +211,18 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             "sort_vectors": _ListSerializer(
                 list_name="sort_vectors",
                 item_serializer=_VectorSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "colours": _ListSerializer(
+                list_name="colours",
+                item_serializer=_ColourSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "matrices": _ListSerializer(
+                list_name="matrices",
+                item_serializer=_MatrixSerializer(indent, use_tabs),
                 indent=indent,
                 use_tabs=use_tabs
             ),

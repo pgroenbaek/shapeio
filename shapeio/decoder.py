@@ -40,6 +40,42 @@ class _Parser(ABC, Generic[T]):
     def parse(self, text: str) -> T:
         pass
 
+    def _find_block(self, text: str, block_name: str):
+        header_pattern = re.compile(
+            rf'{re.escape(block_name)}\s*\(\s*\d+',
+            re.IGNORECASE
+        )
+        match = header_pattern.search(text)
+        if not match:
+            raise ValueError(f"No valid '{block_name}' block header found")
+
+        start_idx = match.start()
+
+        open_paren_idx = text.find('(', match.start())
+        if open_paren_idx == -1:
+            raise ValueError(f"Malformed block: no opening '(' for '{block_name}'")
+
+        depth = 0
+        idx = open_paren_idx
+        while idx < len(text):
+            char = text[idx]
+            if char == '(':
+                depth += 1
+            elif char == ')':
+                depth -= 1
+                if depth == 0:
+                    return text[start_idx:idx + 1]
+            idx += 1
+
+        raise ValueError(f"Unbalanced parentheses in '{block_name}' block")
+
+    def _parse_block(self, text: str, block_name: str, parser: "_Parser") -> T:
+        block_text = self._find_block(text, block_name)
+        if block_text is None:
+            raise ValueError(f"No valid '{block_name}' block found in shape file.")
+
+        return parser.parse(block_text)
+
 
 class _ShapeHeaderParser(_Parser[shape.ShapeHeader]):
     PATTERN = re.compile(r'shape_header\s*\(\s*([0-9a-fA-F]{8})\s+([0-9a-fA-F]{8})\s*\)', re.IGNORECASE)
@@ -150,32 +186,37 @@ class _MatrixParser(_Parser[shape.Matrix]):
 class _ListParser(_Parser[List[T]]):
     def __init__(self,
         list_name: str,
-        item_name: str,
         item_parser: _Parser[T],
         item_pattern: Pattern,
     ):
         self.list_name = list_name
-        self.item_name = item_name
         self.item_parser = item_parser
         self.item_pattern = item_pattern
 
-        list_pattern_str = (
-            rf'{regex.escape(list_name)}\s*\(\s*(\d+)\s*'
-            rf'(?P<items>(?:{regex.escape(item_name)}\s*\((?:[^()]+|(?R))*\)\s*)+)\)'
-        )
-        self.list_pattern = regex.compile(list_pattern_str, regex.DOTALL)
-
     def parse(self, text: str) -> List[T]:
         text = text.strip()
-        match = self.list_pattern.match(text)
-        if not match:
-            raise ValueError(f"Invalid {self.list_name} block: '{text}'")
 
-        count = int(match.group(1))
-        body = match.group(2)
+        header_match = re.match(
+            rf'{re.escape(self.list_name)}\s*\(\s*(\d+)',
+            text
+        )
+        if not header_match:
+            raise ValueError(f"Invalid {self.list_name} block header: '{text}'")
+        
+        count = int(header_match.group(1))
+        header_end = header_match.end()
+
+        body_end = text.rfind(')')
+        if body_end == -1:
+            if count == 0:
+                return []
+            raise ValueError(f"Malformed block structure in '{self.list_name}'")
+
+        body = text[header_end : body_end].strip()
 
         matches = list(self.item_pattern.finditer(body))
         if len(matches) != count:
+            print(matches)
             raise ValueError(f"Expected {count} {self.list_name}, but found {len(matches)}")
 
         return [self.item_parser.parse(m.group(0)) for m in matches]
@@ -187,53 +228,61 @@ class _ShapeParser(_Parser[shape.Shape]):
         self._named_shader_parser = _NamedShaderParser()
         self._shader_names_parser = _ListParser(
             list_name="shader_names",
-            item_name="named_shader",
             item_parser=self._named_shader_parser,
             item_pattern=self._named_shader_parser.PATTERN
         )
         self._named_filter_mode_parser = _NamedFilterModeParser()
         self._named_filter_names_parser = _ListParser(
             list_name="texture_filter_names",
-            item_name="named_filter_mode",
             item_parser=self._named_filter_mode_parser,
             item_pattern=self._named_filter_mode_parser.PATTERN
         )
         self._point_parser = _PointParser()
         self._points_parser = _ListParser(
             list_name="points",
-            item_name="point",
             item_parser=self._point_parser,
             item_pattern=self._point_parser.PATTERN
         )
         self._uv_point_parser = _UVPointParser()
         self._uv_points_parser = _ListParser(
             list_name="uv_points",
-            item_name="uv_point",
             item_parser=self._uv_point_parser,
             item_pattern=self._uv_point_parser.PATTERN
         )
         self._vector_parser = _VectorParser()
         self._normals_parser = _ListParser(
             list_name="normals",
-            item_name="vector",
             item_parser=self._vector_parser,
             item_pattern=self._vector_parser.PATTERN
         )
         self._sort_vectors_parser = _ListParser(
             list_name="sort_vectors",
-            item_name="vector",
             item_parser=self._vector_parser,
             item_pattern=self._vector_parser.PATTERN
         )
+        self._colour_parser = _ColourParser()
+        self._colours_parser = _ListParser(
+            list_name="colours",
+            item_parser=self._colour_parser,
+            item_pattern=self._colour_parser.PATTERN
+        )
+        self._matrix_parser = _MatrixParser()
+        self._matrices_parser = _ListParser(
+            list_name="matrices",
+            item_parser=self._matrix_parser,
+            item_pattern=self._matrix_parser.PATTERN
+        )
 
     def parse(self, text: str) -> shape.Shape:
-        shape_header = self._parse_shape_header_block(text)
-        shader_names = self._parse_list_block(text, "shader_names", "named_shader", self._shader_names_parser)
-        texture_filter_names = self._parse_list_block(text, "texture_filter_names", "named_filter_mode", self._named_filter_names_parser)
-        points = self._parse_list_block(text, "points", "point", self._points_parser)
-        uv_points = self._parse_list_block(text, "uv_points", "uv_point", self._uv_points_parser)
-        normals = self._parse_list_block(text, "normals", "vector", self._normals_parser)
-        sort_vectors = self._parse_list_block(text, "sort_vectors", "vector", self._sort_vectors_parser)
+        shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
+        shader_names = self._parse_block(text, "shader_names", self._shader_names_parser)
+        texture_filter_names = self._parse_block(text, "texture_filter_names", self._named_filter_names_parser)
+        points = self._parse_block(text, "points", self._points_parser)
+        uv_points = self._parse_block(text, "uv_points", self._uv_points_parser)
+        normals = self._parse_block(text, "normals", self._normals_parser)
+        sort_vectors = self._parse_block(text, "sort_vectors", self._sort_vectors_parser)
+        colours = self._parse_block(text, "colours", self._colours_parser)
+        matrices = self._parse_block(text, "matrices", self._matrices_parser)
 
         return shape.Shape(
             shape_header=shape_header,
@@ -244,8 +293,8 @@ class _ShapeParser(_Parser[shape.Shape]):
             uv_points=uv_points,
             normals=normals,
             sort_vectors=sort_vectors,
-            colours=[],
-            matrices=[],
+            colours=colours,
+            matrices=matrices,
             images=[],
             textures=[],
             light_materials=[],
@@ -255,28 +304,3 @@ class _ShapeParser(_Parser[shape.Shape]):
             lod_controls=[],
             animations=[]
         )
-
-    def _compile_list_block_pattern(self, list_name: str, item_name: str) -> Pattern:
-        block_pattern_str = (
-            rf'{regex.escape(list_name)}\s*\(\s*\d+\s*(?:{regex.escape(item_name)}\s*\((?:[^()]+|(?R))*\)\s*)+\)'
-        )
-        block_pattern = regex.compile(block_pattern_str, regex.DOTALL)
-        return block_pattern
-
-    def _parse_shape_header_block(self, text: str) -> List[str]:
-        shape_header_block_pattern = re.compile(
-            r"shape_header\s*\(\s*[0-9a-fA-F]{8}\s+[0-9a-fA-F]{8}\s*\)",
-            re.IGNORECASE
-        )
-        match = shape_header_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'shape_header' block found in shape file.")
-
-        return self._shape_header_parser.parse(match.group(0))
-
-    def _parse_list_block(self, text: str, block_name: str, item_name: str, parser: _ListParser) -> List[T]:
-        pattern = self._compile_list_block_pattern(block_name, item_name)
-        match = pattern.search(text)
-        if not match:
-            raise ValueError(f"No valid '{block_name}' block found in shape file.")
-        return parser.parse(match.group(0))

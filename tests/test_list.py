@@ -28,7 +28,6 @@ from shapeio.encoder import _ListSerializer, _PointSerializer
 def parser():
     return _ListParser(
         list_name="points",
-        item_name="point",
         item_parser=_PointParser(),
         item_pattern=_PointParser.PATTERN,
     )
@@ -206,4 +205,33 @@ def test_serialize_newline_after_header_false_newline_before_closing_true():
         ")"
     )
     output = serializer.serialize(points)
+    assert output == expected
+
+
+def test_parse_empty_list(parser):
+    text = "points ( 0 )"
+    items = parser.parse(text)
+    assert isinstance(items, list)
+    assert len(items) == 0
+
+
+def test_serialize_empty_list_default_no_newlines():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+    )
+    output = serializer.serialize([])
+    assert output == "points ( 0 )"
+
+
+def test_serialize_empty_list_with_newlines():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        newlines_for_empty_list=True,
+        newline_after_header=True,
+        newline_before_closing=True,
+    )
+    output = serializer.serialize([])
+    expected = "points ( 0\n)"
     assert output == expected
