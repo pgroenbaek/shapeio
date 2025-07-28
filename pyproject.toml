@@ -10,8 +10,7 @@ readme = "README.md"
 authors = [{name = "Peter Grønbæk Andersen", email = "peter@grnbk.io"}]
 license = {text = "GNU GPL v3"}
 dependencies = [
-    "numpy",
-    "regex>=2024.11.6,<2025.0"
+    "numpy"
 ]
 requires-python = ">=3.6"
 classifiers = [

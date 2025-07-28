@@ -111,6 +111,13 @@ class _MatrixSerializer(_Serializer[shape.Matrix]):
         return f"{indent}matrix {matrix.name} ( {values_str} )"
 
 
+class _ImageSerializer(_Serializer[str]):
+    def serialize(self, value: str, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return f"{indent}image ( {value} )"
+
+
 class _ListSerializer(_Serializer[List[T]]):
     def __init__(
         self,
@@ -223,6 +230,12 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             "matrices": _ListSerializer(
                 list_name="matrices",
                 item_serializer=_MatrixSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "images": _ListSerializer(
+                list_name="images",
+                item_serializer=_ImageSerializer(indent, use_tabs),
                 indent=indent,
                 use_tabs=use_tabs
             ),

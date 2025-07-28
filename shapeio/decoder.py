@@ -18,7 +18,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import re
-import regex
 from abc import ABC, abstractmethod
 from typing import List, TypeVar, Generic, Pattern
 
@@ -183,6 +182,21 @@ class _MatrixParser(_Parser[shape.Matrix]):
         return shape.Matrix(name, *values)
 
 
+class _ImageParser(_Parser[str]):
+    PATTERN = re.compile(r'image\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
+
+    def parse(self, text: str) -> str:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid image format: '{text}'")
+        
+        value = match.group(1).strip()
+        if not value:
+            raise ValueError(f"image cannot be empty: '{text}'")
+        
+        return value
+
+
 class _ListParser(_Parser[List[T]]):
     def __init__(self,
         list_name: str,
@@ -272,6 +286,12 @@ class _ShapeParser(_Parser[shape.Shape]):
             item_parser=self._matrix_parser,
             item_pattern=self._matrix_parser.PATTERN
         )
+        self._image_parser = _ImageParser()
+        self._images_parser = _ListParser(
+            list_name="images",
+            item_parser=self._image_parser,
+            item_pattern=self._image_parser.PATTERN
+        )
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
@@ -283,6 +303,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         sort_vectors = self._parse_block(text, "sort_vectors", self._sort_vectors_parser)
         colours = self._parse_block(text, "colours", self._colours_parser)
         matrices = self._parse_block(text, "matrices", self._matrices_parser)
+        images = self._parse_block(text, "images", self._images_parser)
 
         return shape.Shape(
             shape_header=shape_header,
@@ -295,7 +316,7 @@ class _ShapeParser(_Parser[shape.Shape]):
             sort_vectors=sort_vectors,
             colours=colours,
             matrices=matrices,
-            images=[],
+            images=images,
             textures=[],
             light_materials=[],
             light_model_cfgs=[],
