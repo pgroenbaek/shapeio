@@ -228,12 +228,12 @@ class _ShapeParser(_Parser[shape.Shape]):
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_shape_header_block(text)
-        shader_names = self._parse_shader_names_block(text)
-        texture_filter_names = self._parse_texture_filter_names_block(text)
-        points = self._parse_points_block(text)
-        uv_points = self._parse_uv_points_block(text)
-        normals = self._parse_normals_block(text)
-        sort_vectors = self._parse_sort_vectors_block(text)
+        shader_names = self._parse_list_block(text, "shader_names", "named_shader", self._shader_names_parser)
+        texture_filter_names = self._parse_list_block(text, "texture_filter_names", "named_filter_mode", self._named_filter_names_parser)
+        points = self._parse_list_block(text, "points", "point", self._points_parser)
+        uv_points = self._parse_list_block(text, "uv_points", "uv_point", self._uv_points_parser)
+        normals = self._parse_list_block(text, "normals", "vector", self._normals_parser)
+        sort_vectors = self._parse_list_block(text, "sort_vectors", "vector", self._sort_vectors_parser)
 
         return shape.Shape(
             shape_header=shape_header,
@@ -274,58 +274,9 @@ class _ShapeParser(_Parser[shape.Shape]):
 
         return self._shape_header_parser.parse(match.group(0))
 
-    def _parse_shader_names_block(self, text: str) -> List[str]:
-        shader_names_block_pattern = self._compile_list_block_pattern(list_name="shader_names", item_name="named_shader")
-        match = shader_names_block_pattern.search(text)
+    def _parse_list_block(self, text: str, block_name: str, item_name: str, parser: _ListParser) -> List[T]:
+        pattern = self._compile_list_block_pattern(block_name, item_name)
+        match = pattern.search(text)
         if not match:
-            raise ValueError("No valid 'shader_names' block found in shape file.")
-
-        return self._shader_names_parser.parse(match.group(0))
-    
-    def _parse_texture_filter_names_block(self, text: str) -> List[str]:
-        texture_filter_names_block_pattern = self._compile_list_block_pattern(list_name="texture_filter_names", item_name="named_filter_mode")
-        match = texture_filter_names_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'texture_filter_names' block found in shape file.")
-
-        return self._named_filter_names_parser.parse(match.group(0))
-
-    def _parse_points_block(self, text: str) -> List[shape.Point]:
-        points_block_pattern = self._compile_list_block_pattern(list_name="points", item_name="point")
-        match = points_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'points' block found in shape file.")
-
-        return self._points_parser.parse(match.group(0))
-
-    def _parse_points_block(self, text: str) -> List[shape.Point]:
-        points_block_pattern = self._compile_list_block_pattern(list_name="points", item_name="point")
-        match = points_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'points' block found in shape file.")
-
-        return self._points_parser.parse(match.group(0))
-    
-    def _parse_uv_points_block(self, text: str) -> List[shape.UVPoint]:
-        uv_points_block_pattern = self._compile_list_block_pattern(list_name="uv_points", item_name="uv_point")
-        match = uv_points_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'uv_points' block found in shape file.")
-
-        return self._uv_points_parser.parse(match.group(0))
-    
-    def _parse_normals_block(self, text: str) -> List[shape.Vector]:
-        normals_block_pattern = self._compile_list_block_pattern(list_name="normals", item_name="vector")
-        match = normals_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'normals' block found in shape file.")
-
-        return self._normals_parser.parse(match.group(0))
-
-    def _parse_sort_vectors_block(self, text: str) -> List[shape.Vector]:
-        sort_vectors_block_pattern = self._compile_list_block_pattern(list_name="sort_vectors", item_name="vector")
-        match = sort_vectors_block_pattern.search(text)
-        if not match:
-            raise ValueError("No valid 'sort_vectors' block found in shape file.")
-
-        return self._sort_vectors_parser.parse(match.group(0))
+            raise ValueError(f"No valid '{block_name}' block found in shape file.")
+        return parser.parse(match.group(0))
