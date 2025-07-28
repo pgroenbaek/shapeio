@@ -28,10 +28,10 @@ T = TypeVar('T')
 
 class ShapeDecoder:
     def __init__(self):
-        self.parser = _ShapeParser()
+        self._parser = _ShapeParser()
 
     def decode(self, text: str) -> shape.Shape:
-        return self.parser.parse(text)
+        return self._parser.parse(text)
 
 
 class _Parser(ABC, Generic[T]):
@@ -197,6 +197,22 @@ class _ImageParser(_Parser[str]):
         return value
 
 
+class _TextureParser(_Parser[shape.Texture]):
+    PATTERN = re.compile(r'texture\s*\(\s*(-?\d+)\s+(-?\d+)\s+(-?\d+(?:\.\d+)?)\s+([a-fA-F0-9]+)\s*\)', re.IGNORECASE)
+
+    def parse(self, text: str) -> str:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid texture format: '{text}'")
+        
+        image_index = int(match.group(1))
+        filter_mode = int(match.group(2))
+        mipmap_lod_bias = float(match.group(3))
+        border_colour = match.group(4)
+
+        return shape.Texture(image_index, filter_mode, mipmap_lod_bias, border_colour)
+
+
 class _ListParser(_Parser[List[T]]):
     def __init__(self,
         list_name: str,
@@ -292,6 +308,12 @@ class _ShapeParser(_Parser[shape.Shape]):
             item_parser=self._image_parser,
             item_pattern=self._image_parser.PATTERN
         )
+        self._texture_parser = _TextureParser()
+        self._textures_parser = _ListParser(
+            list_name="textures",
+            item_parser=self._texture_parser,
+            item_pattern=self._texture_parser.PATTERN
+        )
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
@@ -304,6 +326,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         colours = self._parse_block(text, "colours", self._colours_parser)
         matrices = self._parse_block(text, "matrices", self._matrices_parser)
         images = self._parse_block(text, "images", self._images_parser)
+        textures = self._parse_block(text, "textures", self._textures_parser)
 
         return shape.Shape(
             shape_header=shape_header,
@@ -317,7 +340,7 @@ class _ShapeParser(_Parser[shape.Shape]):
             colours=colours,
             matrices=matrices,
             images=images,
-            textures=[],
+            textures=textures,
             light_materials=[],
             light_model_cfgs=[],
             vtx_states=[],

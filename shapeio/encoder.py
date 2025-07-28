@@ -27,11 +27,11 @@ T = TypeVar('T')
 
 class ShapeEncoder:
     def __init__(self, indent: int = 1, use_tabs: bool = True):
-        self.serializer = _ShapeSerializer(indent=indent, use_tabs=use_tabs)
+        self._serializer = _ShapeSerializer(indent=indent, use_tabs=use_tabs)
 
     def encode(self, shape: shape.Shape) -> str:
         header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
-        text = self.serializer.serialize(shape)
+        text = self._serializer.serialize(shape)
 
         return header + text
 
@@ -52,7 +52,7 @@ class _Serializer(ABC, Generic[T]):
 class _ShapeHeaderSerializer(_Serializer[shape.ShapeHeader]):
     def serialize(self, value: shape.ShapeHeader, depth: int = 0) -> str:
         indent = self.get_indent(depth)
-        return f"{indent}shape_header ( {value.flags1.upper()} {value.flags2.upper()} )"
+        return f"{indent}shape_header ( {value.flags1.lower()} {value.flags2.lower()} )"
 
 
 class _NamedShaderSerializer(_Serializer[str]):
@@ -116,6 +116,17 @@ class _ImageSerializer(_Serializer[str]):
         indent = self.get_indent(depth)
 
         return f"{indent}image ( {value} )"
+
+
+class _TextureSerializer(_Serializer[shape.Texture]):
+    def serialize(self, texture: shape.Texture, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return (
+            f"{indent}texture ( {texture.image_index} "
+            f"{texture.filter_mode} {texture.mipmap_lod_bias:.6g} "
+            f"{texture.border_colour} )"
+        )
 
 
 class _ListSerializer(_Serializer[List[T]]):
@@ -236,6 +247,12 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             "images": _ListSerializer(
                 list_name="images",
                 item_serializer=_ImageSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "textures": _ListSerializer(
+                list_name="textures",
+                item_serializer=_TextureSerializer(indent, use_tabs),
                 indent=indent,
                 use_tabs=use_tabs
             ),

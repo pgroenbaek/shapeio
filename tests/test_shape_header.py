@@ -37,7 +37,7 @@ def parser():
 def test_serialize_shape_header(serializer):
     header = ShapeHeader("0000001F", "DEADBEEF")
     result = serializer.serialize(header)
-    assert result == "shape_header ( 0000001F DEADBEEF )"
+    assert result == "shape_header ( 0000001f deadbeef )"
 
 
 def test_parse_shape_header(parser):
@@ -70,6 +70,6 @@ def test_serialize_shape_header_with_depth_and_spaces():
     serializer = _ShapeHeaderSerializer(indent=2, use_tabs=False)
     header = ShapeHeader("abcd1234", "deadbeef")
     result = serializer.serialize(header, depth=1)
-    expected = "  shape_header ( ABCD1234 DEADBEEF )"
+    expected = "  shape_header ( abcd1234 deadbeef )"
     assert result == expected
 
