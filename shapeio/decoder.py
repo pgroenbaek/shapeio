@@ -189,11 +189,15 @@ class _ShapeParser(_Parser[shape.Shape]):
             animations=[]
         )
 
-    def _parse_points_block(self, text: str) -> List[shape.Point]:
-        points_block_pattern = regex.compile(
-            r'points\s*\(\s*\d+\s*(?:point\s*\((?:[^()]+|(?R))*\)\s*)+\)',
-            regex.DOTALL
+    def _compile_block_pattern(self, list_name: str, item_name: str) -> Pattern:
+        block_pattern_str = (
+            rf'{regex.escape(list_name)}\s*\(\s*\d+\s*(?:{regex.escape(item_name)}\s*\((?:[^()]+|(?R))*\)\s*)+\)'
         )
+        block_pattern = regex.compile(block_pattern_str, regex.DOTALL)
+        return block_pattern
+
+    def _parse_points_block(self, text: str) -> List[shape.Point]:
+        points_block_pattern = self._compile_block_pattern(list_name="points", item_name="point")
         match = points_block_pattern.search(text)
         if not match:
             raise ValueError("No valid 'points' block found in shape file.")
@@ -201,10 +205,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         return self._points_parser.parse(match.group(0))
     
     def _parse_uv_points_block(self, text: str) -> List[shape.UVPoint]:
-        uv_points_block_pattern = regex.compile(
-            r'uv_points\s*\(\s*\d+\s*(?:uv_point\s*\((?:[^()]+|(?R))*\)\s*)+\)',
-            regex.DOTALL
-        )
+        uv_points_block_pattern = self._compile_block_pattern(list_name="uv_points", item_name="uv_point")
         match = uv_points_block_pattern.search(text)
         if not match:
             raise ValueError("No valid 'uv_points' block found in shape file.")
@@ -212,10 +213,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         return self._uv_points_parser.parse(match.group(0))
     
     def _parse_normals_block(self, text: str) -> List[shape.Vector]:
-        normals_block_pattern = regex.compile(
-            r'normals\s*\(\s*\d+\s*(?:vector\s*\((?:[^()]+|(?R))*\)\s*)+\)',
-            regex.DOTALL
-        )
+        normals_block_pattern = self._compile_block_pattern(list_name="normals", item_name="vector")
         match = normals_block_pattern.search(text)
         if not match:
             raise ValueError("No valid 'normals' block found in shape file.")
