@@ -49,6 +49,26 @@ class _Serializer(ABC, Generic[T]):
         pass
 
 
+class _ShapeHeaderSerializer(_Serializer[shape.ShapeHeader]):
+    def serialize(self, value: shape.ShapeHeader, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        return f"{indent}shape_header ( {value.flags1.upper()} {value.flags2.upper()} )"
+
+
+class _NamedShaderSerializer(_Serializer[str]):
+    def serialize(self, value: str, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return f"{indent}named_shader ( {value} )"
+
+
+class _NamedFilterModeSerializer(_Serializer[str]):
+    def serialize(self, value: str, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return f"{indent}named_filter_mode ( {value} )"
+
+
 class _VectorSerializer(_Serializer[shape.Vector]):
     def serialize(self, vector: shape.Vector, depth: int = 0) -> str:
         indent = self.get_indent(depth)
@@ -152,6 +172,19 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self.serializers = {
+            "shape_header": _ShapeHeaderSerializer(indent, use_tabs),
+            "shader_names": _ListSerializer(
+                list_name="shader_names",
+                item_serializer=_NamedShaderSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "texture_filter_names": _ListSerializer(
+                list_name="texture_filter_names",
+                item_serializer=_NamedFilterModeSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
             "points": _ListSerializer(
                 list_name="points",
                 item_serializer=_PointSerializer(indent, use_tabs),
@@ -166,6 +199,12 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             ),
             "normals": _ListSerializer(
                 list_name="normals",
+                item_serializer=_VectorSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "sort_vectors": _ListSerializer(
+                list_name="sort_vectors",
                 item_serializer=_VectorSerializer(indent, use_tabs),
                 indent=indent,
                 use_tabs=use_tabs

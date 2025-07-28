@@ -30,7 +30,7 @@ def parser():
         list_name="points",
         item_name="point",
         item_parser=_PointParser(),
-        item_pattern=_PointParser.POINT_PATTERN,
+        item_pattern=_PointParser.PATTERN,
     )
 
 @pytest.fixture
