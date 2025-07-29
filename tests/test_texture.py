@@ -55,7 +55,7 @@ def test_parse_texture_with_whitespace(parser):
 def test_serialize_texture(serializer):
     tex = Texture(3, 1, 0.25, "FF00FF00")
     result = serializer.serialize(tex)
-    assert result == "texture ( 3 1 0.25 FF00FF00 )"
+    assert result == "texture ( 3 1 0.25 ff00ff00 )"
 
 
 def test_serialize_texture_with_depth(serializer):

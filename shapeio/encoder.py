@@ -55,20 +55,6 @@ class _ShapeHeaderSerializer(_Serializer[shape.ShapeHeader]):
         return f"{indent}shape_header ( {value.flags1.lower()} {value.flags2.lower()} )"
 
 
-class _NamedShaderSerializer(_Serializer[str]):
-    def serialize(self, value: str, depth: int = 0) -> str:
-        indent = self.get_indent(depth)
-
-        return f"{indent}named_shader ( {value} )"
-
-
-class _NamedFilterModeSerializer(_Serializer[str]):
-    def serialize(self, value: str, depth: int = 0) -> str:
-        indent = self.get_indent(depth)
-
-        return f"{indent}named_filter_mode ( {value} )"
-
-
 class _VectorSerializer(_Serializer[shape.Vector]):
     def serialize(self, vector: shape.Vector, depth: int = 0) -> str:
         indent = self.get_indent(depth)
@@ -87,6 +73,20 @@ class _VolumeSphereSerializer(_Serializer[shape.VolumeSphere]):
         vector_str = self._vector_serializer.serialize(volume_sphere.vector)
 
         return f"{indent}vol_sphere (\n{inner_indent}{vector_str} {volume_sphere.radius:.6g}\n{indent})"
+
+
+class _NamedShaderSerializer(_Serializer[str]):
+    def serialize(self, value: str, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return f"{indent}named_shader ( {value} )"
+
+
+class _NamedFilterModeSerializer(_Serializer[str]):
+    def serialize(self, value: str, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return f"{indent}named_filter_mode ( {value} )"
 
 
 class _PointSerializer(_Serializer[shape.Point]):
@@ -138,8 +138,34 @@ class _TextureSerializer(_Serializer[shape.Texture]):
         return (
             f"{indent}texture ( {texture.image_index} "
             f"{texture.filter_mode} {texture.mipmap_lod_bias:.6g} "
-            f"{texture.border_colour} )"
+            f"{texture.border_colour.lower()} )"
         )
+
+
+class _LightMaterialSerializer(_Serializer[shape.LightMaterial]):
+    def serialize(self, light_material: shape.LightMaterial, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        return (
+            f"{indent}light_material ( {light_material.flags.lower()} "
+            f"{light_material.diff_colour_index} {light_material.amb_colour_index} "
+            f"{light_material.spec_colour_index} {light_material.emissive_colour_index} "
+            f"{light_material.spec_power:.6g} )"
+        )
+
+
+class _VtxStateSerializer(_Serializer[shape.VtxState]):
+    def serialize(self, vtx_state: shape.VtxState, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+
+        base_str = (
+            f"{indent}vtx_state ( {vtx_state.flags.lower()} {vtx_state.matrix_index} "
+            f"{vtx_state.light_material_index} {vtx_state.light_model_cfg_index} {vtx_state.light_flags.lower()}"
+        )
+        if vtx_state.matrix2_index is not None:
+            base_str += f" {vtx_state.matrix2_index}"
+        
+        return base_str + " )"
 
 
 class _ListSerializer(_Serializer[List[T]]):
@@ -272,6 +298,18 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             "textures": _ListSerializer(
                 list_name="textures",
                 item_serializer=_TextureSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "light_materials": _ListSerializer(
+                list_name="light_materials",
+                item_serializer=_LightMaterialSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
+            "vtx_states": _ListSerializer(
+                list_name="vtx_states",
+                item_serializer=_VtxStateSerializer(indent, use_tabs),
                 indent=indent,
                 use_tabs=use_tabs
             ),

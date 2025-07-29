@@ -39,7 +39,7 @@ class _Parser(ABC, Generic[T]):
     def parse(self, text: str) -> T:
         pass
 
-    def _find_block(self, text: str, block_name: str):
+    def _find_block(self, text: str, block_name: str) -> str:
         header_pattern = re.compile(
             rf'{re.escape(block_name)}\s*\(\s*\d+',
             re.IGNORECASE
@@ -70,8 +70,6 @@ class _Parser(ABC, Generic[T]):
 
     def _parse_block(self, text: str, block_name: str, parser: "_Parser[T]") -> T:
         block_text = self._find_block(text, block_name)
-        if block_text is None:
-            raise ValueError(f"No valid '{block_name}' block found in shape file.")
 
         return parser.parse(block_text)
 
@@ -86,36 +84,6 @@ class _ShapeHeaderParser(_Parser[shape.ShapeHeader]):
         
         flags1, flags2 = match.group(1).upper(), match.group(2).upper()
         return shape.ShapeHeader(flags1, flags2)
-
-
-class _NamedShaderParser(_Parser[str]):
-    PATTERN = re.compile(r'named_shader\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
-
-    def parse(self, text: str) -> str:
-        match = self.PATTERN.search(text)
-        if not match:
-            raise ValueError(f"Invalid named_shader format: '{text}'")
-        
-        value = match.group(1).strip()
-        if not value:
-            raise ValueError(f"named_shader cannot be empty: '{text}'")
-        
-        return value
-
-
-class _NamedFilterModeParser(_Parser[str]):
-    PATTERN = re.compile(r'named_filter_mode\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
-
-    def parse(self, text: str) -> str:
-        match = self.PATTERN.search(text)
-        if not match:
-            raise ValueError(f"Invalid named_filter_mode format: '{text}'")
-
-        value = match.group(1).strip()
-        if not value:
-            raise ValueError(f"named_filter_mode cannot be empty: '{text}'")
-        
-        return value
 
 
 class _VectorParser(_Parser[shape.Vector]):
@@ -146,6 +114,36 @@ class _VolumeSphereParser(_Parser[shape.VolumeSphere]):
 
         vector = self._vector_parser.parse(vector_text)
         return shape.VolumeSphere(vector, radius)
+
+
+class _NamedShaderParser(_Parser[str]):
+    PATTERN = re.compile(r'named_shader\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
+
+    def parse(self, text: str) -> str:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid named_shader format: '{text}'")
+        
+        value = match.group(1).strip()
+        if not value:
+            raise ValueError(f"named_shader cannot be empty: '{text}'")
+        
+        return value
+
+
+class _NamedFilterModeParser(_Parser[str]):
+    PATTERN = re.compile(r'named_filter_mode\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
+
+    def parse(self, text: str) -> str:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid named_filter_mode format: '{text}'")
+
+        value = match.group(1).strip()
+        if not value:
+            raise ValueError(f"named_filter_mode cannot be empty: '{text}'")
+        
+        return value
 
 
 class _PointParser(_Parser[shape.Point]):
@@ -228,7 +226,68 @@ class _TextureParser(_Parser[shape.Texture]):
         mipmap_lod_bias = float(match.group(3))
         border_colour = match.group(4)
 
-        return shape.Texture(image_index, filter_mode, mipmap_lod_bias, border_colour)
+        return shape.Texture(
+            image_index,
+            filter_mode,
+            mipmap_lod_bias,
+            border_colour
+        )
+
+
+class _LightMaterialParser(_Parser[shape.LightMaterial]):
+    PATTERN = re.compile(
+        r'light_material\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+(?:\.\d+)?)\s*\)',
+        re.IGNORECASE
+    )
+
+    def parse(self, text: str) -> shape.LightMaterial:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid light_material format: '{text}'")
+        
+        flags = match.group(1)
+        diff_colour_index = int(match.group(2))
+        amb_colour_index = int(match.group(3))
+        spec_colour_index = int(match.group(4))
+        emissive_colour_index = int(match.group(5))
+        spec_power = float(match.group(6))
+
+        return shape.LightMaterial(
+            flags,
+            diff_colour_index,
+            amb_colour_index,
+            spec_colour_index,
+            emissive_colour_index,
+            spec_power
+        )
+
+
+class _VtxStateParser(_Parser[shape.VtxState]):
+    PATTERN = re.compile(
+        r"vtx_state\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+([a-fA-F0-9]+)(?:\s+(-?\d+))?\s*\)",
+        re.IGNORECASE
+    )
+
+    def parse(self, text: str) -> shape.VtxState:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid vtx_state format: '{text}'")
+
+        flags = match.group(1).lower()
+        matrix_index = int(match.group(2))
+        light_material_index = int(match.group(3))
+        light_model_cfg_index = int(match.group(4))
+        light_flags = match.group(5).lower()
+        matrix2_index = int(match.group(6)) if match.group(6) is not None else None
+
+        return shape.VtxState(
+            flags,
+            matrix_index,
+            light_material_index,
+            light_model_cfg_index,
+            light_flags,
+            matrix2_index
+        )
 
 
 class _ListParser(_Parser[List[T]]):
@@ -338,6 +397,18 @@ class _ShapeParser(_Parser[shape.Shape]):
             item_parser=self._texture_parser,
             item_pattern=self._texture_parser.PATTERN
         )
+        self._light_material_parser = _LightMaterialParser()
+        self._light_materials_parser = _ListParser(
+            list_name="light_materials",
+            item_parser=self._light_material_parser,
+            item_pattern=self._light_material_parser.PATTERN
+        )
+        self._vtx_state_parser = _VtxStateParser()
+        self._vtx_states_parser = _ListParser(
+            list_name="vtx_states",
+            item_parser=self._vtx_state_parser,
+            item_pattern=self._vtx_state_parser.PATTERN
+        )
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
@@ -352,6 +423,8 @@ class _ShapeParser(_Parser[shape.Shape]):
         matrices = self._parse_block(text, "matrices", self._matrices_parser)
         images = self._parse_block(text, "images", self._images_parser)
         textures = self._parse_block(text, "textures", self._textures_parser)
+        light_materials = self._parse_block(text, "light_materials", self._light_materials_parser)
+        vtx_states = self._parse_block(text, "vtx_states", self._vtx_states_parser)
 
         return shape.Shape(
             shape_header=shape_header,
@@ -366,9 +439,9 @@ class _ShapeParser(_Parser[shape.Shape]):
             matrices=matrices,
             images=images,
             textures=textures,
-            light_materials=[],
+            light_materials=light_materials,
             light_model_cfgs=[],
-            vtx_states=[],
+            vtx_states=vtx_states,
             prim_states=[],
             lod_controls=[],
             animations=[]
