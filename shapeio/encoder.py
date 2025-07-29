@@ -30,10 +30,10 @@ class ShapeEncoder:
         self._serializer = _ShapeSerializer(indent=indent, use_tabs=use_tabs)
 
     def encode(self, shape: shape.Shape) -> str:
-        header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
+        header = "\ufeffSIMISA@@@@@@@@@@JINX0s1t______\n\n"
         text = self._serializer.serialize(shape)
 
-        return header + text
+        return header + text + "\n"
 
 
 class _Serializer(ABC, Generic[T]):
@@ -175,6 +175,7 @@ class _ListSerializer(_Serializer[List[T]]):
         indent: int = 1,
         use_tabs: bool = True,
         items_per_line: int = 1,
+        count_multiplier: int = 1,
         newline_after_header: bool = True,
         newline_before_closing: bool = True,
         newlines_for_empty_list: bool = False,
@@ -183,6 +184,7 @@ class _ListSerializer(_Serializer[List[T]]):
         self.list_name = list_name
         self.item_serializer = item_serializer
         self.items_per_line = items_per_line
+        self.count_multiplier = count_multiplier
         self.newline_after_header = newline_after_header
         self.newline_before_closing = newline_before_closing
         self.newlines_for_empty_list = newlines_for_empty_list
@@ -190,7 +192,7 @@ class _ListSerializer(_Serializer[List[T]]):
     def serialize(self, items: List[T], depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(depth + 1)
-        header = f"{indent}{self.list_name} ( {len(items)}"
+        header = f"{indent}{self.list_name} ( {len(items) * self.count_multiplier}"
 
         lines = []
 
