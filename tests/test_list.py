@@ -146,6 +146,25 @@ def test_serialize_items_per_line_1_no_newline_after_header_no_newline_before_cl
     assert output == expected
 
 
+def test_serialize_items_per_line_1_no_newline_after_header_no_newline_before_closing_count_multiplier_3():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        items_per_line=1,
+        count_multiplier=3,
+        newline_after_header=False,
+        newline_before_closing=False,
+        indent=1,
+        use_tabs=True,
+    )
+    points = [Point(1, 2, 3), Point(4, 5, 6), Point(7, 8, 9)]
+    expected = (
+        "points ( 9 point ( 1 2 3 ) point ( 4 5 6 ) point ( 7 8 9 ) )"
+    )
+    output = serializer.serialize(points)
+    assert output == expected
+
+
 def test_serialize_items_per_line_2_newline_after_header():
     serializer = _ListSerializer(
         list_name="points",
