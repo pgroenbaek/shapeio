@@ -332,82 +332,70 @@ class _ListParser(_Parser[List[T]]):
 class _ShapeParser(_Parser[shape.Shape]):
     def __init__(self):
         self._shape_header_parser = _ShapeHeaderParser()
-        self._volume_sphere_parser = _VolumeSphereParser()
         self._volumes_parser = _ListParser(
             list_name="volumes",
-            item_parser=self._volume_sphere_parser,
-            item_pattern=self._volume_sphere_parser.PATTERN
+            item_parser=_VolumeSphereParser(),
+            item_pattern=_VolumeSphereParser.PATTERN
         )
-        self._named_shader_parser = _NamedShaderParser()
         self._shader_names_parser = _ListParser(
             list_name="shader_names",
-            item_parser=self._named_shader_parser,
-            item_pattern=self._named_shader_parser.PATTERN
+            item_parser=_NamedShaderParser(),
+            item_pattern=_NamedShaderParser.PATTERN
         )
-        self._named_filter_mode_parser = _NamedFilterModeParser()
         self._named_filter_names_parser = _ListParser(
             list_name="texture_filter_names",
-            item_parser=self._named_filter_mode_parser,
-            item_pattern=self._named_filter_mode_parser.PATTERN
+            item_parser=_NamedFilterModeParser(),
+            item_pattern=_NamedFilterModeParser.PATTERN
         )
-        self._point_parser = _PointParser()
         self._points_parser = _ListParser(
             list_name="points",
-            item_parser=self._point_parser,
-            item_pattern=self._point_parser.PATTERN
+            item_parser=_PointParser(),
+            item_pattern=_PointParser.PATTERN
         )
-        self._uv_point_parser = _UVPointParser()
         self._uv_points_parser = _ListParser(
             list_name="uv_points",
-            item_parser=self._uv_point_parser,
-            item_pattern=self._uv_point_parser.PATTERN
+            item_parser=_UVPointParser(),
+            item_pattern=_UVPointParser.PATTERN
         )
-        self._vector_parser = _VectorParser()
         self._normals_parser = _ListParser(
             list_name="normals",
-            item_parser=self._vector_parser,
-            item_pattern=self._vector_parser.PATTERN
+            item_parser=_VectorParser(),
+            item_pattern=_VectorParser.PATTERN
         )
         self._sort_vectors_parser = _ListParser(
             list_name="sort_vectors",
-            item_parser=self._vector_parser,
-            item_pattern=self._vector_parser.PATTERN
+            item_parser=_VectorParser(),
+            item_pattern=_VectorParser.PATTERN
         )
-        self._colour_parser = _ColourParser()
         self._colours_parser = _ListParser(
             list_name="colours",
-            item_parser=self._colour_parser,
-            item_pattern=self._colour_parser.PATTERN
+            item_parser=_ColourParser(),
+            item_pattern=_ColourParser.PATTERN
         )
-        self._matrix_parser = _MatrixParser()
         self._matrices_parser = _ListParser(
             list_name="matrices",
-            item_parser=self._matrix_parser,
-            item_pattern=self._matrix_parser.PATTERN
+            item_parser=_MatrixParser(),
+            item_pattern=_MatrixParser.PATTERN
         )
-        self._image_parser = _ImageParser()
         self._images_parser = _ListParser(
             list_name="images",
-            item_parser=self._image_parser,
-            item_pattern=self._image_parser.PATTERN
+            item_parser=_ImageParser(),
+            item_pattern=_ImageParser.PATTERN
         )
-        self._texture_parser = _TextureParser()
         self._textures_parser = _ListParser(
             list_name="textures",
-            item_parser=self._texture_parser,
-            item_pattern=self._texture_parser.PATTERN
+            item_parser=_TextureParser(),
+            item_pattern=_TextureParser.PATTERN
         )
-        self._light_material_parser = _LightMaterialParser()
         self._light_materials_parser = _ListParser(
             list_name="light_materials",
-            item_parser=self._light_material_parser,
-            item_pattern=self._light_material_parser.PATTERN
+            item_parser=_LightMaterialParser(),
+            item_pattern=_LightMaterialParser.PATTERN
         )
-        self._vtx_state_parser = _VtxStateParser()
         self._vtx_states_parser = _ListParser(
             list_name="vtx_states",
-            item_parser=self._vtx_state_parser,
-            item_pattern=self._vtx_state_parser.PATTERN
+            item_parser=_VtxStateParser(),
+            item_pattern=_VtxStateParser.PATTERN
         )
 
     def parse(self, text: str) -> shape.Shape:
