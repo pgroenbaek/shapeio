@@ -80,7 +80,6 @@ class _Parser(ABC, Generic[T]):
 
     def _parse_block_optional(self, text: str, block_name: str, parser: "_Parser[T]") -> Optional[T]:
         start_idx = self._find_header_start_idx(text, block_name)
-
         if start_idx is None:
             return None
         
@@ -313,11 +312,17 @@ class _VtxStateParser(_Parser[shape.VtxState]):
 class _PrimStateParser(_Parser[shape.PrimState]):
     PATTERN = re.compile(
         r"""prim_state\s+(\w+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
-            tex_idxs\s*\(\s*\d+\s+((?:-?\d+\s*)+)\)\s+
-            (-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
+            tex_idxs\s*\(.*?\)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
         \)""",
         re.IGNORECASE | re.VERBOSE
     )
+
+    def __init__(self):
+        self._texture_list_parser = _ListParser(
+            list_name="tex_idxs",
+            item_parser=_IntParser(),
+            item_pattern=_IntParser.PATTERN
+        )
 
     def parse(self, text: str) -> shape.PrimState:
         match = self.PATTERN.search(text)
@@ -327,15 +332,12 @@ class _PrimStateParser(_Parser[shape.PrimState]):
         name = match.group(1)
         flags = match.group(2).lower()
         shader_index = int(match.group(3))
-
-        texture_indices_str = match.group(4).strip()
-        texture_indices = [int(x) for x in texture_indices_str.split()]
-
-        z_bias = float(match.group(5))
-        vtx_state_index = int(match.group(6))
-        alpha_test_mode = int(match.group(7))
-        light_cfg_index = int(match.group(8))
-        z_buffer_mode = int(match.group(9))
+        texture_indices = self._parse_block(text, "tex_idxs", self._texture_list_parser)
+        z_bias = float(match.group(4))
+        vtx_state_index = int(match.group(5))
+        alpha_test_mode = int(match.group(6))
+        light_cfg_index = int(match.group(7))
+        z_buffer_mode = int(match.group(8))
 
         return shape.PrimState(
             name,
@@ -383,8 +385,7 @@ class _ListParser(_Parser[List[T]]):
 
         matches = list(self.item_pattern.finditer(body))
         if len(matches) != count:
-            print(matches)
-            raise ValueError(f"Expected {count} {self.list_name}, but found {len(matches)}")
+            raise ValueError(f"Expected {count} items in {self.list_name}, but found {len(matches)}")
 
         return [self.item_parser.parse(m.group(0)) for m in matches]
 
