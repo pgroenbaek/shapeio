@@ -93,8 +93,9 @@ class _ListSerializer(_Serializer[List[T]]):
             current_line.append(rendered)
 
             is_last_item = i == len(items) - 1
-            is_max_items_per_line = len(current_line) == self.items_per_line
-            should_wrap = (self.items_per_line is not None and is_max_items_per_line) or is_last_item
+            is_max_items = len(current_line) == self.items_per_line
+            items_per_line_enabled = self.items_per_line is not None
+            should_wrap = (items_per_line_enabled and is_max_items) or is_last_item
 
             if should_wrap:
                 line_str = ' '.join(current_line)
@@ -174,8 +175,11 @@ class _VolumeSphereSerializer(_Serializer[shape.VolumeSphere]):
         inner_indent = self.get_indent(depth + 1)
         vector_str = self._vector_serializer.serialize(volume_sphere.vector, depth + 1).strip()
         radius_str = self._float_serializer.serialize(volume_sphere.radius)
-
-        return f"{indent}vol_sphere (\n{inner_indent}{vector_str} {radius_str}\n{indent})"
+        return (
+            f"{indent}vol_sphere (\n"
+            f"{inner_indent}{vector_str} {radius_str}\n"
+            f"{indent})"
+        )
 
 
 class _NamedShaderSerializer(_Serializer[str]):
@@ -309,6 +313,68 @@ class _LightMaterialSerializer(_Serializer[shape.LightMaterial]):
         )
 
 
+class _UVOpSerializer(_Serializer[shape.UVOp]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+
+    def serialize(self, uv_op: shape.UVOp, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        s = self._int_serializer.serialize
+
+        if isinstance(uv_op, shape.UVOpCopy):
+            return f"{indent}uv_op_copy ( {s(uv_op.texture_address_mode)} {s(uv_op.source_uv_index)} )"
+
+        elif isinstance(uv_op, shape.UVOpReflectMapFull):
+            return f"{indent}uv_op_reflectmapfull ( {s(uv_op.texture_address_mode)} )"
+
+        elif isinstance(uv_op, shape.UVOpReflectMap):
+            return f"{indent}uv_op_reflectmap ( {s(uv_op.texture_address_mode)} )"
+
+        elif isinstance(uv_op, shape.UVOpUniformScale):
+            return (
+                f"{indent}uv_op_uniformscale ( "
+                f"{s(uv_op.texture_address_mode)} {s(uv_op.source_uv_index)} "
+                f"{s(uv_op.unknown3)} {s(uv_op.unknown4)} )"
+            )
+
+        elif isinstance(uv_op, shape.UVOpNonUniformScale):
+            return (
+                f"{indent}uv_op_nonuniformscale ( "
+                f"{s(uv_op.texture_address_mode)} {s(uv_op.source_uv_index)} "
+                f"{s(uv_op.unknown3)} {s(uv_op.unknown4)} )"
+            )
+
+        else:
+            raise ValueError(f"Unknown UVOp type: {type(uv_op)}")
+
+
+class _LightModelCfgSerializer(_Serializer[shape.LightModelCfg]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._hex_serializer = _HexSerializer(indent, use_tabs)
+        self._uv_ops_serializer = _ListSerializer(
+            list_name="uv_ops",
+            item_serializer=_UVOpSerializer(indent, use_tabs),
+            items_per_line=1,
+            newline_after_header=True,
+            newline_before_closing=True
+        )
+
+    def serialize(self, light_model_cfg: shape.LightModelCfg, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        flags = self._hex_serializer.serialize(light_model_cfg.flags)
+        uv_ops_block = self._uv_ops_serializer.serialize(light_model_cfg.uv_ops, inner_depth)
+
+        return (
+            f"{indent}light_model_cfg ( {flags}\n"
+            f"{uv_ops_block}\n"
+            f"{indent})"
+        )
+
+
 class _VtxStateSerializer(_Serializer[shape.VtxState]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
@@ -336,7 +402,7 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         self._hex_serializer = _HexSerializer(indent, use_tabs)
         self._int_serializer = _IntSerializer(indent, use_tabs)
         self._float_serializer = _FloatSerializer(indent, use_tabs)
-        self._tex_list_serializer = _ListSerializer(
+        self._tex_idxs_serializer = _ListSerializer(
             list_name="tex_idxs",
             item_serializer=_IntSerializer(indent, use_tabs),
             items_per_line=None,
@@ -348,7 +414,7 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
-        tex_idxs_block = self._tex_list_serializer.serialize(prim_state.texture_indices, inner_depth)
+        tex_idxs_block = self._tex_idxs_serializer.serialize(prim_state.texture_indices, inner_depth)
         return (
             f"{indent}prim_state {prim_state.name} ( "
             f"{self._hex_serializer.serialize(prim_state.flags)} "
@@ -440,6 +506,12 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
                 indent=indent,
                 use_tabs=use_tabs
             ),
+            "light_model_cfgs": _ListSerializer(
+                list_name="light_model_cfgs",
+                item_serializer=_LightModelCfgSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
             "vtx_states": _ListSerializer(
                 list_name="vtx_states",
                 item_serializer=_VtxStateSerializer(indent, use_tabs),
@@ -459,6 +531,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         inner_depth = depth + 1
 
         lines = [f"{indent}shape ("]
+
         for name, serializer in self._serializers.items():
             items = getattr(shape, name, [])
             lines.append(serializer.serialize(items, depth=inner_depth))

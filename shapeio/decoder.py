@@ -394,6 +394,82 @@ class _LightMaterialParser(_Parser[shape.LightMaterial]):
         )
 
 
+class _UVOpParser(_Parser[shape.UVOp]):
+    PATTERN = re.compile(
+        r'uv_op_([a-z]+)\s*\(\s*(-?\d+)(?:\s+(-?\d+))?(?:\s+(-?\d+))?(?:\s+(-?\d+))?\s*\)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.UVOp:
+        match = self.PATTERN.fullmatch(text.strip())
+        if not match:
+            raise ValueError(f"Invalid uv_op format: '{text}'")
+
+        op_type = match.group(1).lower()
+        values = [g for g in match.groups()[1:] if g is not None]
+        int_values = [self._int_parser.parse(value) for value in values]
+
+        if op_type == "copy":
+            if len(int_values) != 2:
+                raise ValueError(f"uv_op_copy expects 2 values, got {len(int_values)}: {text}")
+            return shape.UVOpCopy(*int_values)
+
+        elif op_type == "reflectmapfull":
+            if len(int_values) != 1:
+                raise ValueError(f"uv_op_reflectmapfull expects 1 value, got {len(int_values)}: {text}")
+            return shape.UVOpReflectMapFull(*int_values)
+
+        elif op_type == "reflectmap":
+            if len(int_values) != 1:
+                raise ValueError(f"uv_op_reflectmap expects 1 value, got {len(int_values)}: {text}")
+            return shape.UVOpReflectMap(*int_values)
+
+        elif op_type == "uniformscale":
+            if len(int_values) != 4:
+                raise ValueError(f"uv_op_uniformscale expects 4 values, got {len(int_values)}: {text}")
+            return shape.UVOpUniformScale(*int_values)
+
+        elif op_type == "nonuniformscale":
+            if len(int_values) != 4:
+                raise ValueError(f"uv_op_nonuniformscale expects 4 values, got {len(int_values)}: {text}")
+            return shape.UVOpNonUniformScale(*int_values)
+
+        else:
+            raise ValueError(f"Unknown uv_op type: 'uv_op_{op_type}'")
+
+
+class _LightModelCfgParser(_Parser[shape.LightModelCfg]):
+    PATTERN = re.compile(r"""
+        light_model_cfg\s*\(\s*([a-fA-F0-9]+)\s*
+        uv_ops\s*\(\s*\d+\s*
+        (?:uv_op_[a-z_]+\s*\(\s*-?\d+\s+-?\d+\s*\)\s*)+
+        \)\s*
+        \)
+    """, re.IGNORECASE | re.VERBOSE | re.DOTALL)
+
+    def __init__(self):
+        self._hex_parser = _HexParser()
+        self._uv_op_parser = _UVOpParser()
+        self._uv_op_list_parser = _ListParser(
+            list_name="uv_ops",
+            item_parser=self._uv_op_parser,
+            item_pattern=_UVOpParser.PATTERN
+        )
+
+    def parse(self, text: str) -> shape.LightModelCfg:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid light_model_cfg format: '{text}'")
+
+        flags = self._hex_parser.parse(match.group(1))
+        uv_ops = self._parse_block(text, "uv_ops", self._uv_op_list_parser)
+
+        return shape.LightModelCfg(flags, uv_ops)
+
+
 class _VtxStateParser(_Parser[shape.VtxState]):
     PATTERN = re.compile(
         r"vtx_state\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+([a-fA-F0-9]+)(?:\s+(-?\d+))?\s*\)",
@@ -536,6 +612,11 @@ class _ShapeParser(_Parser[shape.Shape]):
             item_parser=_LightMaterialParser(),
             item_pattern=_LightMaterialParser.PATTERN
         )
+        self._light_model_cfgs_parser = _ListParser(
+            list_name="light_model_cfgs",
+            item_parser=_LightModelCfgParser(),
+            item_pattern=_LightModelCfgParser.PATTERN
+        )
         self._vtx_states_parser = _ListParser(
             list_name="vtx_states",
             item_parser=_VtxStateParser(),
@@ -561,6 +642,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         images = self._parse_block(text, "images", self._images_parser)
         textures = self._parse_block(text, "textures", self._textures_parser)
         light_materials = self._parse_block(text, "light_materials", self._light_materials_parser)
+        light_model_cfgs = self._parse_block(text, "light_model_cfgs", self._light_model_cfgs_parser)
         vtx_states = self._parse_block(text, "vtx_states", self._vtx_states_parser)
         prim_states = self._parse_block(text, "prim_states", self._prim_states_parser)
         animations = None
@@ -579,7 +661,7 @@ class _ShapeParser(_Parser[shape.Shape]):
             images=images,
             textures=textures,
             light_materials=light_materials,
-            light_model_cfgs=[],
+            light_model_cfgs=light_model_cfgs,
             vtx_states=vtx_states,
             prim_states=prim_states,
             lod_controls=[],
