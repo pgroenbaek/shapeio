@@ -18,7 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, TypeVar, Generic
+from typing import List, Optional, TypeVar, Generic
 
 from . import shape
 
@@ -47,6 +47,11 @@ class _Serializer(ABC, Generic[T]):
     @abstractmethod
     def serialize(self, obj: T, depth: int = 0) -> str:
         pass
+
+
+class _IntSerializer(_Serializer[int]):
+    def serialize(self, item: int, depth: int = 0) -> str:
+        return str(item)
 
 
 class _ShapeHeaderSerializer(_Serializer[shape.ShapeHeader]):
@@ -168,13 +173,39 @@ class _VtxStateSerializer(_Serializer[shape.VtxState]):
         return base_str + " )"
 
 
+class _PrimStateSerializer(_Serializer[shape.PrimState]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._tex_list_serializer = _ListSerializer(
+            list_name="tex_idxs",
+            item_serializer=_IntSerializer(),
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+
+    def serialize(self, prim_state: shape.PrimState, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        tex_idxs_block = self._tex_list_serializer.serialize(prim_state.texture_indices, inner_depth)
+
+        return (
+            f"{indent}prim_state {prim_state.name} ( {prim_state.flags.lower()} {prim_state.shader_index}\n"
+            f"{tex_idxs_block} "
+            f"{prim_state.z_bias:g} {prim_state.vtx_state_index} {prim_state.alpha_test_mode} "
+            f"{prim_state.light_cfg_index} {prim_state.z_buffer_mode}\n"
+            f"{indent})"
+        )
+
+
 class _ListSerializer(_Serializer[List[T]]):
     def __init__(self,
         list_name: str,
         item_serializer: _Serializer[T],
         indent: int = 1,
         use_tabs: bool = True,
-        items_per_line: int = 1,
+        items_per_line: Optional[int] = 1,
         count_multiplier: int = 1,
         newline_after_header: bool = True,
         newline_before_closing: bool = True,
@@ -212,7 +243,8 @@ class _ListSerializer(_Serializer[List[T]]):
             current_line.append(rendered)
 
             is_last_item = i == len(items) - 1
-            should_wrap = (len(current_line) == self.items_per_line) or is_last_item
+            is_max_items_per_line = len(current_line) == self.items_per_line
+            should_wrap = (self.items_per_line is not None and is_max_items_per_line) or is_last_item
 
             if should_wrap:
                 line_str = ' '.join(current_line)
@@ -315,6 +347,12 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
                 indent=indent,
                 use_tabs=use_tabs
             ),
+            "prim_states": _ListSerializer(
+                list_name="prim_states",
+                item_serializer=_PrimStateSerializer(indent, use_tabs),
+                indent=indent,
+                use_tabs=use_tabs
+            ),
         }
 
     def serialize(self, shape: shape.Shape, depth: int = 0) -> str:
@@ -325,6 +363,11 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         for name, serializer in self._serializers.items():
             items = getattr(shape, name, [])
             lines.append(serializer.serialize(items, depth=inner_depth))
+
+        if shape.animations:
+            # TODO handle optional animations block
+            pass
+        
         lines.append(f"{indent})")
 
         return "\n".join(lines)

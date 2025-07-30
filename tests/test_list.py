@@ -254,3 +254,28 @@ def test_serialize_empty_list_with_newlines():
     output = serializer.serialize([])
     expected = "points ( 0\n)"
     assert output == expected
+
+
+def test_serialize_items_per_line_none_unlimited_items_on_one_line():
+    serializer = _ListSerializer(
+        list_name="points",
+        item_serializer=_PointSerializer(),
+        items_per_line=None,
+        newline_after_header=True,
+        newline_before_closing=True,
+        indent=1,
+        use_tabs=True,
+    )
+    points = [
+        Point(1, 2, 3),
+        Point(4, 5, 6),
+        Point(7, 8, 9),
+        Point(10, 11, 12)
+    ]
+    expected = (
+        "points ( 4\n"
+        "\tpoint ( 1 2 3 ) point ( 4 5 6 ) point ( 7 8 9 ) point ( 10 11 12 )\n"
+        ")"
+    )
+    output = serializer.serialize(points)
+    assert output == expected

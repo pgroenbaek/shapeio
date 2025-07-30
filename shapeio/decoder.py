@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import re
 from abc import ABC, abstractmethod
-from typing import List, TypeVar, Generic, Pattern
+from typing import List, Optional, TypeVar, Generic, Pattern
 
 from . import shape
 
@@ -39,23 +39,28 @@ class _Parser(ABC, Generic[T]):
     def parse(self, text: str) -> T:
         pass
 
-    def _find_block(self, text: str, block_name: str) -> str:
+    def _find_header_start_idx(self, text: str, block_name: str) -> Optional[int]:
         header_pattern = re.compile(
             rf'{re.escape(block_name)}\s*\(\s*\d+',
             re.IGNORECASE
         )
         match = header_pattern.search(text)
         if not match:
+            return None
+
+        return match.start()
+
+    def _find_block(self, text: str, block_name: str) -> str:
+        start_idx = self._find_header_start_idx(text, block_name)
+        if start_idx is None:
             raise ValueError(f"No valid '{block_name}' block header found")
 
-        start_idx = match.start()
-
-        open_paren_idx = text.find('(', match.start())
-        if open_paren_idx == -1:
+        open_parenthesis_idx = text.find('(', start_idx)
+        if open_parenthesis_idx == -1:
             raise ValueError(f"Malformed block: no opening '(' for '{block_name}'")
 
         depth = 0
-        idx = open_paren_idx
+        idx = open_parenthesis_idx
         while idx < len(text):
             char = text[idx]
             if char == '(':
@@ -72,6 +77,21 @@ class _Parser(ABC, Generic[T]):
         block_text = self._find_block(text, block_name)
 
         return parser.parse(block_text)
+
+    def _parse_block_optional(self, text: str, block_name: str, parser: "_Parser[T]") -> Optional[T]:
+        start_idx = self._find_header_start_idx(text, block_name)
+
+        if start_idx is None:
+            return None
+        
+        return self._parse_block(text, block_name)
+
+
+class _IntParser(_Parser[int]):
+    PATTERN = re.compile(r"-?\d+")
+
+    def parse(self, text: str) -> int:
+        return int(text)
 
 
 class _ShapeHeaderParser(_Parser[shape.ShapeHeader]):
@@ -290,6 +310,46 @@ class _VtxStateParser(_Parser[shape.VtxState]):
         )
 
 
+class _PrimStateParser(_Parser[shape.PrimState]):
+    PATTERN = re.compile(
+        r"""prim_state\s+(\w+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
+            tex_idxs\s*\(\s*\d+\s+((?:-?\d+\s*)+)\)\s+
+            (-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
+        \)""",
+        re.IGNORECASE | re.VERBOSE
+    )
+
+    def parse(self, text: str) -> shape.PrimState:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise ValueError(f"Invalid prim_state format: '{text}'")
+
+        name = match.group(1)
+        flags = match.group(2).lower()
+        shader_index = int(match.group(3))
+
+        texture_indices_str = match.group(4).strip()
+        texture_indices = [int(x) for x in texture_indices_str.split()]
+
+        z_bias = float(match.group(5))
+        vtx_state_index = int(match.group(6))
+        alpha_test_mode = int(match.group(7))
+        light_cfg_index = int(match.group(8))
+        z_buffer_mode = int(match.group(9))
+
+        return shape.PrimState(
+            name,
+            flags,
+            shader_index,
+            texture_indices,
+            z_bias,
+            vtx_state_index,
+            alpha_test_mode,
+            light_cfg_index,
+            z_buffer_mode
+        )
+
+
 class _ListParser(_Parser[List[T]]):
     def __init__(self,
         list_name: str,
@@ -397,6 +457,11 @@ class _ShapeParser(_Parser[shape.Shape]):
             item_parser=_VtxStateParser(),
             item_pattern=_VtxStateParser.PATTERN
         )
+        self._prim_states_parser = _ListParser(
+            list_name="prim_states",
+            item_parser=_PrimStateParser(),
+            item_pattern=_PrimStateParser.PATTERN
+        )
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
@@ -413,6 +478,8 @@ class _ShapeParser(_Parser[shape.Shape]):
         textures = self._parse_block(text, "textures", self._textures_parser)
         light_materials = self._parse_block(text, "light_materials", self._light_materials_parser)
         vtx_states = self._parse_block(text, "vtx_states", self._vtx_states_parser)
+        prim_states = self._parse_block(text, "prim_states", self._prim_states_parser)
+        animations = None
 
         return shape.Shape(
             shape_header=shape_header,
@@ -430,7 +497,7 @@ class _ShapeParser(_Parser[shape.Shape]):
             light_materials=light_materials,
             light_model_cfgs=[],
             vtx_states=vtx_states,
-            prim_states=[],
+            prim_states=prim_states,
             lod_controls=[],
-            animations=[]
+            animations=animations or []
         )
