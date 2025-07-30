@@ -43,15 +43,15 @@ def test_serialize_shape_header(serializer):
 def test_parse_shape_header(parser):
     text = "shape_header ( 0000001F deadbeef )"
     header = parser.parse(text)
-    assert header.flags1 == "0000001F"
-    assert header.flags2 == "DEADBEEF"
+    assert header.flags1 == "0000001f"
+    assert header.flags2 == "deadbeef"
 
 
 def test_parse_shape_header_with_whitespace(parser):
     text = "  shape_header (   00ff00aa    abcd1234  )  "
     header = parser.parse(text)
-    assert header.flags1 == "00FF00AA"
-    assert header.flags2 == "ABCD1234"
+    assert header.flags1 == "00ff00aa"
+    assert header.flags2 == "abcd1234"
 
 
 @pytest.mark.parametrize("bad_input", [
