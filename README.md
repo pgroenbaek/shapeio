@@ -41,10 +41,14 @@ brew install mono
 ```
 
 ### Windows
-Download and install [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft. This is typically already available on most systems.
+Download and install [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft.
+
+This is typically already available on most systems.
 
 
 ## Installation
+
+The Python module itself can be installed in the following ways:
 
 ### Install from PyPI
 
