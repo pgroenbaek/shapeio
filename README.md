@@ -21,7 +21,7 @@ The following platform dependencies are **only required for shape compression an
 
 This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore the Mono runtime is required on Linux and macOS, and the .NET Framework is required on Windows.
 
-The `TK.MSTS.Tokens.dll` library is not included with the Python module. But it can be downloaded as part of the TK_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/).
+The `TK.MSTS.Tokens.dll` library is not included with the Python module. But can be downloaded as part of the TK_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/).
 
 See the [Usage section](#compression) for more details on how to compress and decompress shape files.
 
@@ -43,7 +43,7 @@ brew install mono
 ### Windows
 Download and install [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft.
 
-This is typically already available on most systems.
+The .NET Framework is typically already available on most Windows systems.
 
 
 ## Installation
