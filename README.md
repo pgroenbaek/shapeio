@@ -19,7 +19,7 @@ See also:
 
 The following platform dependencies are **only required for shape compression and decompression**. Other parts of the module will work fine without them.
 
-This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. A download with this file is available on [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/).
+This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. A download with this file is available on [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). Therefore the Mono runtime is required on Linux and macOS, and the .NET Framework is required on Windows.
 
 See the [Usage section](#compression) for how to compress and decompress shape files.
 
