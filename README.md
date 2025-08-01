@@ -29,7 +29,7 @@ See the [Usage section](#compression) for how to compress and decompress shape f
 ```bash
 sudo apt update
 sudo apt install mono-complete
-````
+```
 
 ### macOS
 
