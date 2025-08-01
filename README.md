@@ -25,6 +25,7 @@ The `TK.MSTS.Tokens.dll` library is not included with the Python module. But it 
 
 See the [Usage section](#compression) for more details on how to compress and decompress shape files.
 
+How to install the Mono runtime or .NET Framework on your operating system:
 
 ### Linux
 
