@@ -48,66 +48,56 @@ class _Serializer(ABC, Generic[T]):
     def serialize(self, obj: T, depth: int = 0) -> str:
         pass
 
-
-class _ListSerializer(_Serializer[List[T]]):
-    def __init__(self,
-        list_name: str,
-        item_serializer: _Serializer[T],
-        indent: int = 1,
-        use_tabs: bool = True,
+    def _serialize_items_in_block(self,
+        items: List[T],
+        block_name: str,
+        item_serializer: "_Serializer[T]",
+        depth: int = 0,
         items_per_line: Optional[int] = 1,
         count_multiplier: int = 1,
         newline_after_header: bool = True,
-        newline_before_closing: bool = True,
-        newlines_for_empty_list: bool = False,
-    ):
-        super().__init__(indent, use_tabs)
-        self.list_name = list_name
-        self.item_serializer = item_serializer
-        self.items_per_line = items_per_line
-        self.count_multiplier = count_multiplier
-        self.newline_after_header = newline_after_header
-        self.newline_before_closing = newline_before_closing
-        self.newlines_for_empty_list = newlines_for_empty_list
+        newline_before_closing: bool = True
+    ) -> str:
 
-    def serialize(self, items: List[T], depth: int = 0) -> str:
+        inner_depth = depth + 1
         indent = self.get_indent(depth)
-        inner_indent = self.get_indent(depth + 1)
-        header = f"{indent}{self.list_name} ( {len(items) * self.count_multiplier}"
+        inner_indent = self.get_indent(inner_depth)
 
-        lines = []
+        count = int(len(items) * count_multiplier)
+        header = f"{indent}{block_name} ( {count}"
 
-        list_not_empty = len(items) != 0
-        newline_after_header_if_not_empty = self.newline_after_header and list_not_empty
+        list_empty = len(items) == 0
+        should_newline_after_header = newline_after_header and not list_empty
+        should_newline_before_closing = newline_before_closing and not list_empty
 
-        if newline_after_header_if_not_empty or self.newlines_for_empty_list:
-            lines.append(header)
-        else:
-            extra_space_if_not_empty = " " if list_not_empty else ""
-            lines.append(header.rstrip() + extra_space_if_not_empty)
+        lines = [header]
+
+        serialized_items = [item_serializer.serialize(item, inner_depth).strip() for item in items]
+        effective_items_per_line = items_per_line or len(serialized_items)
 
         current_line = []
-        for i, item in enumerate(items):
-            inner_depth = depth + 1
-            rendered = self.item_serializer.serialize(item, depth=inner_depth).strip()
-            current_line.append(rendered)
+        is_first_line = True
 
-            is_last_item = i == len(items) - 1
-            is_max_items = len(current_line) == self.items_per_line
-            items_per_line_enabled = self.items_per_line is not None
-            should_wrap = (items_per_line_enabled and is_max_items) or is_last_item
+        for idx, item_str in enumerate(serialized_items):
+            current_line.append(item_str)
+            is_last_item = idx == len(serialized_items) - 1
+            should_wrap = len(current_line) == effective_items_per_line
 
-            if should_wrap:
-                line_str = ' '.join(current_line)
-                if self.newline_after_header:
-                    lines.append(f"{inner_indent}{line_str}")
+            if should_wrap or is_last_item:
+                line = " ".join(current_line)
+
+                if not should_newline_after_header and is_first_line:
+                    lines[-1] += f" {line}"
                 else:
-                    lines[-1] += line_str if is_last_item else line_str + " "
+                    if items_per_line is None and not should_newline_before_closing:
+                        lines.append(line)
+                    else:
+                        lines.append(f"{inner_indent}{line}")
+
                 current_line = []
-
-        newline_before_closing_if_not_empty = self.newline_before_closing and list_not_empty
-
-        if newline_before_closing_if_not_empty or self.newlines_for_empty_list:
+                is_first_line = False
+        
+        if should_newline_before_closing:
             lines.append(f"{indent})")
         else:
             lines[-1] += " )"
@@ -429,112 +419,101 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         )
 
 
+class _DistanceLevelHeaderSerializer(_Serializer[shape.DistanceLevelHeader]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._hierarchy_serializer = _ListSerializer(
+            list_name="hierarchy",
+            item_serializer=self._int_serializer,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+
+    def serialize(self, header: shape.DistanceLevelHeader, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_indent = self.get_indent(depth + 1)
+
+        dlevel_block = f"{inner_indent}dlevel_selection ( {self._int_serializer.serialize(header.dlevel_selection)} )"
+        hierarchy_block = self._hierarchy_serializer.serialize(header.hierarchy, depth + 1)
+
+        return (
+            f"{indent}distance_level_header (\n"
+            f"{dlevel_block}\n"
+            f"{hierarchy_block}\n"
+            f"{indent})"
+        )
+
+
+class _DistanceLevelSerializer(_Serializer[shape.DistanceLevel]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._dlevel_header_serializer = _DistanceLevelHeaderSerializer(indent, use_tabs)
+        #self._subobject_list_serializer = _ListSerializer(
+        #    list_name="sub_objects",
+        #    item_serializer=_SubObjectSerializer(indent, use_tabs),
+        #    items_per_line=1,
+        #    newline_after_header=False,
+        #    newline_before_closing=False
+        #)
+
+    def serialize(self, dlevel: shape.DistanceLevel, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        header_block = self._dlevel_header_serializer.serialize(dlevel.distance_level_header, inner_depth)
+        subobject_block = ""#self._subobject_list_serializer.serialize(dlevel.sub_objects, inner_depth)
+
+        return (
+            f"{indent}distance_level (\n"
+            f"{header_block}\n"
+            f"{subobject_block}\n"
+            f"{indent})"
+        )
+
+
+class _LodControlSerializer(_Serializer[shape.LodControl]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._dlevel_list_serializer = _ListSerializer(
+            list_name="distance_levels",
+            item_serializer=_DistanceLevelSerializer(indent, use_tabs),
+            items_per_line=1,
+            newline_after_header=True,
+            newline_before_closing=True
+        )
+
+    def serialize(self, lod_control: shape.LodControl, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+        inner_indent = self.get_indent(inner_depth)
+
+        dlevel_bias = self._int_serializer.serialize(lod_control.distance_levels_header.dlevel_bias)
+        dlevels_block = self._dlevel_list_serializer.serialize(lod_control.distance_levels, inner_depth)
+
+        return (
+            f"{indent}lod_control (\n"
+            f"{inner_indent}distance_levels_header ( {dlevel_bias} )\n"
+            f"{dlevels_block}\n"
+            f"{indent})"
+        )
+
+
 class _ShapeSerializer(_Serializer[shape.Shape]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
-        self._serializers = {
-            "shape_header": _ShapeHeaderSerializer(indent, use_tabs),
-            "volumes": _ListSerializer(
-                list_name="volumes",
-                item_serializer=_VolumeSphereSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "shader_names": _ListSerializer(
-                list_name="shader_names",
-                item_serializer=_NamedShaderSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "texture_filter_names": _ListSerializer(
-                list_name="texture_filter_names",
-                item_serializer=_NamedFilterModeSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "points": _ListSerializer(
-                list_name="points",
-                item_serializer=_PointSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "uv_points": _ListSerializer(
-                list_name="uv_points",
-                item_serializer=_UVPointSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "normals": _ListSerializer(
-                list_name="normals",
-                item_serializer=_VectorSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "sort_vectors": _ListSerializer(
-                list_name="sort_vectors",
-                item_serializer=_VectorSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "colours": _ListSerializer(
-                list_name="colours",
-                item_serializer=_ColourSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "matrices": _ListSerializer(
-                list_name="matrices",
-                item_serializer=_MatrixSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "images": _ListSerializer(
-                list_name="images",
-                item_serializer=_ImageSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "textures": _ListSerializer(
-                list_name="textures",
-                item_serializer=_TextureSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "light_materials": _ListSerializer(
-                list_name="light_materials",
-                item_serializer=_LightMaterialSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "light_model_cfgs": _ListSerializer(
-                list_name="light_model_cfgs",
-                item_serializer=_LightModelCfgSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "vtx_states": _ListSerializer(
-                list_name="vtx_states",
-                item_serializer=_VtxStateSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-            "prim_states": _ListSerializer(
-                list_name="prim_states",
-                item_serializer=_PrimStateSerializer(indent, use_tabs),
-                indent=indent,
-                use_tabs=use_tabs
-            ),
-        }
+        self.shape_header_serializer = _ShapeHeaderSerializer(indent, use_tabs)
+        self.named_shader_serializer = _NamedShaderSerializer(indent, use_tabs)
 
     def serialize(self, shape: shape.Shape, depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
         lines = [f"{indent}shape ("]
-
-        for name, serializer in self._serializers.items():
-            items = getattr(shape, name, [])
-            lines.append(serializer.serialize(items, depth=inner_depth))
+        lines.append(self.shape_header_serializer.serialize(shape.shape_header, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.shader_names, "shader_names", self.named_shader_serializer, inner_depth))
 
         if shape.animations:
             # TODO handle optional animations block

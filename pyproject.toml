@@ -4,15 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shapeio"
-version = "0.1.0b0"
+version = "0.5.0b0"
 description = "A library that provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format."
 readme = "README.md"
-authors = [{name = "Peter Grønbæk Andersen", email = "peter@grnbk.io"}]
-license = {text = "GNU GPL v3"}
-dependencies = [
-    "numpy"
+authors = [
+    { name = "Peter Grønbæk Andersen", email = "peter@grnbk.io" }
 ]
+license = { text = "GNU GPL v3" }
 requires-python = ">=3.6"
+dependencies = [
+    "numpy",
+    "pythonnet"
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",

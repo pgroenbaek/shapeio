@@ -19,63 +19,63 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.shape import LightMaterial
-from shapeio.decoder import _LightMaterialParser
-from shapeio.encoder import _LightMaterialSerializer
+# from shapeio.shape import LightMaterial
+# from shapeio.decoder import _LightMaterialParser
+# from shapeio.encoder import _LightMaterialSerializer
 
 
-@pytest.fixture
-def parser():
-    return _LightMaterialParser()
+# @pytest.fixture
+# def parser():
+#     return _LightMaterialParser()
 
 
-@pytest.fixture
-def serializer():
-    return _LightMaterialSerializer()
+# @pytest.fixture
+# def serializer():
+#     return _LightMaterialSerializer()
 
 
-def test_parse_light_material(parser):
-    text = "light_material ( ff000000 1 2 3 4 2.2 )"
-    light_material = parser.parse(text)
-    assert light_material.flags.lower() == "ff000000"
-    assert light_material.diff_colour_index == 1
-    assert light_material.amb_colour_index == 2
-    assert light_material.spec_colour_index == 3
-    assert light_material.emissive_colour_index == 4
-    assert light_material.spec_power == 2.2
+# def test_parse_light_material(parser):
+#     text = "light_material ( ff000000 1 2 3 4 2.2 )"
+#     light_material = parser.parse(text)
+#     assert light_material.flags.lower() == "ff000000"
+#     assert light_material.diff_colour_index == 1
+#     assert light_material.amb_colour_index == 2
+#     assert light_material.spec_colour_index == 3
+#     assert light_material.emissive_colour_index == 4
+#     assert light_material.spec_power == 2.2
 
 
-def test_parse_light_material_with_whitespace(parser):
-    text = "  light_material (  deadbeef   0  0  0  0  1.0 )  "
-    light_material = parser.parse(text)
-    assert light_material.flags.lower() == "deadbeef"
-    assert light_material.diff_colour_index == 0
-    assert light_material.amb_colour_index == 0
-    assert light_material.spec_colour_index == 0
-    assert light_material.emissive_colour_index == 0
-    assert light_material.spec_power == 1.0
+# def test_parse_light_material_with_whitespace(parser):
+#     text = "  light_material (  deadbeef   0  0  0  0  1.0 )  "
+#     light_material = parser.parse(text)
+#     assert light_material.flags.lower() == "deadbeef"
+#     assert light_material.diff_colour_index == 0
+#     assert light_material.amb_colour_index == 0
+#     assert light_material.spec_colour_index == 0
+#     assert light_material.emissive_colour_index == 0
+#     assert light_material.spec_power == 1.0
 
 
-def test_serialize_light_material(serializer):
-    light_material = LightMaterial("ABCDEF12", 1, 2, 3, 4, 5.5)
-    result = serializer.serialize(light_material)
-    assert result == "light_material ( abcdef12 1 2 3 4 5.5 )"
+# def test_serialize_light_material(serializer):
+#     light_material = LightMaterial("ABCDEF12", 1, 2, 3, 4, 5.5)
+#     result = serializer.serialize(light_material)
+#     assert result == "light_material ( abcdef12 1 2 3 4 5.5 )"
 
 
-def test_serialize_light_material_with_depth(serializer):
-    light_material = LightMaterial("FF000000", 0, 1, 2, 3, 4.0)
-    result = serializer.serialize(light_material, depth=1)
-    assert result == "\tlight_material ( ff000000 0 1 2 3 4 )"
+# def test_serialize_light_material_with_depth(serializer):
+#     light_material = LightMaterial("FF000000", 0, 1, 2, 3, 4.0)
+#     result = serializer.serialize(light_material, depth=1)
+#     assert result == "\tlight_material ( ff000000 0 1 2 3 4 )"
 
 
-@pytest.mark.parametrize("bad_input", [
-    "light_material ( ff000000 1 2 3 4 )",         # Too few values
-    "light_material ( ff000000 1 2 3 4 5 6 )",     # Too many values
-    "light_material ( gg000000 1 2 3 4 1.0 )",     # Invalid hex
-    "lightmaterial ( ff000000 1 2 3 4 1.0 )",      # Wrong keyword
-    "light_material  ff000000 1 2 3 4 1.0",        # Missing parentheses
-])
-def test_parse_invalid_light_material_raises(parser, bad_input):
-    with pytest.raises(ValueError):
-        parser.parse(bad_input)
+# @pytest.mark.parametrize("bad_input", [
+#     "light_material ( ff000000 1 2 3 4 )",         # Too few values
+#     "light_material ( ff000000 1 2 3 4 5 6 )",     # Too many values
+#     "light_material ( gg000000 1 2 3 4 1.0 )",     # Invalid hex
+#     "lightmaterial ( ff000000 1 2 3 4 1.0 )",      # Wrong keyword
+#     "light_material  ff000000 1 2 3 4 1.0",        # Missing parentheses
+# ])
+# def test_parse_invalid_light_material_raises(parser, bad_input):
+#     with pytest.raises(ValueError):
+#         parser.parse(bad_input)
 

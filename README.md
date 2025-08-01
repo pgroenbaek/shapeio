@@ -14,6 +14,33 @@ See also:
 - [shapemod](https://github.com/pgroenbaek/shapemod) - provides functions for modifying shapes while keeping them error-free and usable in MSTS/ORTS.
 - [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils) - offers additional utilities for working with track shapes.
 
+
+## Prerequisites
+
+The following platform dependencies are **only required for shape compression and decompression**. Other parts of the module will work fine without them.
+
+This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. A download with this file is available on [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/).
+
+See the [Usage section](#compression) for how to compress and decompress shape files.
+
+
+### Linux
+
+```bash
+sudo apt update
+sudo apt install mono-complete
+````
+
+### macOS
+
+```bash
+brew install mono
+```
+
+### Windows
+Requires [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework). This is typically already available on most systems.
+
+
 ## Installation
 
 ### Install from PyPI
@@ -163,6 +190,7 @@ First, install the required dependencies:
 
 ```sh
 pip install pytest
+pip install pytest-dependency
 ```
 
 Then, run tests with:

@@ -25,7 +25,7 @@ import fnmatch
 import subprocess
 from typing import Optional, List
 
-from . import shape
+from . import shape, compression
 from .decoder import ShapeDecoder
 from .encoder import ShapeEncoder
 
@@ -125,14 +125,26 @@ def is_compressed(filepath: str) -> Optional[bool]:
         return True
 
 
-def compress(filepath: str, ffeditc_path: str) -> None:
-    if not is_compressed():
-        subprocess.call([ffeditc_path, filepath, "/o:" + filepath])
+def compress(
+    input_filepath: str,
+    output_filepath: str,
+    tk_utils_dll_filepath: str
+) -> bool:
+
+    if not is_compressed(input_filepath):
+        #subprocess.call([ffeditc_path, filepath, "/o:" + filepath])
+        return compression.compress_shape(input_filepath, output_filepath, tk_utils_dll_filepath)
 
 
-def decompress(filepath: str, ffeditc_path: str) -> None:
-    if is_compressed():
-        subprocess.call([ffeditc_path, filepath, "/u", "/o:" + filepath])
+def decompress(
+    input_filepath: str,
+    output_filepath: str,
+    tk_utils_dll_filepath: str
+) -> bool:
+
+    if is_compressed(input_filepath):
+        #subprocess.call([ffeditc_path, filepath, "/u", "/o:" + filepath])
+        return compression.decompress_shape(input_filepath, output_filepath, tk_utils_dll_filepath)
 
 
 def is_shape(filepath: str) -> bool:

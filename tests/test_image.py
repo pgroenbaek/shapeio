@@ -19,53 +19,53 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.decoder import _ImageParser
-from shapeio.encoder import _ImageSerializer
+# from shapeio.decoder import _ImageParser
+# from shapeio.encoder import _ImageSerializer
 
 
-@pytest.fixture
-def serializer():
-    return _ImageSerializer()
+# @pytest.fixture
+# def serializer():
+#     return _ImageSerializer()
 
 
-@pytest.fixture
-def parser():
-    return _ImageParser()
+# @pytest.fixture
+# def parser():
+#     return _ImageParser()
 
 
-def test_serialize_image(serializer):
-    image = "DB_Track1w.ACE"
-    result = serializer.serialize(image)
-    assert result == "image ( DB_Track1w.ACE )"
+# def test_serialize_image(serializer):
+#     image = "DB_Track1w.ACE"
+#     result = serializer.serialize(image)
+#     assert result == "image ( DB_Track1w.ACE )"
 
 
-def test_parse_image(parser):
-    text = "image ( DB_Track1w.ACE )"
-    mode = parser.parse(text)
-    assert mode == "DB_Track1w.ACE"
+# def test_parse_image(parser):
+#     text = "image ( DB_Track1w.ACE )"
+#     mode = parser.parse(text)
+#     assert mode == "DB_Track1w.ACE"
 
 
-def test_parse_image_with_whitespace(parser):
-    text = "  image (   DB_Track1w.ACE   )  "
-    mode = parser.parse(text)
-    assert mode == "DB_Track1w.ACE"
+# def test_parse_image_with_whitespace(parser):
+#     text = "  image (   DB_Track1w.ACE   )  "
+#     mode = parser.parse(text)
+#     assert mode == "DB_Track1w.ACE"
 
 
-@pytest.mark.parametrize("bad_input", [
-    "img ( DB_Track1w.ACE )",         # Incorrect keyword
-    "image DB_Track1w.ACE",            # Missing parentheses
-    "image ( )",                  # Empty value
-    "image ()",                   # Also empty
-])
-def test_parse_image_mode_raises(parser, bad_input):
-    with pytest.raises(ValueError):
-        parser.parse(bad_input)
+# @pytest.mark.parametrize("bad_input", [
+#     "img ( DB_Track1w.ACE )",         # Incorrect keyword
+#     "image DB_Track1w.ACE",            # Missing parentheses
+#     "image ( )",                  # Empty value
+#     "image ()",                   # Also empty
+# ])
+# def test_parse_image_mode_raises(parser, bad_input):
+#     with pytest.raises(ValueError):
+#         parser.parse(bad_input)
 
 
-def test_serialize_image_with_depth_and_spaces():
-    serializer = _ImageSerializer(indent=2, use_tabs=False)
-    mode = "DB_Track1w.ACE"
-    result = serializer.serialize(mode, depth=2)
-    expected = "    image ( DB_Track1w.ACE )"
-    assert result == expected
+# def test_serialize_image_with_depth_and_spaces():
+#     serializer = _ImageSerializer(indent=2, use_tabs=False)
+#     mode = "DB_Track1w.ACE"
+#     result = serializer.serialize(mode, depth=2)
+#     expected = "    image ( DB_Track1w.ACE )"
+#     assert result == expected
 

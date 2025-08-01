@@ -2,10 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="shapeio",
-    version="0.1.0b0",
+    version="0.5.0b0",
     packages=find_packages(),
     install_requires=[
-        "numpy"
+        "numpy",
+        "pythonnet",
     ],
     author="Peter Grønbæk Andersen",
     author_email="peter@grnbk.io",
