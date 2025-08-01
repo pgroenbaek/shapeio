@@ -41,7 +41,7 @@ brew install mono
 ```
 
 ### Windows
-Requires [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework). This is typically already available on most systems.
+Download and install [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft. This is typically already available on most systems.
 
 
 ## Installation
