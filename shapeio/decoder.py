@@ -863,19 +863,66 @@ class _VertexSetParser(_Parser[shape.VertexSet]):
         return shape.VertexSet(vtx_state, vtx_start_index, vtx_count)
 
 
+class _IndexedTrilistParser(_Parser[shape.IndexedTrilist]):
+    def parse(self, text: str) -> shape.IndexedTrilist:
+        return shape.IndexedTrilist([], [], [])
+
+
+class _PrimitivesParser(_Parser[List[shape.Primitive]]):
+    def __init__(self):
+        super().__init__()
+        self._int_parser = _IntParser()
+        self._trilist_parser = _IndexedTrilistParser()
+
+    def parse(self, text: str) -> List[shape.Primitive]:
+        results = []
+        current_index = None
+        current_group = []
+
+        primitives_block = self._extract_items_in_block(
+            text,
+            "primitives",
+            item_type="(?:prim_state_idx|indexed_trilist)",
+            escape_regex=False
+        )
+
+        for item in primitives_block.items:
+            item = item.strip()
+            if item.startswith("prim_state_idx"):
+                if current_index is not None:
+                    for trilist in current_group:
+                        results.append(shape.Primitive(current_index, trilist))
+                    current_group = []
+
+                match = re.match(r'^\s*prim_state_idx\s*\(\s*(-?\d+)\s*\)', item)
+                if not match:
+                    raise BlockFormatError(f"Invalid prim_state_idx format: {item!r}")
+                
+                current_index = self._int_parser.parse(match.group(1))
+
+            elif item.startswith("indexed_trilist"):
+                trilist = self._trilist_parser.parse(item)
+                current_group.append(trilist)
+
+        if current_index is not None:
+            for trilist in current_group:
+                results.append(shape.Primitive(current_index, trilist))
+
+        return results
+
+
 class _SubObjectParser(_Parser[shape.SubObject]):
     def __init__(self):
         #self._sub_object_header_parser = _SubObjectHeaderParser()
         self._vertex_parser = _VertexParser()
         self._vertex_set_parser = _VertexSetParser()
-        #self._primitive_parser = _PrimitiveParser()
-        pass
+        self._primitives_parser = _PrimitivesParser()
 
     def parse(self, text: str) -> shape.SubObject:
         sub_object_header = None#self._parse_block(text, "sub_object_header", self._sub_object_header_parser)
         vertices = self._parse_items_in_block(text, "vertices", "vertex", self._vertex_parser).items
         vertex_sets = self._parse_items_in_block(text, "vertex_sets", "vertex_set", self._vertex_set_parser).items
-        primitives = []#self._parse_items_in_block(text, "primitives", "primitive", self._primitive_parser).items
+        primitives = self._primitives_parser.parse(text)
 
         return shape.SubObject(
             sub_object_header=sub_object_header,

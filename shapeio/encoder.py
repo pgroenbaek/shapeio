@@ -18,6 +18,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import List, Optional, TypeVar, Generic
 
 from . import shape
@@ -517,13 +518,61 @@ class _VertexSetSerializer(_Serializer[shape.VertexSet]):
         )
 
 
+class _IndexedTrilistSerializer(_Serializer[shape.IndexedTrilist]):
+    def serialize(self, value: shape.IndexedTrilist, depth: int = 0) -> str:
+        indent = self.get_indent(depth)
+        return f"{indent}indexed_trilist ( )"
+
+
+class _PrimitivesSerializer(_Serializer[List[shape.Primitive]]):
+    def __init__(self, indent=1, use_tabs=True):
+        super().__init__(indent, use_tabs)
+        self._trilist_serializer = _IndexedTrilistSerializer(indent, use_tabs)
+        self._int_serializer = _IntSerializer()
+
+    def serialize(self, primitives: List[shape.Primitive], depth: int = 0) -> str:
+        if not isinstance(primitives, list):
+            raise TypeError(f"Parameter 'primitives' must be a list, but got {type(primitives).__name__}")
+        
+        for idx, primitive in enumerate(primitives):
+            if not isinstance(primitive, shape.Primitive):
+                raise TypeError(
+                    f"Item at index {idx} in parameter 'primitives' must be of type shape.Primitive, but got {type(primitive).__name__}"
+                )
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+        inner_indent = self.get_indent(inner_depth)
+
+        grouped = defaultdict(list)
+        for prim in primitives:
+            grouped[prim.prim_state_index].append(prim.indexed_trilist)
+
+        prim_state_idx_count = len(grouped)
+        indexed_trilist_count = sum(len(trilists) for trilists in grouped.values())
+        total_count = prim_state_idx_count + indexed_trilist_count
+
+        lines = [f"{indent}primitives ( {total_count}"]
+
+        for prim_state_index, trilists in grouped.items():
+            idx_line = f"{inner_indent}prim_state_idx ( {prim_state_index} )"
+            lines.append(idx_line)
+
+            for trilist in trilists:
+                trilist_block = self._trilist_serializer.serialize(trilist, inner_depth)
+                lines.append(trilist_block)
+
+        lines.append(f"{indent})")
+        return "\n".join(lines)
+
+
 class _SubObjectSerializer(_Serializer[shape.SubObject]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         #self._sub_object_header_serializer = _SubObjectHeaderSerializer(indent, use_tabs)
         self._vertex_serializer = _VertexSerializer(indent, use_tabs)
         self._vertex_set_serializer = _VertexSetSerializer(indent, use_tabs)
-        #self._primitive_serializer = _PrimitiveSerializer(indent, use_tabs)
+        self._primitives_serializer = _PrimitivesSerializer(indent, use_tabs)
 
     def serialize(self, sub_object: shape.SubObject, depth: int = 0) -> str:
         if not isinstance(sub_object, shape.SubObject):
@@ -535,7 +584,7 @@ class _SubObjectSerializer(_Serializer[shape.SubObject]):
         header_block = ""#self._sub_object_header_serializer.serialize(sub_object.sub_object_header, inner_depth)
         vertices_block = self._serialize_items_in_block(sub_object.vertices, "vertices", self._vertex_serializer, inner_depth)
         vertex_sets_block = self._serialize_items_in_block(sub_object.vertex_sets, "vertex_sets", self._vertex_set_serializer, inner_depth)
-        primitives_block = ""#self._serialize_items_in_block(sub_object.primitives, "primitives", self._primitive_serializer, inner_depth)
+        primitives_block = self._primitives_serializer.serialize(sub_object.primitives, inner_depth)
 
         return (
             f"{indent}sub_object (\n"
