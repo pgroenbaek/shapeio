@@ -19,59 +19,59 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-# from shapeio.shape import (
-#     UVOpCopy,
-#     UVOpReflectMapFull,
-#     UVOpReflectMap,
-#     UVOpUniformScale,
-#     UVOpNonUniformScale
-# )
-# from shapeio.decoder import _UVOpParser
-# from shapeio.encoder import _UVOpSerializer
+from shapeio.shape import (
+    UVOpCopy,
+    UVOpReflectMapFull,
+    UVOpReflectMap,
+    UVOpUniformScale,
+    UVOpNonUniformScale
+)
+from shapeio.decoder import _UVOpParser, BlockFormatError
+from shapeio.encoder import _UVOpSerializer
 
 
-# @pytest.fixture
-# def serializer():
-#     return _UVOpSerializer()
+@pytest.fixture
+def serializer():
+    return _UVOpSerializer()
 
 
-# @pytest.fixture
-# def parser():
-#     return _UVOpParser()
+@pytest.fixture
+def parser():
+    return _UVOpParser()
 
 
-# @pytest.mark.parametrize("text, expected_type, expected_values", [
-#     ("uv_op_copy ( 1 2 )", UVOpCopy, (1, 2)),
-#     ("uv_op_reflectmapfull ( 3 )", UVOpReflectMapFull, (3,)),
-#     ("uv_op_reflectmap ( 4 )", UVOpReflectMap, (4,)),
-#     ("uv_op_uniformscale ( 5 6 7 8 )", UVOpUniformScale, (5, 6, 7, 8)),
-#     ("uv_op_nonuniformscale ( 9 10 11 12 )", UVOpNonUniformScale, (9, 10, 11, 12)),
-# ])
-# def test_parse_uv_op(parser, text, expected_type, expected_values):
-#     uv_op = parser.parse(text)
-#     assert isinstance(uv_op, expected_type)
-#     assert list(vars(uv_op).values()) == list(expected_values)
+@pytest.mark.parametrize("text, expected_type, expected_values", [
+    ("uv_op_copy ( 1 2 )", UVOpCopy, (1, 2)),
+    ("uv_op_reflectmapfull ( 3 )", UVOpReflectMapFull, (3,)),
+    ("uv_op_reflectmap ( 4 )", UVOpReflectMap, (4,)),
+    ("uv_op_uniformscale ( 5 6 7 8 )", UVOpUniformScale, (5, 6, 7, 8)),
+    ("uv_op_nonuniformscale ( 9 10 11 12 )", UVOpNonUniformScale, (9, 10, 11, 12)),
+])
+def test_parse_uv_op(parser, text, expected_type, expected_values):
+    uv_op = parser.parse(text)
+    assert isinstance(uv_op, expected_type)
+    assert list(vars(uv_op).values()) == list(expected_values)
 
 
-# @pytest.mark.parametrize("uv_op, expected", [
-#     (UVOpCopy(1, 2), "uv_op_copy ( 1 2 )"),
-#     (UVOpReflectMapFull(3), "uv_op_reflectmapfull ( 3 )"),
-#     (UVOpReflectMap(4), "uv_op_reflectmap ( 4 )"),
-#     (UVOpUniformScale(5, 6, 7, 8), "uv_op_uniformscale ( 5 6 7 8 )"),
-#     (UVOpNonUniformScale(9, 10, 11, 12), "uv_op_nonuniformscale ( 9 10 11 12 )"),
-# ])
-# def test_serialize_uv_op(serializer, uv_op, expected):
-#     result = serializer.serialize(uv_op, depth=0)
-#     assert result.strip() == expected
+@pytest.mark.parametrize("uv_op, expected", [
+    (UVOpCopy(1, 2), "uv_op_copy ( 1 2 )"),
+    (UVOpReflectMapFull(3), "uv_op_reflectmapfull ( 3 )"),
+    (UVOpReflectMap(4), "uv_op_reflectmap ( 4 )"),
+    (UVOpUniformScale(5, 6, 7, 8), "uv_op_uniformscale ( 5 6 7 8 )"),
+    (UVOpNonUniformScale(9, 10, 11, 12), "uv_op_nonuniformscale ( 9 10 11 12 )"),
+])
+def test_serialize_uv_op(serializer, uv_op, expected):
+    result = serializer.serialize(uv_op, depth=0)
+    assert result.strip() == expected
 
 
-# @pytest.mark.parametrize("bad_text", [
-#     "uv_op_copy ( 1 )",  # Too few args
-#     "uv_op_reflectmapfull ( )",  # No args
-#     "uv_op_uniformscale ( 1 2 3 )",  # Too few
-#     "uv_op_unknown ( 1 2 )",  # Unknown op
-#     "uv_op_copy 1 2",  # Missing parentheses
-# ])
-# def test_parse_invalid_uv_op_raises(parser, bad_text):
-#     with pytest.raises(ValueError):
-#         parser.parse(bad_text)
+@pytest.mark.parametrize("bad_text", [
+    "uv_op_copy ( 1 )",  # Too few args
+    "uv_op_reflectmapfull ( )",  # No args
+    "uv_op_uniformscale ( 1 2 3 )",  # Too few
+    "uv_op_unknown ( 1 2 )",  # Unknown op
+    "uv_op_copy 1 2",  # Missing parentheses
+])
+def test_parse_invalid_uv_op_raises(parser, bad_text):
+    with pytest.raises(BlockFormatError):
+        parser.parse(bad_text)

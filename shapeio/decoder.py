@@ -50,6 +50,10 @@ class ParenthesisMismatchError(ShapeParserError):
     """Raised when parentheses in a block are unmatched."""
     pass
 
+class BlockFormatError(ShapeParserError):
+    """Raised when format in a block is malformed."""
+    pass
+
 
 class _Items():
     def __init__(self, items: List[str], expected_count: int):
@@ -185,25 +189,33 @@ class _Parser(ABC, Generic[T]):
         end_idx = self._find_block_end(text, open_idx)
         return text[start_idx:end_idx]
 
-    def _extract_items_in_block(self, block: str, block_name: str, item_type: str, verify_count: bool = True) -> _Items:
+    def _extract_items_in_block(self, text: str, block_name: str, item_type: str, verify_block: bool = True, verify_count: bool = True, escape_regex: bool = False) -> Optional[_Items]:
         """
         Extracts all items matching item_type inside a given block.
 
         Parameters:
-            block (str): The block of text to search.
+            text (str): The text to search.
             block_name (str): The name of the block for count verification.
             item_type (str): The type name of the items to extract.
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
             verify_count (bool): Whether to verify the number of extracted items matches the block's declared count.
+            escape_regex (bool): Whether to escape the item_type used for matching items with regex in the block.
 
         Returns:
-            _Items: A tuple containing the list of extracted items and the expected count.
+            Optional[_Items]: A tuple containing the list of extracted items and the expected count.
 
         Raises:
-            BlockNotFoundError: If the block header count cannot be found.
-            CountMismatchError: If the number of items found does not match the expected count.
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
+            CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
+        block = self._extract_block(text, block_name, verify_block=verify_block)
+
         items = []
-        pattern = re.compile(rf'^\s*{re.escape(item_type)}\s*\(', re.MULTILINE)
+
+        if escape_regex:
+            pattern = re.compile(rf'^\s*{re.escape(item_type)}\s*\(', re.MULTILINE)
+        else:
+            pattern = re.compile(rf'^\s*{item_type}\s*\(', re.MULTILINE)
 
         for match in pattern.finditer(block):
             start_idx = match.end() - 1
@@ -217,35 +229,38 @@ class _Parser(ABC, Generic[T]):
 
         return _Items(items, count)
 
-    def _extract_values_in_block(self, block: str, block_name: str, verify_count: bool = True) -> _Items:
+    def _extract_values_in_block(self, text: str, block_name: str, verify_block: bool = True, verify_count: bool = True) -> Optional[_Items]:
         """
         Extracts space-separated values inside the parentheses of a block.
 
         Parameters:
-            block (str): The block text to extract values from.
+            text (str): The text to extract values from.
             block_name (str): The block's name for count verification.
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
             verify_count (bool): Whether to verify count matches the number of values extracted.
 
         Returns:
-            _Items: List of values extracted and expected count.
+            Optional[_Items]: List of values extracted and expected count.
 
         Raises:
-            BlockNotFoundError: If the block is not found or malformed.
-            CountMismatchError: If the count does not match the number of extracted values.
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
+            CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
             ShapeParserError: If the first token inside the block is not an integer count.
         """
         pattern = re.compile(rf'^\s*{re.escape(block_name)}\s*\((.*?)\)', re.DOTALL | re.MULTILINE)
-        match = pattern.search(block)
+        match = pattern.search(text)
         if not match:
-            raise BlockNotFoundError(f"Block '{block_name}' not found or malformed")
+            if verify_block:
+                raise BlockNotFoundError(f"Block '{block_name}' not found or malformed")
+            return None
 
         content = match.group(1).strip()
         if not content:
-            return [], 0
+            return _Items([], 0)
 
         tokens = content.split()
         if not tokens:
-            return [], 0
+            return _Items([], 0)
 
         try:
             count = int(tokens[0])
@@ -259,23 +274,26 @@ class _Parser(ABC, Generic[T]):
 
         return _Items(values, count)
 
-    def _extract_named_items_in_block(self, block: str, block_name: str, item_type: str, verify_count: bool = True) -> _Items:
+    def _extract_named_items_in_block(self, text: str, block_name: str, item_type: str, verify_block: bool = True, verify_count: bool = True) -> Optional[_Items]:
         """
         Extracts items with a name after the item_type keyword inside a block.
 
         Parameters:
-            block (str): The block text to extract from.
+            text (str): The text to extract from.
             block_name (str): The name of the block for count verification.
             item_type (str): The type keyword that precedes the named items (e.g. "param").
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
             verify_count (bool): Whether to verify count consistency.
 
         Returns:
-            _Items: List of extracted named items and expected count.
+            Optional[_Items]: List of extracted named items and expected count.
 
         Raises:
-            BlockNotFoundError: If block header count is missing.
-            CountMismatchError: If extracted item count doesn't match expected.
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
+            CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
+        block = self._extract_block(text, block_name, verify_block=verify_block)
+
         pattern = re.compile(rf'^\s*{re.escape(item_type)}\s+\S+\s*\(', re.MULTILINE)
 
         items = []
@@ -299,17 +317,20 @@ class _Parser(ABC, Generic[T]):
             text (str): The full text to search the block in.
             block_name (str): The name of the block to parse.
             parser (_Parser[T]): The parser instance to use for parsing.
-            verify_block (bool): Whether to raise if block is missing.
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
 
         Returns:
             Optional[T]: The parsed block object or None if not found and verify_block is False.
+
+        Raises:
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
         """
         block_str = self._extract_block(text, block_name, verify_block)
         if block_str is None:
             return None
         return parser.parse(block_str)
 
-    def _parse_items_in_block(self, block: str, block_name: str, item_type: str, parser: "_Parser[T]", verify_count: bool = True) -> _ParsedItems[T]:
+    def _parse_items_in_block(self, block: str, block_name: str, item_type: str, parser: "_Parser[T]", verify_block: bool = True, verify_count: bool = True, escape_regex: bool = False) -> Optional[_ParsedItems[T]]:
         """
         Parses all items matching item_type inside a block, returning a list of parsed items and expected count.
 
@@ -318,16 +339,22 @@ class _Parser(ABC, Generic[T]):
             block_name (str): The block name used for count verification.
             item_type (str): The item type name to parse.
             parser (_Parser[T]): The parser instance to use for parsing.
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
             verify_count (bool): Whether to verify the number of extracted items matches the count.
+            escape_regex (bool): Whether to escape the item_type used for matching items with regex in the block.
 
         Returns:
-            _ParsedItems[T]: Parsed items and expected count.
+            Optional[_ParsedItems[T]]: Parsed items and expected count.
+
+        Raises:
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
+            CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
-        extracted_items = self._extract_items_in_block(block, block_name, item_type, verify_count)
+        extracted_items = self._extract_items_in_block(block, block_name, item_type, verify_block, verify_count, escape_regex)
         parsed_items = [parser.parse(item) for item in extracted_items.items]
         return _ParsedItems(parsed_items, extracted_items.expected_count)
 
-    def _parse_values_in_block(self, block: str, block_name: str, parser: "_Parser[T]", verify_count: bool = True) -> _ParsedItems[T]:
+    def _parse_values_in_block(self, block: str, block_name: str, parser: "_Parser[T]", verify_block: bool = True, verify_count: bool = True) -> Optional[_ParsedItems[T]]:
         """
         Parses space-separated values inside a block, returning parsed values and expected count.
 
@@ -335,16 +362,21 @@ class _Parser(ABC, Generic[T]):
             block (str): The block text.
             block_name (str): The block name for verification.
             parser (_Parser[T]): The parser instance to use for parsing.
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
             verify_count (bool): Whether to verify count consistency.
 
         Returns:
-            _ParsedItems[T]: Parsed values and expected count.
+            Optional[_ParsedItems[T]]: Parsed values and expected count.
+
+        Raises:
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
+            CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
-        extracted_values = self._extract_values_in_block(block, block_name, verify_count)
+        extracted_values = self._extract_values_in_block(block, block_name, verify_block, verify_count)
         parsed_values = [parser.parse(value) for value in extracted_values.items]
         return _ParsedItems(parsed_values, extracted_values.expected_count)
 
-    def _parse_named_items_in_block(self, block: str, block_name: str, item_type: str, parser: "_Parser[T]", verify_count: bool = True) -> _ParsedItems[T]:
+    def _parse_named_items_in_block(self, block: str, block_name: str, item_type: str, parser: "_Parser[T]", verify_block: bool = True, verify_count: bool = True) -> Optional[_ParsedItems[T]]:
         """
         Parses named items inside a block, returning parsed items and expected count.
 
@@ -353,12 +385,17 @@ class _Parser(ABC, Generic[T]):
             block_name (str): The block name for verification.
             item_type (str): The item type keyword preceding the named item.
             parser (_Parser[T]): The parser instance to use for parsing.
+            verify_block (bool): If True, raises an error when the block is not found; otherwise returns None.
             verify_count (bool): Whether to verify count consistency.
 
         Returns:
-            _ParsedItems[T]: Parsed named items and expected count.
+            Optional[_ParsedItems[T]]: Parsed named items and expected count.
+
+        Raises:
+            BlockNotFoundError: If block header count is missing (only if verify_block = True).
+            CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
-        extracted_items = self._extract_named_items_in_block(block, block_name, item_type, verify_count)
+        extracted_items = self._extract_named_items_in_block(block, block_name, item_type, verify_block, verify_count)
         parsed_items = [parser.parse(item) for item in extracted_items.items]
         return _ParsedItems(parsed_items, extracted_items.expected_count)
 
@@ -416,46 +453,46 @@ class _ShapeHeaderParser(_Parser[shape.ShapeHeader]):
     def parse(self, text: str) -> shape.ShapeHeader:
         match = self.PATTERN.search(text)
         if not match:
-            raise ValueError(f"Invalid shape_header format: '{text}'")
+            raise BlockFormatError(f"Invalid shape_header format: '{text}'")
 
         flags1 = self._hex_parser.parse(match.group(1))
         flags2 = self._hex_parser.parse(match.group(2))
         return shape.ShapeHeader(flags1, flags2)
 
 
-# class _VectorParser(_Parser[shape.Vector]):
-#     PATTERN = re.compile(r'vector\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+class _VectorParser(_Parser[shape.Vector]):
+    PATTERN = re.compile(r'vector\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
-#     def __init__(self):
-#         self._float_parser = _FloatParser()
+    def __init__(self):
+        self._float_parser = _FloatParser()
 
-#     def parse(self, text: str) -> shape.Vector:
-#         match = self.PATTERN.match(text.strip())
-#         if not match:
-#             raise ValueError(f"Invalid vector format: '{text}'")
+    def parse(self, text: str) -> shape.Vector:
+        match = self.PATTERN.match(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid vector format: '{text}'")
 
-#         x = self._float_parser.parse(match.group(1))
-#         y = self._float_parser.parse(match.group(2))
-#         z = self._float_parser.parse(match.group(3))
-#         return shape.Vector(x, y, z)
+        x = self._float_parser.parse(match.group(1))
+        y = self._float_parser.parse(match.group(2))
+        z = self._float_parser.parse(match.group(3))
+        return shape.Vector(x, y, z)
 
 
-# class _VolumeSphereParser(_Parser[shape.VolumeSphere]):
-#     PATTERN = re.compile(r"vol_sphere\s*\(\s*(vector\s*\([^()]*\))\s+(-?\d+(?:\.\d+)?)\s*\)", re.IGNORECASE)
+class _VolumeSphereParser(_Parser[shape.VolumeSphere]):
+    PATTERN = re.compile(r"vol_sphere\s*\(\s*(vector\s*\([^()]*\))\s+(-?\d+(?:\.\d+)?)\s*\)", re.IGNORECASE)
 
-#     def __init__(self):
-#         self._vector_parser = _VectorParser()
-#         self._float_parser = _FloatParser()
+    def __init__(self):
+        self._vector_parser = _VectorParser()
+        self._float_parser = _FloatParser()
 
-#     def parse(self, text: str) -> shape.VolumeSphere:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid vol_sphere format: '{text}'")
+    def parse(self, text: str) -> shape.VolumeSphere:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid vol_sphere format: '{text}'")
 
-#         vector_text = match.group(1)
-#         radius = self._float_parser.parse(match.group(2))
-#         vector = self._vector_parser.parse(vector_text)
-#         return shape.VolumeSphere(vector, radius)
+        vector_text = match.group(1)
+        radius = self._float_parser.parse(match.group(2))
+        vector = self._vector_parser.parse(vector_text)
+        return shape.VolumeSphere(vector, radius)
 
 
 class _NamedShaderParser(_Parser[str]):
@@ -464,327 +501,312 @@ class _NamedShaderParser(_Parser[str]):
     def parse(self, text: str) -> str:
         match = self.PATTERN.search(text)
         if not match:
-            raise ValueError(f"Invalid named_shader format: '{text}'")
+            raise BlockFormatError(f"Invalid named_shader format: '{text}'")
 
         value = match.group(1).strip()
         if not value:
-            raise ValueError(f"named_shader cannot be empty: '{text}'")
+            raise BlockFormatError(f"named_shader cannot be empty: '{text}'")
 
         return value
 
 
-# class _NamedFilterModeParser(_Parser[str]):
-#     PATTERN = re.compile(r'named_filter_mode\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
+class _NamedFilterModeParser(_Parser[str]):
+    PATTERN = re.compile(r'named_filter_mode\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
 
-#     def parse(self, text: str) -> str:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid named_filter_mode format: '{text}'")
+    def parse(self, text: str) -> str:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid named_filter_mode format: '{text}'")
 
-#         value = match.group(1).strip()
-#         if not value:
-#             raise ValueError(f"named_filter_mode cannot be empty: '{text}'")
+        value = match.group(1).strip()
+        if not value:
+            raise BlockFormatError(f"named_filter_mode cannot be empty: '{text}'")
 
-#         return value
+        return value
 
 
-# class _PointParser(_Parser[shape.Point]):
-#     PATTERN = re.compile(r'point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+class _PointParser(_Parser[shape.Point]):
+    PATTERN = re.compile(r'point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
-#     def __init__(self):
-#         self._float_parser = _FloatParser()
+    def __init__(self):
+        self._float_parser = _FloatParser()
 
-#     def parse(self, text: str) -> shape.Point:
-#         match = self.PATTERN.match(text.strip())
-#         if not match:
-#             raise ValueError(f"Invalid point format: '{text}'")
+    def parse(self, text: str) -> shape.Point:
+        match = self.PATTERN.match(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid point format: '{text}'")
 
-#         x = self._float_parser.parse(match.group(1))
-#         y = self._float_parser.parse(match.group(2))
-#         z = self._float_parser.parse(match.group(3))
-#         return shape.Point(x, y, z)
+        x = self._float_parser.parse(match.group(1))
+        y = self._float_parser.parse(match.group(2))
+        z = self._float_parser.parse(match.group(3))
+        return shape.Point(x, y, z)
 
 
-# class _UVPointParser(_Parser[shape.UVPoint]):
-#     PATTERN = re.compile(r'uv_point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+class _UVPointParser(_Parser[shape.UVPoint]):
+    PATTERN = re.compile(r'uv_point\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
-#     def __init__(self):
-#         self._float_parser = _FloatParser()
+    def __init__(self):
+        self._float_parser = _FloatParser()
 
-#     def parse(self, text: str) -> shape.UVPoint:
-#         match = self.PATTERN.match(text.strip())
-#         if not match:
-#             raise ValueError(f"Invalid uv_point format: '{text}'")
+    def parse(self, text: str) -> shape.UVPoint:
+        match = self.PATTERN.match(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid uv_point format: '{text}'")
 
-#         u = self._float_parser.parse(match.group(1))
-#         v = self._float_parser.parse(match.group(2))
-#         return shape.UVPoint(u, v)
+        u = self._float_parser.parse(match.group(1))
+        v = self._float_parser.parse(match.group(2))
+        return shape.UVPoint(u, v)
 
 
-# class _ColourParser(_Parser[shape.Colour]):
-#     PATTERN = re.compile(r'colour\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
+class _ColourParser(_Parser[shape.Colour]):
+    PATTERN = re.compile(r'colour\s*\(\s*([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s+([-+eE\d\.]+)\s*\)')
 
-#     def __init__(self):
-#         self._float_parser = _FloatParser()
+    def __init__(self):
+        self._float_parser = _FloatParser()
 
-#     def parse(self, text: str) -> shape.Colour:
-#         match = self.PATTERN.match(text.strip())
-#         if not match:
-#             raise ValueError(f"Invalid colour format: '{text}'")
+    def parse(self, text: str) -> shape.Colour:
+        match = self.PATTERN.match(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid colour format: '{text}'")
 
-#         a = self._float_parser.parse(match.group(1))
-#         r = self._float_parser.parse(match.group(2))
-#         g = self._float_parser.parse(match.group(3))
-#         b = self._float_parser.parse(match.group(4))
-#         return shape.Colour(a, r, g, b)
+        a = self._float_parser.parse(match.group(1))
+        r = self._float_parser.parse(match.group(2))
+        g = self._float_parser.parse(match.group(3))
+        b = self._float_parser.parse(match.group(4))
+        return shape.Colour(a, r, g, b)
 
 
-# class _MatrixParser(_Parser[shape.Matrix]):
-#     PATTERN = re.compile(r'matrix\s+(\S+)\s*\(\s*([-+eE\d\.]+(?:\s+[-+eE\d\.]+){11})\s*\)')
+class _MatrixParser(_Parser[shape.Matrix]):
+    PATTERN = re.compile(r'matrix\s+(\S+)\s*\(\s*([-+eE\d\.]+(?:\s+[-+eE\d\.]+){11})\s*\)')
 
-#     def __init__(self):
-#         self._float_parser = _FloatParser()
-#         self._str_parser = _StrParser()
+    def __init__(self):
+        self._float_parser = _FloatParser()
+        self._str_parser = _StrParser()
 
-#     def parse(self, text: str) -> shape.Matrix:
-#         match = self.PATTERN.match(text.strip())
-#         if not match:
-#             raise ValueError(f"Invalid matrix format: '{text}'")
+    def parse(self, text: str) -> shape.Matrix:
+        match = self.PATTERN.match(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid matrix format: '{text}'")
 
-#         name = self._str_parser.parse(match.group(1))
-#         values = [self._float_parser.parse(v) for v in match.group(2).split()]
-#         if len(values) != 12:
-#             raise ValueError(f"Expected 12 values, got {len(values)}")
+        name = self._str_parser.parse(match.group(1))
+        values = [self._float_parser.parse(v) for v in match.group(2).split()]
+        if len(values) != 12:
+            raise BlockFormatError(f"Expected 12 values in matrix, got {len(values)}")
 
-#         return shape.Matrix(name, *values)
+        return shape.Matrix(name, *values)
 
 
-# class _ImageParser(_Parser[str]):
-#     PATTERN = re.compile(r'image\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
+class _ImageParser(_Parser[str]):
+    PATTERN = re.compile(r'image\s*\(\s*(.+?)\s*\)', re.IGNORECASE)
 
-#     def parse(self, text: str) -> str:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid image format: '{text}'")
+    def parse(self, text: str) -> str:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid image format: '{text}'")
 
-#         value = match.group(1).strip()
-#         if not value:
-#             raise ValueError(f"image cannot be empty: '{text}'")
+        value = match.group(1).strip()
+        if not value:
+            raise BlockFormatError(f"image cannot be empty: '{text}'")
 
-#         return value
+        return value
 
 
-# class _TextureParser(_Parser[shape.Texture]):
-#     PATTERN = re.compile(r'texture\s*\(\s*(-?\d+)\s+(-?\d+)\s+(-?\d+(?:\.\d+)?)\s+([a-fA-F0-9]+)\s*\)', re.IGNORECASE)
-
-#     def __init__(self):
-#         self._int_parser = _IntParser()
-#         self._float_parser = _FloatParser()
-#         self._hex_parser = _HexParser()
-
-#     def parse(self, text: str) -> shape.Texture:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid texture format: '{text}'")
-
-#         image_index = self._int_parser.parse(match.group(1))
-#         filter_mode = self._int_parser.parse(match.group(2))
-#         mipmap_lod_bias = self._float_parser.parse(match.group(3))
-#         border_colour = self._hex_parser.parse(match.group(4))
-
-#         return shape.Texture(
-#             image_index,
-#             filter_mode,
-#             mipmap_lod_bias,
-#             border_colour
-#         )
-
-
-# class _LightMaterialParser(_Parser[shape.LightMaterial]):
-#     PATTERN = re.compile(
-#         r'light_material\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+(?:\.\d+)?)\s*\)',
-#         re.IGNORECASE
-#     )
-
-#     def __init__(self):
-#         self._hex_parser = _HexParser()
-#         self._int_parser = _IntParser()
-#         self._float_parser = _FloatParser()
-
-#     def parse(self, text: str) -> shape.LightMaterial:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid light_material format: '{text}'")
-
-#         flags = self._hex_parser.parse(match.group(1))
-#         diff_colour_index = self._int_parser.parse(match.group(2))
-#         amb_colour_index = self._int_parser.parse(match.group(3))
-#         spec_colour_index = self._int_parser.parse(match.group(4))
-#         emissive_colour_index = self._int_parser.parse(match.group(5))
-#         spec_power = self._float_parser.parse(match.group(6))
-
-#         return shape.LightMaterial(
-#             flags,
-#             diff_colour_index,
-#             amb_colour_index,
-#             spec_colour_index,
-#             emissive_colour_index,
-#             spec_power
-#         )
-
-
-# class _UVOpParser(_Parser[shape.UVOp]):
-#     PATTERN = re.compile(
-#         r'uv_op_([a-z]+)\s*\(\s*(-?\d+)(?:\s+(-?\d+))?(?:\s+(-?\d+))?(?:\s+(-?\d+))?\s*\)',
-#         re.IGNORECASE
-#     )
-
-#     def __init__(self):
-#         self._int_parser = _IntParser()
-
-#     def parse(self, text: str) -> shape.UVOp:
-#         match = self.PATTERN.fullmatch(text.strip())
-#         if not match:
-#             raise ValueError(f"Invalid uv_op format: '{text}'")
-
-#         op_type = match.group(1).lower()
-#         values = [g for g in match.groups()[1:] if g is not None]
-#         int_values = [self._int_parser.parse(value) for value in values]
-
-#         if op_type == "copy":
-#             if len(int_values) != 2:
-#                 raise ValueError(f"uv_op_copy expects 2 values, got {len(int_values)}: {text}")
-#             return shape.UVOpCopy(*int_values)
-
-#         elif op_type == "reflectmapfull":
-#             if len(int_values) != 1:
-#                 raise ValueError(f"uv_op_reflectmapfull expects 1 value, got {len(int_values)}: {text}")
-#             return shape.UVOpReflectMapFull(*int_values)
-
-#         elif op_type == "reflectmap":
-#             if len(int_values) != 1:
-#                 raise ValueError(f"uv_op_reflectmap expects 1 value, got {len(int_values)}: {text}")
-#             return shape.UVOpReflectMap(*int_values)
-
-#         elif op_type == "uniformscale":
-#             if len(int_values) != 4:
-#                 raise ValueError(f"uv_op_uniformscale expects 4 values, got {len(int_values)}: {text}")
-#             return shape.UVOpUniformScale(*int_values)
-
-#         elif op_type == "nonuniformscale":
-#             if len(int_values) != 4:
-#                 raise ValueError(f"uv_op_nonuniformscale expects 4 values, got {len(int_values)}: {text}")
-#             return shape.UVOpNonUniformScale(*int_values)
-
-#         else:
-#             raise ValueError(f"Unknown uv_op type: 'uv_op_{op_type}'")
-
-
-# class _LightModelCfgParser(_Parser[shape.LightModelCfg]):
-#     PATTERN = re.compile(r"""
-#         light_model_cfg\s*\(\s*([a-fA-F0-9]+)\s*
-#         uv_ops\s*\(\s*\d+\s*
-#         (?:uv_op_[a-z_]+\s*\(\s*-?\d+\s+-?\d+\s*\)\s*)+
-#         \)\s*
-#         \)
-#     """, re.IGNORECASE | re.VERBOSE | re.DOTALL)
-
-#     def __init__(self):
-#         self._hex_parser = _HexParser()
-#         self._uv_op_list_parser = _ListParser(
-#             list_name="uv_ops",
-#             item_parser=_UVOpParser(),
-#             item_pattern=_UVOpParser.PATTERN
-#         )
-
-#     def parse(self, text: str) -> shape.LightModelCfg:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid light_model_cfg format: '{text}'")
-
-#         flags = self._hex_parser.parse(match.group(1))
-#         uv_ops = self._parse_block(text, "uv_ops", self._uv_op_list_parser)
-
-#         return shape.LightModelCfg(flags, uv_ops)
-
-
-# class _VtxStateParser(_Parser[shape.VtxState]):
-#     PATTERN = re.compile(
-#         r"vtx_state\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+([a-fA-F0-9]+)(?:\s+(-?\d+))?\s*\)",
-#         re.IGNORECASE
-#     )
-
-#     def __init__(self):
-#         self._hex_parser = _HexParser()
-#         self._int_parser = _IntParser()
-
-#     def parse(self, text: str) -> shape.VtxState:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid vtx_state format: '{text}'")
-
-#         flags = self._hex_parser.parse(match.group(1))
-#         matrix_index = self._int_parser.parse(match.group(2))
-#         light_material_index = self._int_parser.parse(match.group(3))
-#         light_model_cfg_index = self._int_parser.parse(match.group(4))
-#         light_flags = self._hex_parser.parse(match.group(5))
-#         matrix2_index = self._int_parser.parse(match.group(6)) if match.group(6) is not None else None
-
-#         return shape.VtxState(
-#             flags,
-#             matrix_index,
-#             light_material_index,
-#             light_model_cfg_index,
-#             light_flags,
-#             matrix2_index
-#         )
-
-
-# class _PrimStateParser(_Parser[shape.PrimState]):
-#     PATTERN = re.compile(
-#         r"""prim_state\s+(\w+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
-#             tex_idxs\s*\(.*?\)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
-#         \)""",
-#         re.IGNORECASE | re.VERBOSE
-#     )
-
-#     def __init__(self):
-#         self._hex_parser = _HexParser()
-#         self._int_parser = _IntParser()
-#         self._str_parser = _StrParser()
-#         self._float_parser = _FloatParser()
-#         self._texture_list_parser = _ListParser(
-#             list_name="tex_idxs",
-#             item_parser=self._int_parser,
-#             item_pattern=_IntParser.PATTERN
-#         )
-
-#     def parse(self, text: str) -> shape.PrimState:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise ValueError(f"Invalid prim_state format: '{text}'")
-
-#         name = self._str_parser.parse(match.group(1))
-#         flags = self._hex_parser.parse(match.group(2))
-#         shader_index = self._int_parser.parse(match.group(3))
-#         texture_indices = self._parse_block(text, "tex_idxs", self._texture_list_parser)
-#         z_bias = self._float_parser.parse(match.group(4))
-#         vtx_state_index = self._int_parser.parse(match.group(5))
-#         alpha_test_mode = self._int_parser.parse(match.group(6))
-#         light_cfg_index = self._int_parser.parse(match.group(7))
-#         z_buffer_mode = self._int_parser.parse(match.group(8))
-
-#         return shape.PrimState(
-#             name,
-#             flags,
-#             shader_index,
-#             texture_indices,
-#             z_bias,
-#             vtx_state_index,
-#             alpha_test_mode,
-#             light_cfg_index,
-#             z_buffer_mode
-#         )
+class _TextureParser(_Parser[shape.Texture]):
+    PATTERN = re.compile(r'texture\s*\(\s*(-?\d+)\s+(-?\d+)\s+(-?\d+(?:\.\d+)?)\s+([a-fA-F0-9]+)\s*\)', re.IGNORECASE)
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+        self._float_parser = _FloatParser()
+        self._hex_parser = _HexParser()
+
+    def parse(self, text: str) -> shape.Texture:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid texture format: '{text}'")
+
+        image_index = self._int_parser.parse(match.group(1))
+        filter_mode = self._int_parser.parse(match.group(2))
+        mipmap_lod_bias = self._float_parser.parse(match.group(3))
+        border_colour = self._hex_parser.parse(match.group(4))
+
+        return shape.Texture(
+            image_index,
+            filter_mode,
+            mipmap_lod_bias,
+            border_colour
+        )
+
+
+class _LightMaterialParser(_Parser[shape.LightMaterial]):
+    PATTERN = re.compile(
+        r'light_material\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+(?:\.\d+)?)\s*\)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._hex_parser = _HexParser()
+        self._int_parser = _IntParser()
+        self._float_parser = _FloatParser()
+
+    def parse(self, text: str) -> shape.LightMaterial:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid light_material format: '{text}'")
+
+        flags = self._hex_parser.parse(match.group(1))
+        diff_colour_index = self._int_parser.parse(match.group(2))
+        amb_colour_index = self._int_parser.parse(match.group(3))
+        spec_colour_index = self._int_parser.parse(match.group(4))
+        emissive_colour_index = self._int_parser.parse(match.group(5))
+        spec_power = self._float_parser.parse(match.group(6))
+
+        return shape.LightMaterial(
+            flags,
+            diff_colour_index,
+            amb_colour_index,
+            spec_colour_index,
+            emissive_colour_index,
+            spec_power
+        )
+
+
+class _UVOpParser(_Parser[shape.UVOp]):
+    PATTERN = re.compile(
+        r'uv_op_([a-z]+)\s*\(\s*(-?\d+)(?:\s+(-?\d+))?(?:\s+(-?\d+))?(?:\s+(-?\d+))?\s*\)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.UVOp:
+        match = self.PATTERN.fullmatch(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid uv_op format: '{text}'")
+
+        op_type = match.group(1).lower()
+        values = [g for g in match.groups()[1:] if g is not None]
+        int_values = [self._int_parser.parse(value) for value in values]
+
+        if op_type == "copy":
+            if len(int_values) != 2:
+                raise BlockFormatError(f"uv_op_copy expects 2 values, got {len(int_values)}: {text}")
+            return shape.UVOpCopy(*int_values)
+
+        elif op_type == "reflectmapfull":
+            if len(int_values) != 1:
+                raise BlockFormatError(f"uv_op_reflectmapfull expects 1 value, got {len(int_values)}: {text}")
+            return shape.UVOpReflectMapFull(*int_values)
+
+        elif op_type == "reflectmap":
+            if len(int_values) != 1:
+                raise BlockFormatError(f"uv_op_reflectmap expects 1 value, got {len(int_values)}: {text}")
+            return shape.UVOpReflectMap(*int_values)
+
+        elif op_type == "uniformscale":
+            if len(int_values) != 4:
+                raise BlockFormatError(f"uv_op_uniformscale expects 4 values, got {len(int_values)}: {text}")
+            return shape.UVOpUniformScale(*int_values)
+
+        elif op_type == "nonuniformscale":
+            if len(int_values) != 4:
+                raise BlockFormatError(f"uv_op_nonuniformscale expects 4 values, got {len(int_values)}: {text}")
+            return shape.UVOpNonUniformScale(*int_values)
+
+        else:
+            raise BlockFormatError(f"Unknown uv_op type: 'uv_op_{op_type}'")
+
+
+class _LightModelCfgParser(_Parser[shape.LightModelCfg]):
+    PATTERN = re.compile(r'light_model_cfg\s*\(\s*([a-fA-F0-9]+)', re.IGNORECASE)
+
+    def __init__(self):
+        self._hex_parser = _HexParser()
+        self._uv_op_parser = _UVOpParser()
+
+    def parse(self, text: str) -> shape.LightModelCfg:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid light_model_cfg format: '{text}'")
+
+        flags = self._hex_parser.parse(match.group(1))
+        uv_ops = self._parse_items_in_block(text, "uv_ops", "uv_op_[a-z]+", self._uv_op_parser, escape_regex=False).items
+
+        return shape.LightModelCfg(flags, uv_ops)
+
+
+class _VtxStateParser(_Parser[shape.VtxState]):
+    PATTERN = re.compile(
+        r"vtx_state\s*\(\s*([a-fA-F0-9]+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+([a-fA-F0-9]+)(?:\s+(-?\d+))?\s*\)",
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._hex_parser = _HexParser()
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.VtxState:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid vtx_state format: '{text}'")
+
+        flags = self._hex_parser.parse(match.group(1))
+        matrix_index = self._int_parser.parse(match.group(2))
+        light_material_index = self._int_parser.parse(match.group(3))
+        light_model_cfg_index = self._int_parser.parse(match.group(4))
+        light_flags = self._hex_parser.parse(match.group(5))
+        matrix2_index = self._int_parser.parse(match.group(6)) if match.group(6) is not None else None
+
+        return shape.VtxState(
+            flags,
+            matrix_index,
+            light_material_index,
+            light_model_cfg_index,
+            light_flags,
+            matrix2_index
+        )
+
+
+class _PrimStateParser(_Parser[shape.PrimState]):
+    PATTERN = re.compile(
+        r"""prim_state\s+(\w+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
+            tex_idxs\s*\(.*?\)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
+        \)""",
+        re.IGNORECASE | re.VERBOSE
+    )
+
+    def __init__(self):
+        self._hex_parser = _HexParser()
+        self._int_parser = _IntParser()
+        self._str_parser = _StrParser()
+        self._float_parser = _FloatParser()
+
+    def parse(self, text: str) -> shape.PrimState:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid prim_state format: '{text}'")
+
+        name = self._str_parser.parse(match.group(1))
+        flags = self._hex_parser.parse(match.group(2))
+        shader_index = self._int_parser.parse(match.group(3))
+        texture_indices = self._parse_values_in_block(text, "tex_idxs", self._int_parser).items
+        z_bias = self._float_parser.parse(match.group(4))
+        vtx_state_index = self._int_parser.parse(match.group(5))
+        alpha_test_mode = self._int_parser.parse(match.group(6))
+        light_cfg_index = self._int_parser.parse(match.group(7))
+        z_buffer_mode = self._int_parser.parse(match.group(8))
+
+        return shape.PrimState(
+            name,
+            flags,
+            shader_index,
+            texture_indices,
+            z_bias,
+            vtx_state_index,
+            alpha_test_mode,
+            light_cfg_index,
+            z_buffer_mode
+        )
 
 
 # class _DistanceLevelHeaderParser(_Parser[shape.DistanceLevelHeader]):
@@ -807,7 +829,7 @@ class _NamedShaderParser(_Parser[str]):
 #     def parse(self, text: str) -> shape.DistanceLevelHeader:
 #         match = self.PATTERN.search(text)
 #         if not match:
-#             raise ValueError(f"Invalid distance_level_header format: '{text}'")
+#             raise BlockFormatError(f"Invalid distance_level_header format: '{text}'")
 
 #         dlevel_selection = self._int_parser.parse(match.group(1))
 #         hierarchy = self._parse_block(text, "hierarchy", self._hierarchy_parser)
@@ -832,7 +854,7 @@ class _NamedShaderParser(_Parser[str]):
 #     def parse(self, text: str) -> shape.DistanceLevel:
 #         match = self.PATTERN.search(text)
 #         if not match:
-#             raise ValueError(f"Invalid distance_level format: '{text}'")
+#             raise BlockFormatError(f"Invalid distance_level format: '{text}'")
 
 #         distance_level_header = self._parse_block(text, "distance_level_header", self._dlevel_header_parser)
 #         sub_objects = []#self._subobject_list_parser.parse(inner)
@@ -860,7 +882,7 @@ class _NamedShaderParser(_Parser[str]):
 #     def parse(self, text: str) -> shape.LodControl:
 #         match = self.PATTERN.search(text)
 #         if not match:
-#             raise ValueError(f"Invalid lod_control format: '{text}'")
+#             raise BlockFormatError(f"Invalid lod_control format: '{text}'")
 
 #         dlevel_bias = 0#self._int_parser.parse(match.group(1))
 #         distance_levels = self._parse_block(text, "distance_levels", self._distance_levels_parser)
@@ -875,105 +897,38 @@ class _NamedShaderParser(_Parser[str]):
 class _ShapeParser(_Parser[shape.Shape]):
     def __init__(self):
         self._shape_header_parser = _ShapeHeaderParser()
-        self._shader_names_parser = _NamedShaderParser()
-        # self._volumes_parser = _ListParser(
-        #     list_name="volumes",
-        #     item_parser=_VolumeSphereParser(),
-        #     item_pattern=_VolumeSphereParser.PATTERN
-        # )
-        # self._shader_names_parser = _ListParser(
-        #     list_name="shader_names",
-        #     item_parser=_NamedShaderParser(),
-        #     item_pattern=_NamedShaderParser.PATTERN
-        # )
-        # self._named_filter_names_parser = _ListParser(
-        #     list_name="texture_filter_names",
-        #     item_parser=_NamedFilterModeParser(),
-        #     item_pattern=_NamedFilterModeParser.PATTERN
-        # )
-        # self._points_parser = _ListParser(
-        #     list_name="points",
-        #     item_parser=_PointParser(),
-        #     item_pattern=_PointParser.PATTERN
-        # )
-        # self._uv_points_parser = _ListParser(
-        #     list_name="uv_points",
-        #     item_parser=_UVPointParser(),
-        #     item_pattern=_UVPointParser.PATTERN
-        # )
-        # self._normals_parser = _ListParser(
-        #     list_name="normals",
-        #     item_parser=_VectorParser(),
-        #     item_pattern=_VectorParser.PATTERN
-        # )
-        # self._sort_vectors_parser = _ListParser(
-        #     list_name="sort_vectors",
-        #     item_parser=_VectorParser(),
-        #     item_pattern=_VectorParser.PATTERN
-        # )
-        # self._colours_parser = _ListParser(
-        #     list_name="colours",
-        #     item_parser=_ColourParser(),
-        #     item_pattern=_ColourParser.PATTERN
-        # )
-        # self._matrices_parser = _ListParser(
-        #     list_name="matrices",
-        #     item_parser=_MatrixParser(),
-        #     item_pattern=_MatrixParser.PATTERN
-        # )
-        # self._images_parser = _ListParser(
-        #     list_name="images",
-        #     item_parser=_ImageParser(),
-        #     item_pattern=_ImageParser.PATTERN
-        # )
-        # self._textures_parser = _ListParser(
-        #     list_name="textures",
-        #     item_parser=_TextureParser(),
-        #     item_pattern=_TextureParser.PATTERN
-        # )
-        # self._light_materials_parser = _ListParser(
-        #     list_name="light_materials",
-        #     item_parser=_LightMaterialParser(),
-        #     item_pattern=_LightMaterialParser.PATTERN
-        # )
-        # self._light_model_cfgs_parser = _ListParser(
-        #     list_name="light_model_cfgs",
-        #     item_parser=_LightModelCfgParser(),
-        #     item_pattern=_LightModelCfgParser.PATTERN
-        # )
-        # self._vtx_states_parser = _ListParser(
-        #     list_name="vtx_states",
-        #     item_parser=_VtxStateParser(),
-        #     item_pattern=_VtxStateParser.PATTERN
-        # )
-        # self._prim_states_parser = _ListParser(
-        #     list_name="prim_states",
-        #     item_parser=_PrimStateParser(),
-        #     item_pattern=_PrimStateParser.PATTERN
-        # )
-        # self._lod_controls_parser = _ListParser(
-        #     list_name="lod_controls",
-        #     item_parser=_LodControlParser(),
-        #     item_pattern=_LodControlParser.PATTERN
-        # )
+        self._volume_sphere_parser = _VolumeSphereParser()
+        self._named_shader_parser = _NamedShaderParser()
+        self._named_filter_mode_parser = _NamedFilterModeParser()
+        self._point_parser = _PointParser()
+        self._uv_point_parser = _UVPointParser()
+        self._vector_parser = _VectorParser()
+        self._colour_parser = _ColourParser()
+        self._matrix_parser = _MatrixParser()
+        self._image_parser = _ImageParser()
+        self._texture_parser = _TextureParser()
+        self._light_material_parser = _LightMaterialParser()
+        self._light_model_cfg_parser = _LightModelCfgParser()
+        self._vtx_state_parser = _VtxStateParser()
+        self._prim_state_parser = _PrimStateParser()
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
-        volumes = []#self._parse_block(text, "volumes", self._volumes_parser)
-        shader_names = self._parse_items_in_block(text, "shader_names", "named_shader", self._shader_names_parser).items
-        texture_filter_names = []#self._parse_block(text, "texture_filter_names", self._named_filter_names_parser)
-        points = []#self._parse_block(text, "points", self._points_parser)
-        uv_points = []#self._parse_block(text, "uv_points", self._uv_points_parser)
-        normals = []#self._parse_block(text, "normals", self._normals_parser)
-        sort_vectors = []#self._parse_block(text, "sort_vectors", self._sort_vectors_parser)
-        colours = []#self._parse_block(text, "colours", self._colours_parser)
-        matrices = []#self._parse_block(text, "matrices", self._matrices_parser)
-        images = []#self._parse_block(text, "images", self._images_parser)
-        textures = []#self._parse_block(text, "textures", self._textures_parser)
-        light_materials = []#self._parse_block(text, "light_materials", self._light_materials_parser)
-        light_model_cfgs = []#self._parse_block(text, "light_model_cfgs", self._light_model_cfgs_parser)
-        vtx_states = []#self._parse_block(text, "vtx_states", self._vtx_states_parser)
-        prim_states = []#self._parse_block(text, "prim_states", self._prim_states_parser)
+        volumes = self._parse_items_in_block(text, "volumes", "vol_sphere", self._volume_sphere_parser).items
+        shader_names = self._parse_items_in_block(text, "shader_names", "named_shader", self._named_shader_parser).items
+        texture_filter_names = self._parse_items_in_block(text, "texture_filter_names", "named_filter_mode", self._named_filter_mode_parser).items
+        points = self._parse_items_in_block(text, "points", "point", self._point_parser).items
+        uv_points = self._parse_items_in_block(text, "uv_points", "uv_point", self._uv_point_parser).items
+        normals = self._parse_items_in_block(text, "normals", "vector", self._vector_parser).items
+        sort_vectors = self._parse_items_in_block(text, "sort_vectors", "vector", self._vector_parser).items
+        colours = self._parse_items_in_block(text, "colours", "colour", self._colour_parser).items
+        matrices = self._parse_named_items_in_block(text, "matrices", "matrix", self._matrix_parser).items
+        images = self._parse_items_in_block(text, "images", "image", self._image_parser).items
+        textures = self._parse_items_in_block(text, "textures", "texture", self._texture_parser).items
+        light_materials = self._parse_items_in_block(text, "light_materials", "light_material", self._light_material_parser).items
+        light_model_cfgs = self._parse_items_in_block(text, "light_model_cfgs", "light_model_cfg", self._light_model_cfg_parser).items
+        vtx_states = self._parse_items_in_block(text, "vtx_states", "vtx_state", self._vtx_state_parser).items
+        prim_states = self._parse_named_items_in_block(text, "prim_states", "prim_state", self._prim_state_parser).items
         lod_controls = []#self._parse_block(text, "lod_controls", self._lod_controls_parser)
         animations = None
 

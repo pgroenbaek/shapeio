@@ -19,81 +19,81 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-# from shapeio.shape import Matrix
-# from shapeio.decoder import _MatrixParser
-# from shapeio.encoder import _MatrixSerializer
+from shapeio.shape import Matrix
+from shapeio.decoder import _MatrixParser, BlockFormatError
+from shapeio.encoder import _MatrixSerializer
 
 
-# @pytest.fixture
-# def serializer():
-#     return _MatrixSerializer()
+@pytest.fixture
+def serializer():
+    return _MatrixSerializer()
 
 
-# @pytest.fixture
-# def parser():
-#     return _MatrixParser()
+@pytest.fixture
+def parser():
+    return _MatrixParser()
 
 
-# def test_serialize_matrix(serializer):
-#     matrix = Matrix(
-#         "transform",
-#         1.0, 0.0, 0.0,
-#         0.0, 1.0, 0.0,
-#         0.0, 0.0, 1.0,
-#         10.2, 20.0, 30.6
-#     )
-#     expected = (
-#         "matrix transform ( 1 0 0 "
-#         "0 1 0 "
-#         "0 0 1 "
-#         "10.2 20 30.6 )"
-#     )
-#     assert serializer.serialize(matrix) == expected
+def test_serialize_matrix(serializer):
+    matrix = Matrix(
+        "transform",
+        1.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0,
+        10.2, 20.0, 30.6
+    )
+    expected = (
+        "matrix transform ( 1 0 0 "
+        "0 1 0 "
+        "0 0 1 "
+        "10.2 20 30.6 )"
+    )
+    assert serializer.serialize(matrix) == expected
 
 
-# def test_parse_matrix(parser):
-#     text = "matrix transform ( 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0 )"
-#     matrix = parser.parse(text)
-#     assert matrix.name == "transform"
-#     assert matrix.ax == 1.0
-#     assert matrix.bx == 0.0
-#     assert matrix.cz == 1.0
-#     assert matrix.dx == 10.0
-#     assert matrix.dz == 30.0
+def test_parse_matrix(parser):
+    text = "matrix transform ( 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0 )"
+    matrix = parser.parse(text)
+    assert matrix.name == "transform"
+    assert matrix.ax == 1.0
+    assert matrix.bx == 0.0
+    assert matrix.cz == 1.0
+    assert matrix.dx == 10.0
+    assert matrix.dz == 30.0
 
 
-# def test_parse_matrix_with_whitespace(parser):
-#     text = "   matrix  move  (  -1.0  0.0 0.0    0.0  -1.0 0.0   0.0 0.0 -1.0   5.5   6.6  7.7 )   "
-#     matrix = parser.parse(text)
-#     assert matrix.name == "move"
-#     assert matrix.ax == -1.0
-#     assert matrix.by == -1.0
-#     assert matrix.cz == -1.0
-#     assert matrix.dx == 5.5
-#     assert matrix.dz == 7.7
+def test_parse_matrix_with_whitespace(parser):
+    text = "   matrix  move  (  -1.0  0.0 0.0    0.0  -1.0 0.0   0.0 0.0 -1.0   5.5   6.6  7.7 )   "
+    matrix = parser.parse(text)
+    assert matrix.name == "move"
+    assert matrix.ax == -1.0
+    assert matrix.by == -1.0
+    assert matrix.cz == -1.0
+    assert matrix.dx == 5.5
+    assert matrix.dz == 7.7
 
 
-# @pytest.mark.parametrize("bad_input", [
-#     "matrix transform ( 1.0 0.0 )",                         # Too few values
-#     "matrix transform ( 1.0 0.0 0.0 0.0 1.0 0.0 )",         # Still too few
-#     "matrix transform ( " + " ".join(["1.0"] * 13) + " )",  # Too many
-#     "matri transform ( 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0 )",  # Typo in keyword
-#     "matrix ( 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0 )",           # Missing name
-#     "matrix transform 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0",     # Missing parentheses
-# ])
-# def test_parse_invalid_matrix_raises(parser, bad_input):
-#     with pytest.raises(ValueError):
-#         parser.parse(bad_input)
+@pytest.mark.parametrize("bad_input", [
+    "matrix transform ( 1.0 0.0 )",                         # Too few values
+    "matrix transform ( 1.0 0.0 0.0 0.0 1.0 0.0 )",         # Still too few
+    "matrix transform ( " + " ".join(["1.0"] * 13) + " )",  # Too many
+    "matri transform ( 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0 )",  # Typo in keyword
+    "matrix ( 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0 )",           # Missing name
+    "matrix transform 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 10.0 20.0 30.0",     # Missing parentheses
+])
+def test_parse_invalid_matrix_raises(parser, bad_input):
+    with pytest.raises(BlockFormatError):
+        parser.parse(bad_input)
 
 
-# def test_serialize_matrix_with_depth_and_spaces():
-#     serializer = _MatrixSerializer(indent=2, use_tabs=False)
-#     matrix = Matrix(
-#         "m", 1, 2, 3,
-#         4, 5, 6,
-#         7, 8, 9,
-#         10, 11, 12
-#     )
-#     result = serializer.serialize(matrix, depth=2)
-#     expected = "    matrix m ( 1 2 3 4 5 6 7 8 9 10 11 12 )"
-#     assert result == expected
+def test_serialize_matrix_with_depth_and_spaces():
+    serializer = _MatrixSerializer(indent=2, use_tabs=False)
+    matrix = Matrix(
+        "m", 1, 2, 3,
+        4, 5, 6,
+        7, 8, 9,
+        10, 11, 12
+    )
+    result = serializer.serialize(matrix, depth=2)
+    expected = "    matrix m ( 1 2 3 4 5 6 7 8 9 10 11 12 )"
+    assert result == expected

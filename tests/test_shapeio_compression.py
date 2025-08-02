@@ -33,19 +33,19 @@ def global_storage():
     }
 
 
-# @pytest.mark.dependency(name="test_shape_compression")
-# @pytest.mark.skipif(not os.path.exists("./TK.MSTS.Tokens.dll"), reason="requires TK.MSTS.Tokens.dll to be present in the file system")
-# def test_shape_compression(global_storage):
-#     shape_filepath = global_storage["shape"]
-#     shape_output_filepath = global_storage["shape_compressed"]
-#     shapeio.compress(shape_filepath, shape_output_filepath, "./TK.MSTS.Tokens.dll")
-#     assert shapeio.is_compressed(shape_output_filepath)
+@pytest.mark.dependency(name="test_shape_compression")
+@pytest.mark.skipif(not os.path.exists("./TK.MSTS.Tokens.dll"), reason="requires TK.MSTS.Tokens.dll to be present in the file system")
+def test_shape_compression(global_storage):
+    shape_filepath = global_storage["shape"]
+    shape_output_filepath = global_storage["shape_compressed"]
+    shapeio.compress(shape_filepath, shape_output_filepath, "./TK.MSTS.Tokens.dll")
+    assert shapeio.is_compressed(shape_output_filepath)
 
 
-# @pytest.mark.dependency(depends=["test_shape_compression"])
-# @pytest.mark.skipif(not os.path.exists("./TK.MSTS.Tokens.dll"), reason="requires TK.MSTS.Tokens.dll to be present in the file system")
-# def test_shape_decompression(global_storage):
-#     shape_filepath = global_storage["shape_compressed"]
-#     shape_output_filepath = global_storage["shape_decompressed"]
-#     shapeio.decompress(shape_filepath, shape_output_filepath, "./TK.MSTS.Tokens.dll")
-#     assert not shapeio.is_compressed(shape_output_filepath)
+@pytest.mark.dependency(depends=["test_shape_compression"])
+@pytest.mark.skipif(not os.path.exists("./TK.MSTS.Tokens.dll"), reason="requires TK.MSTS.Tokens.dll to be present in the file system")
+def test_shape_decompression(global_storage):
+    shape_filepath = global_storage["shape_compressed"]
+    shape_output_filepath = global_storage["shape_decompressed"]
+    shapeio.decompress(shape_filepath, shape_output_filepath, "./TK.MSTS.Tokens.dll")
+    assert not shapeio.is_compressed(shape_output_filepath)

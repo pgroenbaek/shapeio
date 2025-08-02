@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.decoder import _NamedShaderParser
+from shapeio.decoder import _NamedShaderParser, BlockFormatError
 from shapeio.encoder import _NamedShaderSerializer
 
 
@@ -58,7 +58,7 @@ def test_parse_named_shader_with_whitespace(parser):
     "named_shader ()",                     # Also empty
 ])
 def test_parse_invalid_named_shader_raises(parser, bad_input):
-    with pytest.raises(ValueError):
+    with pytest.raises(BlockFormatError):
         parser.parse(bad_input)
 
 

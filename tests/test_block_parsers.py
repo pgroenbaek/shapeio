@@ -38,6 +38,62 @@ def parser():
 @pytest.fixture
 def valid_shape_text():
     return """
+    volumes ( 12
+        vol_sphere (
+            vector ( -1.23867 3.5875 40 ) 42.452
+        )
+        vol_sphere (
+            vector ( -1.23867 0.495151 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.495151 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.495151 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.495151 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.495151 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.490651 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.490651 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.490651 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.23867 0.490651 40 ) 40.1839
+        )
+        vol_sphere (
+            vector ( -1.24156 0.488148 40 ) 40.1746
+        )
+        vol_sphere (
+            vector ( -1.24156 0.12 40 ) 40.1746
+        )
+    )
+    shader_names ( 2
+        named_shader ( TexDiff )
+        named_shader ( BlendATexDiff )
+    )
+    texture_filter_names ( 2
+        named_filter_mode ( MipLinear )
+        named_filter_mode ( LinearMipLinear )
+    )
+    normals ( 8
+        vector ( 0 0.992697 0 )
+        vector ( 0 0.999432 0 )
+        vector ( 0 0.185853 0 )
+        vector ( 0 0.994208 0 )
+        vector ( 0 0.986775 0 )
+        vector ( 0 0.334085 0 )
+        vector ( 0 0.334116 0 )
+        vector ( 0 0.174891 0 )
+    )
     colours ( 0 )
     matrices ( 10
         matrix PNT5D_L01 ( 1 0 0 0 1 0 0 0 1 0 0 0 )
@@ -180,7 +236,7 @@ def test_extract_block_with_nesting(parser, valid_shape_text):
 
 def test_extract_empty_block(parser, valid_shape_text):
     block = parser._extract_block(valid_shape_text, "colours")
-    expected = "\n    colours ( 0 )"
+    expected = "    colours ( 0 )"
     assert expected == block
 
 
@@ -233,15 +289,21 @@ def test_parse_values_textures(parser, valid_shape_text):
     "colours 0.0 0.0 0.0 0.0",   # Missing parentheses
     "colours ( 0",   # Unmatched parentheses
 ])
-def test_extract_block(parser, bad_input):
+def test_extract_block_expect_error(parser, bad_input):
     with pytest.raises(ShapeParserError):
         parser._extract_block(bad_input, "colours")
 
 
-def test_parse_values_textures(parser, invalid_textures_count):
+def test_parse_values_textures_expect_count_mismatch(parser, invalid_textures_count):
     block = parser._extract_block(invalid_textures_count, "textures")
     with pytest.raises(CountMismatchError):
         parser._extract_items_in_block(block, "textures", "texture")
+
+
+def test_parse_items_with_extracting_block(parser, valid_shape_text):
+    items = parser._extract_items_in_block(valid_shape_text, "normals", "vector")
+    assert items.expected_count == 8
+    assert len(items.items) == 8
 
 
 def test_parse_values_textures_verify_count_false(parser, invalid_textures_count):

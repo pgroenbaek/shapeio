@@ -19,58 +19,58 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-# from shapeio.shape import Colour
-# from shapeio.decoder import _ColourParser
-# from shapeio.encoder import _ColourSerializer
+from shapeio.shape import Colour
+from shapeio.decoder import _ColourParser, BlockFormatError
+from shapeio.encoder import _ColourSerializer
 
 
-# @pytest.fixture
-# def serializer():
-#     return _ColourSerializer()
+@pytest.fixture
+def serializer():
+    return _ColourSerializer()
 
 
-# @pytest.fixture
-# def parser():
-#     return _ColourParser()
+@pytest.fixture
+def parser():
+    return _ColourParser()
 
 
-# def test_serialize_colour(serializer):
-#     colour = Colour(1.0, 2.2, 3.2, 4.5)
-#     assert serializer.serialize(colour) == "colour ( 1 2.2 3.2 4.5 )"
+def test_serialize_colour(serializer):
+    colour = Colour(1.0, 2.2, 3.2, 4.5)
+    assert serializer.serialize(colour) == "colour ( 1 2.2 3.2 4.5 )"
 
 
-# def test_parse_colour(parser):
-#     text = "colour ( 1.0 2.0 3.0 4.0 )"
-#     colour = parser.parse(text)
-#     assert colour.a == 1.0
-#     assert colour.r == 2.0
-#     assert colour.g == 3.0
-#     assert colour.b == 4.0
+def test_parse_colour(parser):
+    text = "colour ( 1.0 2.0 3.0 4.0 )"
+    colour = parser.parse(text)
+    assert colour.a == 1.0
+    assert colour.r == 2.0
+    assert colour.g == 3.0
+    assert colour.b == 4.0
 
 
-# def test_parse_colour_with_whitespace(parser):
-#     text = "  colour (   -1.5  0.0   42.75 13.37   )  "
-#     colour = parser.parse(text)
-#     assert colour.a == -1.5
-#     assert colour.r == 0.0
-#     assert colour.g == 42.75
-#     assert colour.b == 13.37
+def test_parse_colour_with_whitespace(parser):
+    text = "  colour (   -1.5  0.0   42.75 13.37   )  "
+    colour = parser.parse(text)
+    assert colour.a == -1.5
+    assert colour.r == 0.0
+    assert colour.g == 42.75
+    assert colour.b == 13.37
 
 
-# @pytest.mark.parametrize("bad_input", [
-#     "colour ( 1.0 2.0 3.0 )",          # Too few components
-#     "colour ( 1.0 2.0 3.0 4.0 5.0 )",  # Too many components
-#     "color ( 1.0 2.0 3.0 4.0 )",       # Incorrect keyword
-#     "colour 1.0 2.0 3.0 4.0",          # Missing parentheses
-# ])
-# def test_parse_invalid_colour_raises(parser, bad_input):
-#     with pytest.raises(ValueError):
-#         parser.parse(bad_input)
+@pytest.mark.parametrize("bad_input", [
+    "colour ( 1.0 2.0 3.0 )",          # Too few components
+    "colour ( 1.0 2.0 3.0 4.0 5.0 )",  # Too many components
+    "color ( 1.0 2.0 3.0 4.0 )",       # Incorrect keyword
+    "colour 1.0 2.0 3.0 4.0",          # Missing parentheses
+])
+def test_parse_invalid_colour_raises(parser, bad_input):
+    with pytest.raises(BlockFormatError):
+        parser.parse(bad_input)
 
 
-# def test_serialize_colour_with_depth_and_spaces():
-#     serializer = _ColourSerializer(indent=2, use_tabs=False)
-#     colour = Colour(1.0, 2.2, 3.4, 4.3)
-#     result = serializer.serialize(colour, depth=2)
-#     expected = "    colour ( 1 2.2 3.4 4.3 )"
-#     assert result == expected
+def test_serialize_colour_with_depth_and_spaces():
+    serializer = _ColourSerializer(indent=2, use_tabs=False)
+    colour = Colour(1.0, 2.2, 3.4, 4.3)
+    result = serializer.serialize(colour, depth=2)
+    expected = "    colour ( 1 2.2 3.4 4.3 )"
+    assert result == expected

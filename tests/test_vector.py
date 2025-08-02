@@ -19,56 +19,56 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-# from shapeio.shape import Vector
-# from shapeio.decoder import _VectorParser
-# from shapeio.encoder import _VectorSerializer
+from shapeio.shape import Vector
+from shapeio.decoder import _VectorParser, BlockFormatError
+from shapeio.encoder import _VectorSerializer
 
 
-# @pytest.fixture
-# def serializer():
-#     return _VectorSerializer()
+@pytest.fixture
+def serializer():
+    return _VectorSerializer()
 
 
-# @pytest.fixture
-# def parser():
-#     return _VectorParser()
+@pytest.fixture
+def parser():
+    return _VectorParser()
 
 
-# def test_serialize_vector(serializer):
-#     vector = Vector(1.2, 2.0, 3.0)
-#     assert serializer.serialize(vector) == "vector ( 1.2 2 3 )"
+def test_serialize_vector(serializer):
+    vector = Vector(1.2, 2.0, 3.0)
+    assert serializer.serialize(vector) == "vector ( 1.2 2 3 )"
 
 
-# def test_parse_vector(parser):
-#     text = "vector ( 1 2.0 3.0 )"
-#     vector = parser.parse(text)
-#     assert vector.x == 1.0
-#     assert vector.y == 2.0
-#     assert vector.z == 3.0
+def test_parse_vector(parser):
+    text = "vector ( 1 2.0 3.0 )"
+    vector = parser.parse(text)
+    assert vector.x == 1.0
+    assert vector.y == 2.0
+    assert vector.z == 3.0
 
 
-# def test_parse_vector_with_whitespace(parser):
-#     text = "  vector (   -1.5  0.0   42.75 )  "
-#     vector = parser.parse(text)
-#     assert vector.x == -1.5
-#     assert vector.y == 0.0
-#     assert vector.z == 42.75
+def test_parse_vector_with_whitespace(parser):
+    text = "  vector (   -1.5  0.0   42.75 )  "
+    vector = parser.parse(text)
+    assert vector.x == -1.5
+    assert vector.y == 0.0
+    assert vector.z == 42.75
 
 
-# @pytest.mark.parametrize("bad_input", [
-#     "vector ( 1.0 2.0 )",          # Too few components
-#     "vector ( 1.0 2.0 3.0 4.0 )",  # Too many components
-#     "vect ( 1.0 2.0 3.0 )",        # Incorrect keyword
-#     "vector 1.0 2.0 3.0",          # Missing parentheses
-# ])
-# def test_parse_invalid_vector_raises(parser, bad_input):
-#     with pytest.raises(ValueError):
-#         parser.parse(bad_input)
+@pytest.mark.parametrize("bad_input", [
+    "vector ( 1.0 2.0 )",          # Too few components
+    "vector ( 1.0 2.0 3.0 4.0 )",  # Too many components
+    "vect ( 1.0 2.0 3.0 )",        # Incorrect keyword
+    "vector 1.0 2.0 3.0",          # Missing parentheses
+])
+def test_parse_invalid_vector_raises(parser, bad_input):
+    with pytest.raises(BlockFormatError):
+        parser.parse(bad_input)
 
 
-# def test_serialize_vector_with_depth_and_spaces():
-#     serializer = _VectorSerializer(indent=2, use_tabs=False)
-#     vector = Vector(1.2, 2.0, 3.0)
-#     result = serializer.serialize(vector, depth=1)
-#     expected = "  vector ( 1.2 2 3 )"
-#     assert result == expected
+def test_serialize_vector_with_depth_and_spaces():
+    serializer = _VectorSerializer(indent=2, use_tabs=False)
+    vector = Vector(1.2, 2.0, 3.0)
+    result = serializer.serialize(vector, depth=1)
+    expected = "  vector ( 1.2 2 3 )"
+    assert result == expected

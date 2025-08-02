@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from shapeio.shape import ShapeHeader
-from shapeio.decoder import _ShapeHeaderParser
+from shapeio.decoder import _ShapeHeaderParser, BlockFormatError
 from shapeio.encoder import _ShapeHeaderSerializer
 
 
@@ -62,7 +62,7 @@ def test_parse_shape_header_with_whitespace(parser):
     "shape_header ( 000000G1 DEADBEEF )",         # Invalid hex char
 ])
 def test_parse_invalid_shape_header_raises(parser, bad_input):
-    with pytest.raises(ValueError):
+    with pytest.raises(BlockFormatError):
         parser.parse(bad_input)
 
 

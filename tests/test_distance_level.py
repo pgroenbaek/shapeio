@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 # from shapeio.shape import DistanceLevel, DistanceLevelHeader
-# from shapeio.decoder import _DistanceLevelParser
+# from shapeio.decoder import _DistanceLevelParser, BlockFormatError
 # from shapeio.encoder import _DistanceLevelSerializer
 
 
@@ -82,5 +82,5 @@ import pytest
 #     "distance_level ( )",                            # Empty block
 # ])
 # def test_parse_invalid_distance_level_raises(parser, bad_input):
-#     with pytest.raises(ValueError):
+#     with pytest.raises(BlockFormatError):
 #         parser.parse(bad_input)

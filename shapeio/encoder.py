@@ -343,20 +343,14 @@ class _LightModelCfgSerializer(_Serializer[shape.LightModelCfg]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self._hex_serializer = _HexSerializer(indent, use_tabs)
-        self._uv_ops_serializer = _ListSerializer(
-            list_name="uv_ops",
-            item_serializer=_UVOpSerializer(indent, use_tabs),
-            items_per_line=1,
-            newline_after_header=True,
-            newline_before_closing=True
-        )
+        self._uv_op_serializer = _UVOpSerializer(indent, use_tabs)
 
     def serialize(self, light_model_cfg: shape.LightModelCfg, depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
         flags = self._hex_serializer.serialize(light_model_cfg.flags)
-        uv_ops_block = self._uv_ops_serializer.serialize(light_model_cfg.uv_ops, inner_depth)
+        uv_ops_block = self._serialize_items_in_block(light_model_cfg.uv_ops, "uv_ops", self._uv_op_serializer, inner_depth)
 
         return (
             f"{indent}light_model_cfg ( {flags}\n"
@@ -392,19 +386,20 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         self._hex_serializer = _HexSerializer(indent, use_tabs)
         self._int_serializer = _IntSerializer(indent, use_tabs)
         self._float_serializer = _FloatSerializer(indent, use_tabs)
-        self._tex_idxs_serializer = _ListSerializer(
-            list_name="tex_idxs",
-            item_serializer=_IntSerializer(indent, use_tabs),
-            items_per_line=None,
-            newline_after_header=False,
-            newline_before_closing=False
-        )
 
     def serialize(self, prim_state: shape.PrimState, depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
-        tex_idxs_block = self._tex_idxs_serializer.serialize(prim_state.texture_indices, inner_depth)
+        tex_idxs_block = self._serialize_items_in_block(
+            prim_state.texture_indices,
+            "tex_idxs",
+            self._int_serializer,
+            inner_depth,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
         return (
             f"{indent}prim_state {prim_state.name} ( "
             f"{self._hex_serializer.serialize(prim_state.flags)} "
@@ -504,16 +499,43 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
 class _ShapeSerializer(_Serializer[shape.Shape]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
-        self.shape_header_serializer = _ShapeHeaderSerializer(indent, use_tabs)
-        self.named_shader_serializer = _NamedShaderSerializer(indent, use_tabs)
+        self._shape_header_serializer = _ShapeHeaderSerializer(indent, use_tabs)
+        self._volume_sphere_serializer = _VolumeSphereSerializer(indent, use_tabs)
+        self._named_shader_serializer = _NamedShaderSerializer(indent, use_tabs)
+        self._named_filter_mode_serializer = _NamedFilterModeSerializer(indent, use_tabs)
+        self._point_serializer = _PointSerializer(indent, use_tabs)
+        self._uv_point_serializer = _UVPointSerializer(indent, use_tabs)
+        self._vector_serializer = _VectorSerializer(indent, use_tabs)
+        self._colour_serializer = _ColourSerializer(indent, use_tabs)
+        self._matrix_serializer = _MatrixSerializer(indent, use_tabs)
+        self._image_serializer = _ImageSerializer(indent, use_tabs)
+        self._texture_serializer = _TextureSerializer(indent, use_tabs)
+        self._light_material_serializer = _LightMaterialSerializer(indent, use_tabs)
+        self._light_model_cfg_serializer = _LightModelCfgSerializer(indent, use_tabs)
+        self._vtx_state_serializer = _VtxStateSerializer(indent, use_tabs)
+        self._prim_state_serializer = _PrimStateSerializer(indent, use_tabs)
 
     def serialize(self, shape: shape.Shape, depth: int = 0) -> str:
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
         lines = [f"{indent}shape ("]
-        lines.append(self.shape_header_serializer.serialize(shape.shape_header, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.shader_names, "shader_names", self.named_shader_serializer, inner_depth))
+        lines.append(self._shape_header_serializer.serialize(shape.shape_header, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.volumes, "volumes", self._volume_sphere_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.shader_names, "shader_names", self._named_shader_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.texture_filter_names, "texture_filter_names", self._named_filter_mode_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.points, "points", self._point_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.uv_points, "uv_points", self._uv_point_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.normals, "normals", self._vector_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.sort_vectors, "sort_vectors", self._vector_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.colours, "colours", self._colour_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.matrices, "matrices", self._matrix_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.images, "images", self._image_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.textures, "textures", self._texture_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.light_materials, "light_materials", self._light_material_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.light_model_cfgs, "light_model_cfgs", self._light_model_cfg_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(shape.prim_states, "prim_states", self._prim_state_serializer, inner_depth))
 
         if shape.animations:
             # TODO handle optional animations block

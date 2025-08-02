@@ -20,7 +20,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 # from shapeio.shape import LodControl, DistanceLevelsHeader
-# from shapeio.decoder import _LodControlParser
+# from shapeio.decoder import _LodControlParser, BlockFormatError
 # from shapeio.encoder import _LodControlSerializer
 
 
@@ -73,5 +73,5 @@ import pytest
 #     "lod_control ( )",  # completely empty
 # ])
 # def test_parse_invalid_lod_control_raises(parser, bad_input):
-#     with pytest.raises(ValueError):
+#     with pytest.raises(BlockFormatError):
 #         parser.parse(bad_input)
