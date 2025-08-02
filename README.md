@@ -11,7 +11,7 @@ The API is very similar to that of the `json` module and includes functions for 
 When modifying shapes using this module, there are no safeguards other than the data structure itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 
 See also:
-- [shapemod](https://github.com/pgroenbaek/shapemod) - provides functions for modifying shapes while keeping them error-free and usable in MSTS/ORTS.
+- [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides functions for modifying shapes while keeping them error-free and usable in MSTS/ORTS.
 - [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils) - offers additional utilities for working with track shapes.
 
 

@@ -770,7 +770,8 @@ class _VtxStateParser(_Parser[shape.VtxState]):
 class _PrimStateParser(_Parser[shape.PrimState]):
     PATTERN = re.compile(
         r"""prim_state\s+(\w+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
-            tex_idxs\s*\(.*?\)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
+            tex_idxs\s*\(\s*(?:-?\d+\s*)*\)\s+
+            (-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
         \)""",
         re.IGNORECASE | re.VERBOSE
     )
@@ -809,89 +810,71 @@ class _PrimStateParser(_Parser[shape.PrimState]):
         )
 
 
-# class _DistanceLevelHeaderParser(_Parser[shape.DistanceLevelHeader]):
-#     PATTERN = re.compile(
-#         r"""distance_level_header\s*\(\s*
-#             dlevel_selection\s*\(\s*(-?\d+)\s*\)\s*
-#             hierarchy\s*\(.*?\)
-#         \s*\)""",
-#         re.IGNORECASE | re.VERBOSE | re.DOTALL
-#     )
+class _DistanceLevelHeaderParser(_Parser[shape.DistanceLevelHeader]):
+    PATTERN = re.compile(
+        r"""distance_level_header\s*\(\s*
+            dlevel_selection\s*\(\s*(-?\d+)\s*\)\s*
+            hierarchy\s*\(.*?\)
+        \s*\)""",
+        re.IGNORECASE | re.VERBOSE | re.DOTALL
+    )
 
-#     def __init__(self):
-#         self._int_parser = _IntParser()
-#         self._hierarchy_parser = _ListParser(
-#             list_name="hierarchy",
-#             item_parser=self._int_parser,
-#             item_pattern=_IntParser.PATTERN
-#         )
+    def __init__(self):
+        self._int_parser = _IntParser()
 
-#     def parse(self, text: str) -> shape.DistanceLevelHeader:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise BlockFormatError(f"Invalid distance_level_header format: '{text}'")
+    def parse(self, text: str) -> shape.DistanceLevelHeader:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid distance_level_header format: '{text}'")
 
-#         dlevel_selection = self._int_parser.parse(match.group(1))
-#         hierarchy = self._parse_block(text, "hierarchy", self._hierarchy_parser)
+        dlevel_selection = self._int_parser.parse(match.group(1))
+        hierarchy = self._parse_values_in_block(text, "hierarchy", self._int_parser)
 
-#         return shape.DistanceLevelHeader(dlevel_selection, hierarchy)
+        return shape.DistanceLevelHeader(dlevel_selection, hierarchy)
 
 
-# class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
-#     PATTERN = re.compile(
-#         r"distance_level\s*\(\s*(.*?)\s*\)", 
-#         re.IGNORECASE | re.DOTALL
-#     )
+class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
+    PATTERN = re.compile(
+        r"distance_level\s*\(\s*(.*?)\s*\)", 
+        re.IGNORECASE | re.DOTALL
+    )
 
-#     def __init__(self):
-#         self._dlevel_header_parser = _DistanceLevelHeaderParser()
-#         #self._subobject_list_parser = _ListParser(
-#         #    list_name="sub_objects",
-#         #    item_parser=_SubObjectParser(),
-#         #    item_pattern=_SubObjectParser.PATTERN
-#         #)
+    def __init__(self):
+        self._dlevel_header_parser = _DistanceLevelHeaderParser()
+        #self._subobject_list_parser = _ListParser(
+        #    list_name="sub_objects",
+        #    item_parser=_SubObjectParser(),
+        #    item_pattern=_SubObjectParser.PATTERN
+        #)
 
-#     def parse(self, text: str) -> shape.DistanceLevel:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise BlockFormatError(f"Invalid distance_level format: '{text}'")
+    def parse(self, text: str) -> shape.DistanceLevel:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid distance_level format: '{text}'")
 
-#         distance_level_header = self._parse_block(text, "distance_level_header", self._dlevel_header_parser)
-#         sub_objects = []#self._subobject_list_parser.parse(inner)
+        distance_level_header = self._parse_block(text, "distance_level_header", self._dlevel_header_parser)
+        sub_objects = []#self._subobject_list_parser.parse(inner)
 
-#         return shape.DistanceLevel(
-#             distance_level_header=distance_level_header,
-#             sub_objects=sub_objects
-#         )
+        return shape.DistanceLevel(
+            distance_level_header=distance_level_header,
+            sub_objects=sub_objects
+        )
 
 
-# class _LodControlParser(_Parser[shape.LodControl]):
-#     PATTERN = re.compile(
-#         r"lod_control\s*\(\s*(.*?)\s*\)", 
-#         re.IGNORECASE | re.DOTALL
-#     )
+class _LodControlParser(_Parser[shape.LodControl]):
+    def __init__(self):
+        self._int_parser = _IntParser()
+        self._distance_level_parser = _DistanceLevelParser()
 
-#     def __init__(self):
-#         self._int_parser = _IntParser()
-#         self._distance_levels_parser = _ListParser(
-#             list_name="distance_levels",
-#             item_parser=_DistanceLevelParser(),
-#             item_pattern=_DistanceLevelParser.PATTERN
-#         )
+    def parse(self, text: str) -> shape.LodControl:
+        dlevel_bias = 0#self._int_parser.parse(match.group(1))
+        distance_levels = []#self._parse_block(text, "distance_levels", self._distance_levels_parser)
 
-#     def parse(self, text: str) -> shape.LodControl:
-#         match = self.PATTERN.search(text)
-#         if not match:
-#             raise BlockFormatError(f"Invalid lod_control format: '{text}'")
-
-#         dlevel_bias = 0#self._int_parser.parse(match.group(1))
-#         distance_levels = self._parse_block(text, "distance_levels", self._distance_levels_parser)
-
-#         distance_levels_header = shape.DistanceLevelsHeader(dlevel_bias)
-#         return shape.LodControl(
-#             distance_levels_header=distance_levels_header,
-#             distance_levels=distance_levels
-#         )
+        distance_levels_header = shape.DistanceLevelsHeader(dlevel_bias)
+        return shape.LodControl(
+            distance_levels_header=distance_levels_header,
+            distance_levels=distance_levels
+        )
 
 
 class _ShapeParser(_Parser[shape.Shape]):
@@ -911,6 +894,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         self._light_model_cfg_parser = _LightModelCfgParser()
         self._vtx_state_parser = _VtxStateParser()
         self._prim_state_parser = _PrimStateParser()
+        self._lod_control_parser = _LodControlParser()
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
@@ -929,7 +913,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         light_model_cfgs = self._parse_items_in_block(text, "light_model_cfgs", "light_model_cfg", self._light_model_cfg_parser).items
         vtx_states = self._parse_items_in_block(text, "vtx_states", "vtx_state", self._vtx_state_parser).items
         prim_states = self._parse_named_items_in_block(text, "prim_states", "prim_state", self._prim_state_parser).items
-        lod_controls = []#self._parse_block(text, "lod_controls", self._lod_controls_parser)
+        lod_controls = self._parse_items_in_block(text, "lod_controls", "lod_control", self._lod_control_parser).items
         animations = None
 
         return shape.Shape(
