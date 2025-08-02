@@ -4,7 +4,6 @@ ShapeIO
 This module provides functions to decode MSTS/ORTS shape files into Python
 objects and to encode them back into the shape file format.
 
-
 Copyright (C) 2025 Peter Grønbæk Andersen <peter@grnbk.io>
 
 This program is free software: you can redistribute it and/or modify
@@ -27,6 +26,8 @@ __all__ = [
     'load', 'loads', 'dump', 'dumps',
     'is_shape', 'is_compressed', 'compress', 'decompress',
     'copy', 'replace', 'replace_ignorecase'
+    'ShapeParserError', 'BlockNotFoundError', 'CountMismatchError'
+    'ParenthesisMismatchError', 'BlockFormatError'
     'ShapeDecoder', 'ShapeEncoder'
 ]
 
@@ -38,4 +39,6 @@ from .shapeio import load, loads, dump, dumps
 from .shapeio import is_shape, is_compressed, compress, decompress
 from .shapeio import copy, replace, replace_ignorecase
 from .decoder import ShapeDecoder
+from .decoder import ShapeParserError, BlockNotFoundError, CountMismatchError
+from .decoder import ParenthesisMismatchError, BlockFormatError
 from .encoder import ShapeEncoder

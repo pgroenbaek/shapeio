@@ -134,8 +134,6 @@ class Matrix:
             ")"
         )
 
-# TODO: Reached here ----------------------
-
 class VertexIdx:
     def __init__(self,
         vertex1_index: int,

@@ -524,17 +524,22 @@ class _DistanceLevelSerializer(_Serializer[shape.DistanceLevel]):
         )
 
 
+class _DistanceLevelsHeaderSerializer(_Serializer[shape.DistanceLevelsHeader]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+
+    def serialize(self, header: shape.DistanceLevelsHeader, depth: int = 0) -> str:
+        if not isinstance(header, shape.DistanceLevelsHeader):
+            raise TypeError(f"Parameter 'header' must be of type shape.DistanceLevelsHeader, but got {type(header).__name__}")
+
+        indent = self.get_indent(depth)
+        return f"{indent}distance_levels_header ( {header.dlevel_bias} )"
+
+
 class _LodControlSerializer(_Serializer[shape.LodControl]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
-        self._int_serializer = _IntSerializer(indent, use_tabs)
-        self._dlevel_list_serializer = _ListSerializer(
-            list_name="distance_levels",
-            item_serializer=_DistanceLevelSerializer(indent, use_tabs),
-            items_per_line=1,
-            newline_after_header=True,
-            newline_before_closing=True
-        )
+        self._distance_levels_header_serializer = _DistanceLevelsHeaderSerializer(indent, use_tabs)
 
     def serialize(self, lod_control: shape.LodControl, depth: int = 0) -> str:
         if not isinstance(lod_control, shape.LodControl):
@@ -544,12 +549,12 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
         inner_depth = depth + 1
         inner_indent = self.get_indent(inner_depth)
 
-        dlevel_bias = self._int_serializer.serialize(lod_control.distance_levels_header.dlevel_bias)
-        dlevels_block = self._dlevel_list_serializer.serialize(lod_control.distance_levels, inner_depth)
+        dlevels_header_block = self._distance_levels_header_serializer.serialize(lod_control.distance_levels_header, inner_depth)
+        dlevels_block = ""#self._dlevel_list_serializer.serialize(lod_control.distance_levels, inner_depth)
 
         return (
             f"{indent}lod_control (\n"
-            f"{inner_indent}distance_levels_header ( {dlevel_bias} )\n"
+            f"{dlevels_header_block}\n"
             f"{dlevels_block}\n"
             f"{indent})"
         )
@@ -573,6 +578,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         self._light_model_cfg_serializer = _LightModelCfgSerializer(indent, use_tabs)
         self._vtx_state_serializer = _VtxStateSerializer(indent, use_tabs)
         self._prim_state_serializer = _PrimStateSerializer(indent, use_tabs)
+        self._lod_control_serializer = _LodControlSerializer(indent, use_tabs)
 
     def serialize(self, s: shape.Shape, depth: int = 0) -> str:
         if not isinstance(s, shape.Shape):
@@ -598,6 +604,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         lines.append(self._serialize_items_in_block(s.light_model_cfgs, "light_model_cfgs", self._light_model_cfg_serializer, inner_depth))
         lines.append(self._serialize_items_in_block(s.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth))
         lines.append(self._serialize_items_in_block(s.prim_states, "prim_states", self._prim_state_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.lod_controls, "lod_controls", self._lod_control_serializer, inner_depth))
 
         if s.animations:
             # TODO handle optional animations block

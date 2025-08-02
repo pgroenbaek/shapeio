@@ -861,16 +861,27 @@ class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
         )
 
 
+class _DistanceLevelsHeaderParser(_Parser[shape.DistanceLevelsHeader]):
+    PATTERN = re.compile(r'distance_levels_header\s*\(\s*(\d+)\s*\)', re.IGNORECASE)
+
+    def parse(self, text: str) -> shape.DistanceLevelsHeader:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid distance_levels_header format: '{text}'")
+
+        dlevel_bias = int(match.group(1))
+        return shape.DistanceLevelsHeader(dlevel_bias)
+
+
 class _LodControlParser(_Parser[shape.LodControl]):
     def __init__(self):
-        self._int_parser = _IntParser()
-        self._distance_level_parser = _DistanceLevelParser()
+        self._distance_levels_header_parser = _DistanceLevelsHeaderParser()
+        #self._distance_level_parser = _DistanceLevelParser()
 
     def parse(self, text: str) -> shape.LodControl:
-        dlevel_bias = 0#self._int_parser.parse(match.group(1))
+        distance_levels_header = self._parse_block(text, "distance_levels_header", self._distance_levels_header_parser)
         distance_levels = []#self._parse_block(text, "distance_levels", self._distance_levels_parser)
 
-        distance_levels_header = shape.DistanceLevelsHeader(dlevel_bias)
         return shape.LodControl(
             distance_levels_header=distance_levels_header,
             distance_levels=distance_levels
