@@ -858,12 +858,15 @@ class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
 class _DistanceLevelsHeaderParser(_Parser[shape.DistanceLevelsHeader]):
     PATTERN = re.compile(r'distance_levels_header\s*\(\s*(\d+)\s*\)', re.IGNORECASE)
 
+    def __init__(self):
+        self._int_parser = _IntParser()
+
     def parse(self, text: str) -> shape.DistanceLevelsHeader:
         match = self.PATTERN.search(text)
         if not match:
             raise BlockFormatError(f"Invalid distance_levels_header format: '{text}'")
 
-        dlevel_bias = int(match.group(1))
+        dlevel_bias = self._int_parser.parse(match.group(1))
         return shape.DistanceLevelsHeader(dlevel_bias)
 
 

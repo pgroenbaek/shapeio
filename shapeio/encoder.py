@@ -541,13 +541,14 @@ class _DistanceLevelSerializer(_Serializer[shape.DistanceLevel]):
 class _DistanceLevelsHeaderSerializer(_Serializer[shape.DistanceLevelsHeader]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
 
     def serialize(self, header: shape.DistanceLevelsHeader, depth: int = 0) -> str:
         if not isinstance(header, shape.DistanceLevelsHeader):
             raise TypeError(f"Parameter 'header' must be of type shape.DistanceLevelsHeader, but got {type(header).__name__}")
 
         indent = self.get_indent(depth)
-        return f"{indent}distance_levels_header ( {header.dlevel_bias} )"
+        return f"{indent}distance_levels_header ( {self._int_serializer.serialize(header.dlevel_bias)} )"
 
 
 class _LodControlSerializer(_Serializer[shape.LodControl]):
@@ -601,30 +602,44 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
-        lines = [f"{indent}shape ("]
-        lines.append(self._shape_header_serializer.serialize(s.shape_header, inner_depth))
-        lines.append(self._serialize_items_in_block(s.volumes, "volumes", self._volume_sphere_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.shader_names, "shader_names", self._named_shader_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.texture_filter_names, "texture_filter_names", self._named_filter_mode_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.points, "points", self._point_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.uv_points, "uv_points", self._uv_point_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.normals, "normals", self._vector_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.sort_vectors, "sort_vectors", self._vector_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.colours, "colours", self._colour_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.matrices, "matrices", self._matrix_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.images, "images", self._image_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.textures, "textures", self._texture_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.light_materials, "light_materials", self._light_material_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.light_model_cfgs, "light_model_cfgs", self._light_model_cfg_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.prim_states, "prim_states", self._prim_state_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(s.lod_controls, "lod_controls", self._lod_control_serializer, inner_depth))
+        shape_header_block = self._shape_header_serializer.serialize(s.shape_header, inner_depth)
+        volumes_block = self._serialize_items_in_block(s.volumes, "volumes", self._volume_sphere_serializer, inner_depth)
+        shader_names_block = self._serialize_items_in_block(s.shader_names, "shader_names", self._named_shader_serializer, inner_depth)
+        texture_filter_names_block = self._serialize_items_in_block(s.texture_filter_names, "texture_filter_names", self._named_filter_mode_serializer, inner_depth)
+        points_block = self._serialize_items_in_block(s.points, "points", self._point_serializer, inner_depth)
+        uv_points_block = self._serialize_items_in_block(s.uv_points, "uv_points", self._uv_point_serializer, inner_depth)
+        normals_block = self._serialize_items_in_block(s.normals, "normals", self._vector_serializer, inner_depth)
+        sort_vectors_block = self._serialize_items_in_block(s.sort_vectors, "sort_vectors", self._vector_serializer, inner_depth)
+        colours_block = self._serialize_items_in_block(s.colours, "colours", self._colour_serializer, inner_depth)
+        matrices_block = self._serialize_items_in_block(s.matrices, "matrices", self._matrix_serializer, inner_depth)
+        images_block = self._serialize_items_in_block(s.images, "images", self._image_serializer, inner_depth)
+        textures_block = self._serialize_items_in_block(s.textures, "textures", self._texture_serializer, inner_depth)
+        light_materials_block = self._serialize_items_in_block(s.light_materials, "light_materials", self._light_material_serializer, inner_depth)
+        light_model_cfgs_block = self._serialize_items_in_block(s.light_model_cfgs, "light_model_cfgs", self._light_model_cfg_serializer, inner_depth)
+        vtx_states_block = self._serialize_items_in_block(s.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth)
+        prim_states_block = self._serialize_items_in_block(s.prim_states, "prim_states", self._prim_state_serializer, inner_depth)
+        lod_controls_block = self._serialize_items_in_block(s.lod_controls, "lod_controls", self._lod_control_serializer, inner_depth)
 
-        if s.animations:
-            # TODO handle optional animations block
-            pass
-        
-        lines.append(f"{indent})")
-
-        return "\n".join(lines)
+        return (
+            f"{indent}shape (\n"
+            f"{shape_header_block}\n"
+            f"{volumes_block}\n"
+            f"{shader_names_block}\n"
+            f"{texture_filter_names_block}\n"
+            f"{points_block}\n"
+            f"{uv_points_block}\n"
+            f"{normals_block}\n"
+            f"{sort_vectors_block}\n"
+            f"{colours_block}\n"
+            f"{matrices_block}\n"
+            f"{images_block}\n"
+            f"{textures_block}\n"
+            f"{light_materials_block}\n"
+            f"{light_model_cfgs_block}\n"
+            f"{vtx_states_block}\n"
+            f"{prim_states_block}\n"
+            f"{lod_controls_block}\n"
+            f"{animations_block + '\n' if animations_block else ''}"
+            f"{indent})"
+        )
 
