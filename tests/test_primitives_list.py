@@ -52,10 +52,10 @@ def test_parse_primitives_basic(parser):
     text = (
         "primitives ( 5\n"
         "  prim_state_idx ( 1 )\n"
-        "  indexed_trilist ( )\n"
-        "  indexed_trilist ( )\n"
+        "  indexed_trilist (\n vertex_idxs ( 0 )\n normal_idxs ( 0 )\n flags ( 0 )\n )\n"
+        "  indexed_trilist (\n vertex_idxs ( 0 )\n normal_idxs ( 0 )\n flags ( 0 )\n )\n"
         "  prim_state_idx ( 2 )\n"
-        "  indexed_trilist ( )\n"
+        "  indexed_trilist (\n vertex_idxs ( 0 )\n normal_idxs ( 0 )\n flags ( 0 )\n )\n"
         ")"
     )
     primitives = parser.parse(text)

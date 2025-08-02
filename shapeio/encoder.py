@@ -55,12 +55,14 @@ class _Serializer(ABC, Generic[T]):
         item_serializer: "_Serializer[T]",
         depth: int = 0,
         items_per_line: Optional[int] = 1,
-        count_multiplier: int = 1,
+        disable_inner_indent: bool = False,
+        count_multiplier: float = 1,
         newline_after_header: bool = True,
         newline_before_closing: bool = True
     ) -> str:
 
-        inner_depth = depth + 1
+
+        inner_depth = depth if disable_inner_indent else depth + 1
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(inner_depth)
 
@@ -519,16 +521,75 @@ class _VertexSetSerializer(_Serializer[shape.VertexSet]):
 
 
 class _IndexedTrilistSerializer(_Serializer[shape.IndexedTrilist]):
-    def serialize(self, value: shape.IndexedTrilist, depth: int = 0) -> str:
+    def __init__(self, indent=1, use_tabs=True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._str_serializer = _StrSerializer(indent, use_tabs)
+        self._hex_serializer = _HexSerializer(indent, use_tabs)
+    
+    def serialize(self, indexed_trilist: shape.IndexedTrilist, depth: int = 0) -> str:
+        if not isinstance(indexed_trilist, shape.IndexedTrilist):
+            raise TypeError(f"Parameter 'indexed_trilist' must be a shape.IndexedTrilist, but got {type(indexed_trilist).__name__}")
+        
         indent = self.get_indent(depth)
-        return f"{indent}indexed_trilist ( )"
+        inner_depth = depth + 1
+
+        flattened_vertex_idxs = [
+            val
+            for v in indexed_trilist.vertex_indexes
+            for val in (v.vertex1_index, v.vertex2_index, v.vertex3_index)
+        ]
+
+        flattened_normal_idxs = [
+            f"{n.index} {n.unknown2}"
+            for n in indexed_trilist.normal_indexes
+        ]
+
+        vertex_idxs_block = self._serialize_items_in_block(
+            flattened_vertex_idxs,
+            "vertex_idxs",
+            self._int_serializer,
+            inner_depth,
+            disable_inner_indent=True,
+            items_per_line=240,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+        normal_idxs_block = self._serialize_items_in_block(
+            flattened_normal_idxs,
+            "normal_idxs",
+            self._str_serializer,
+            inner_depth,
+            disable_inner_indent=True,
+            items_per_line=120,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+        flags_block = self._serialize_items_in_block(
+            indexed_trilist.flags,
+            "flags",
+            self._hex_serializer,
+            inner_depth,
+            disable_inner_indent=True,
+            items_per_line=120,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+
+        return (
+            f"{indent}indexed_trilist (\n"
+            f"{vertex_idxs_block}\n"
+            f"{normal_idxs_block}\n"
+            f"{flags_block}\n"
+            f"{indent})"
+        )
 
 
 class _PrimitivesSerializer(_Serializer[List[shape.Primitive]]):
     def __init__(self, indent=1, use_tabs=True):
         super().__init__(indent, use_tabs)
         self._trilist_serializer = _IndexedTrilistSerializer(indent, use_tabs)
-        self._int_serializer = _IntSerializer()
+        self._int_serializer = _IntSerializer(indent, use_tabs)
 
     def serialize(self, primitives: List[shape.Primitive], depth: int = 0) -> str:
         if not isinstance(primitives, list):

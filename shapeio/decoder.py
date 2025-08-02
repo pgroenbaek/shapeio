@@ -864,8 +864,33 @@ class _VertexSetParser(_Parser[shape.VertexSet]):
 
 
 class _IndexedTrilistParser(_Parser[shape.IndexedTrilist]):
+    def __init__(self):
+        super().__init__()
+        self._int_parser = _IntParser()
+        self._hex_parser = _HexParser()
+
     def parse(self, text: str) -> shape.IndexedTrilist:
-        return shape.IndexedTrilist([], [], [])
+        raw_vertex_idxs = self._parse_values_in_block(text, "vertex_idxs", self._int_parser)
+        raw_normal_idxs = self._parse_values_in_block(text, "normal_idxs", self._int_parser, verify_count=False)
+        flags = self._parse_values_in_block(text, "flags", self._hex_parser).items
+
+        if raw_normal_idxs.expected_count * 2 != len(raw_normal_idxs.items):
+            raise CountMismatchException("Some error message")
+
+        vertex_idxs = [
+            shape.VertexIdx(raw_vertex_idxs.items[i], raw_vertex_idxs.items[i + 1], raw_vertex_idxs.items[i + 2])
+            for i in range(0, len(raw_vertex_idxs.items), 3)
+        ]
+        normal_idxs = [
+            shape.NormalIdx(raw_normal_idxs.items[i], raw_normal_idxs.items[i + 1])
+            for i in range(0, len(raw_normal_idxs.items), 2)
+        ]
+
+        return shape.IndexedTrilist(
+            vertex_indexes=vertex_idxs,
+            normal_indexes=normal_idxs,
+            flags=flags
+        )
 
 
 class _PrimitivesParser(_Parser[List[shape.Primitive]]):
@@ -922,7 +947,7 @@ class _SubObjectParser(_Parser[shape.SubObject]):
         sub_object_header = None#self._parse_block(text, "sub_object_header", self._sub_object_header_parser)
         vertices = self._parse_items_in_block(text, "vertices", "vertex", self._vertex_parser).items
         vertex_sets = self._parse_items_in_block(text, "vertex_sets", "vertex_set", self._vertex_set_parser).items
-        primitives = self._primitives_parser.parse(text)
+        primitives = self._parse_block(text, "primitives", self._primitives_parser)
 
         return shape.SubObject(
             sub_object_header=sub_object_header,
