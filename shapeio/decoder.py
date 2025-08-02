@@ -810,37 +810,35 @@ class _PrimStateParser(_Parser[shape.PrimState]):
         )
 
 
-class _DistanceLevelHeaderParser(_Parser[shape.DistanceLevelHeader]):
-    PATTERN = re.compile(
-        r"""distance_level_header\s*\(\s*
-            dlevel_selection\s*\(\s*(-?\d+)\s*\)\s*
-            hierarchy\s*\(.*?\)
-        \s*\)""",
-        re.IGNORECASE | re.VERBOSE | re.DOTALL
-    )
+class _DistanceLevelSelectionParser(_Parser[int]):
+    PATTERN = re.compile(r'dlevel_selection\s*\(\s*(\d+)\s*\)', re.IGNORECASE)
 
     def __init__(self):
         self._int_parser = _IntParser()
 
-    def parse(self, text: str) -> shape.DistanceLevelHeader:
+    def parse(self, text: str) -> int:
         match = self.PATTERN.search(text)
         if not match:
-            raise BlockFormatError(f"Invalid distance_level_header format: '{text}'")
+            raise BlockFormatError(f"Invalid dlevel_selection format: '{text}'")
 
-        dlevel_selection = self._int_parser.parse(match.group(1))
-        hierarchy = self._parse_values_in_block(text, "hierarchy", self._int_parser)
+        return self._int_parser.parse(match.group(1))
+
+
+class _DistanceLevelHeaderParser(_Parser[shape.DistanceLevelHeader]):
+    def __init__(self):
+        self._distance_level_selection_parser = _DistanceLevelSelectionParser()
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.DistanceLevelHeader:
+        dlevel_selection = self._parse_block(text, "dlevel_selection", self._distance_level_selection_parser)
+        hierarchy = self._parse_values_in_block(text, "hierarchy", self._int_parser).items
 
         return shape.DistanceLevelHeader(dlevel_selection, hierarchy)
 
 
 class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
-    PATTERN = re.compile(
-        r"distance_level\s*\(\s*(.*?)\s*\)", 
-        re.IGNORECASE | re.DOTALL
-    )
-
     def __init__(self):
-        self._dlevel_header_parser = _DistanceLevelHeaderParser()
+        self._distance_level_header_parser = _DistanceLevelHeaderParser()
         #self._subobject_list_parser = _ListParser(
         #    list_name="sub_objects",
         #    item_parser=_SubObjectParser(),
@@ -848,11 +846,7 @@ class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
         #)
 
     def parse(self, text: str) -> shape.DistanceLevel:
-        match = self.PATTERN.search(text)
-        if not match:
-            raise BlockFormatError(f"Invalid distance_level format: '{text}'")
-
-        distance_level_header = self._parse_block(text, "distance_level_header", self._dlevel_header_parser)
+        distance_level_header = self._parse_block(text, "distance_level_header", self._distance_level_header_parser)
         sub_objects = []#self._subobject_list_parser.parse(inner)
 
         return shape.DistanceLevel(
@@ -876,11 +870,11 @@ class _DistanceLevelsHeaderParser(_Parser[shape.DistanceLevelsHeader]):
 class _LodControlParser(_Parser[shape.LodControl]):
     def __init__(self):
         self._distance_levels_header_parser = _DistanceLevelsHeaderParser()
-        #self._distance_level_parser = _DistanceLevelParser()
+        self._distance_level_parser = _DistanceLevelParser()
 
     def parse(self, text: str) -> shape.LodControl:
         distance_levels_header = self._parse_block(text, "distance_levels_header", self._distance_levels_header_parser)
-        distance_levels = []#self._parse_block(text, "distance_levels", self._distance_levels_parser)
+        distance_levels = self._parse_items_in_block(text, "distance_levels", "distance_level", self._distance_level_parser).items
 
         return shape.LodControl(
             distance_levels_header=distance_levels_header,

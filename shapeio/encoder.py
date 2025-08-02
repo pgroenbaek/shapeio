@@ -464,31 +464,45 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         )
 
 
-class _DistanceLevelHeaderSerializer(_Serializer[shape.DistanceLevelHeader]):
+class _DistanceLevelSelectionSerializer(_Serializer[int]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self._int_serializer = _IntSerializer(indent, use_tabs)
-        self._hierarchy_serializer = _ListSerializer(
-            list_name="hierarchy",
-            item_serializer=self._int_serializer,
-            items_per_line=None,
-            newline_after_header=False,
-            newline_before_closing=False
-        )
+
+    def serialize(self, value: int, depth: int = 0) -> str:
+        if not isinstance(value, int):
+            raise TypeError(f"Parameter 'value' must be of type int, but got {type(value).__name__}")
+
+        indent = self.get_indent(depth)
+        return f"{indent}dlevel_selection ( {self._int_serializer.serialize(value)} )"
+
+
+class _DistanceLevelHeaderSerializer(_Serializer[shape.DistanceLevelHeader]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._distance_level_selection_serializer = _DistanceLevelSelectionSerializer(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
 
     def serialize(self, header: shape.DistanceLevelHeader, depth: int = 0) -> str:
         if not isinstance(header, shape.DistanceLevelHeader):
             raise TypeError(f"Parameter 'header' must be of type shape.DistanceLevelHeader, but got {type(header).__name__}")
 
         indent = self.get_indent(depth)
-        inner_indent = self.get_indent(depth + 1)
+        inner_depth = depth + 1
 
-        dlevel_block = f"{inner_indent}dlevel_selection ( {self._int_serializer.serialize(header.dlevel_selection)} )"
-        hierarchy_block = self._hierarchy_serializer.serialize(header.hierarchy, depth + 1)
-
+        dlevel_selection_block = self._distance_level_selection_serializer.serialize(header.dlevel_selection, inner_depth)
+        hierarchy_block = self._serialize_items_in_block(
+            header.hierarchy,
+            "hierarchy",
+            self._int_serializer,
+            inner_depth,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
         return (
             f"{indent}distance_level_header (\n"
-            f"{dlevel_block}\n"
+            f"{dlevel_selection_block}\n"
             f"{hierarchy_block}\n"
             f"{indent})"
         )
@@ -540,6 +554,7 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self._distance_levels_header_serializer = _DistanceLevelsHeaderSerializer(indent, use_tabs)
+        self._distance_level_serializer = _DistanceLevelSerializer(indent, use_tabs)
 
     def serialize(self, lod_control: shape.LodControl, depth: int = 0) -> str:
         if not isinstance(lod_control, shape.LodControl):
@@ -547,10 +562,9 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
 
         indent = self.get_indent(depth)
         inner_depth = depth + 1
-        inner_indent = self.get_indent(inner_depth)
 
         dlevels_header_block = self._distance_levels_header_serializer.serialize(lod_control.distance_levels_header, inner_depth)
-        dlevels_block = ""#self._dlevel_list_serializer.serialize(lod_control.distance_levels, inner_depth)
+        dlevels_block = self._serialize_items_in_block(lod_control.distance_levels, "distance_levels", self._distance_level_serializer, inner_depth)
 
         return (
             f"{indent}lod_control (\n"
