@@ -464,6 +464,36 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         )
 
 
+class _SubObjectSerializer(_Serializer[shape.SubObject]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        #self._sub_object_header_serializer = _SubObjectHeaderSerializer(indent, use_tabs)
+        #self._vertex_serializer = _VertexSerializer(indent, use_tabs)
+        #self._vertex_set_serializer = _VertexSetSerializer(indent, use_tabs)
+        #self._primitive_serializer = _PrimitiveSerializer(indent, use_tabs)
+
+    def serialize(self, sub_object: shape.SubObject, depth: int = 0) -> str:
+        if not isinstance(sub_object, shape.SubObject):
+            raise TypeError(f"Parameter 'sub_object' must be of type shape.SubObject, but got {type(sub_object).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        header_block = ""#self._sub_object_header_serializer.serialize(sub_object.sub_object_header, inner_depth)
+        vertices_block = ""#self._serialize_items_in_block(sub_object.vertices, "vertices", self._vertex_serializer, inner_depth)
+        vertex_sets_block = ""#self._serialize_items_in_block(sub_object.vertex_sets, "vertex_sets", self._vertex_set_serializer, inner_depth)
+        primitives_block = ""#self._serialize_items_in_block(sub_object.primitives, "primitives", self._primitive_serializer, inner_depth)
+
+        return (
+            f"{indent}sub_object (\n"
+            f"{header_block}\n"
+            f"{vertices_block}\n"
+            f"{vertex_sets_block}\n"
+            f"{primitives_block}\n"
+            f"{indent})"
+        )
+
+
 class _DistanceLevelSelectionSerializer(_Serializer[int]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
@@ -512,13 +542,7 @@ class _DistanceLevelSerializer(_Serializer[shape.DistanceLevel]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self._dlevel_header_serializer = _DistanceLevelHeaderSerializer(indent, use_tabs)
-        #self._subobject_list_serializer = _ListSerializer(
-        #    list_name="sub_objects",
-        #    item_serializer=_SubObjectSerializer(indent, use_tabs),
-        #    items_per_line=1,
-        #    newline_after_header=False,
-        #    newline_before_closing=False
-        #)
+        self._sub_object_serializer = _SubObjectSerializer()
 
     def serialize(self, dlevel: shape.DistanceLevel, depth: int = 0) -> str:
         if not isinstance(dlevel, shape.DistanceLevel):
@@ -528,12 +552,12 @@ class _DistanceLevelSerializer(_Serializer[shape.DistanceLevel]):
         inner_depth = depth + 1
 
         header_block = self._dlevel_header_serializer.serialize(dlevel.distance_level_header, inner_depth)
-        subobject_block = ""#self._subobject_list_serializer.serialize(dlevel.sub_objects, inner_depth)
+        sub_objects_block = self._serialize_items_in_block(dlevel.sub_objects, "sub_objects", self._sub_object_serializer, inner_depth)
 
         return (
             f"{indent}distance_level (\n"
             f"{header_block}\n"
-            f"{subobject_block}\n"
+            f"{sub_objects_block}\n"
             f"{indent})"
         )
 
@@ -619,6 +643,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         vtx_states_block = self._serialize_items_in_block(s.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth)
         prim_states_block = self._serialize_items_in_block(s.prim_states, "prim_states", self._prim_state_serializer, inner_depth)
         lod_controls_block = self._serialize_items_in_block(s.lod_controls, "lod_controls", self._lod_control_serializer, inner_depth)
+        animations_block = None
 
         return (
             f"{indent}shape (\n"

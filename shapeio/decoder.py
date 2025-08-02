@@ -810,6 +810,28 @@ class _PrimStateParser(_Parser[shape.PrimState]):
         )
 
 
+class _SubObjectParser(_Parser[shape.SubObject]):
+    def __init__(self):
+        #self._sub_object_header_parser = _SubObjectHeaderParser()
+        #self._vertex_parser = _VertexParser()
+        #self._vertex_set_parser = _VertexSetParser()
+        #self._primitive_parser = _PrimitiveParser()
+        pass
+
+    def parse(self, text: str) -> shape.SubObject:
+        sub_object_header = None#self._parse_block(text, "sub_object_header", self._sub_object_header_parser)
+        vertices = []#self._parse_items_in_block(text, "vertices", "vertex", self._vertex_parser).items
+        vertex_sets = []#self._parse_items_in_block(text, "vertex_sets", "vertex_set", self._vertex_set_parser).items
+        primitives = []#self._parse_items_in_block(text, "primitives", "primitive", self._primitive_parser).items
+
+        return shape.SubObject(
+            sub_object_header=sub_object_header,
+            vertices=vertices,
+            vertex_sets=vertex_sets,
+            primitives=primitives
+        )
+
+
 class _DistanceLevelSelectionParser(_Parser[int]):
     PATTERN = re.compile(r'dlevel_selection\s*\(\s*(\d+)\s*\)', re.IGNORECASE)
 
@@ -839,15 +861,11 @@ class _DistanceLevelHeaderParser(_Parser[shape.DistanceLevelHeader]):
 class _DistanceLevelParser(_Parser[shape.DistanceLevel]):
     def __init__(self):
         self._distance_level_header_parser = _DistanceLevelHeaderParser()
-        #self._subobject_list_parser = _ListParser(
-        #    list_name="sub_objects",
-        #    item_parser=_SubObjectParser(),
-        #    item_pattern=_SubObjectParser.PATTERN
-        #)
+        self._sub_object_parser = _SubObjectParser()
 
     def parse(self, text: str) -> shape.DistanceLevel:
         distance_level_header = self._parse_block(text, "distance_level_header", self._distance_level_header_parser)
-        sub_objects = []#self._subobject_list_parser.parse(inner)
+        sub_objects = self._parse_items_in_block(text, "sub_objects", "sub_object", self._sub_object_parser).items
 
         return shape.DistanceLevel(
             distance_level_header=distance_level_header,
