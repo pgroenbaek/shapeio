@@ -464,12 +464,65 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         )
 
 
+class _VertexSerializer(_Serializer[shape.Vertex]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._hex_serializer = _HexSerializer(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+
+    def serialize(self, vertex: shape.Vertex, depth: int = 0) -> str:
+        if not isinstance(vertex, shape.Vertex):
+            raise TypeError(f"Parameter 'vertex' must be of type shape.Vertex, but got {type(vertex).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        vertex_uvs_block = self._serialize_items_in_block(
+            vertex.vertex_uvs,
+            "vertex_uvs",
+            self._int_serializer,
+            inner_depth,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+
+        return (
+            f"{indent}vertex ( "
+            f"{self._hex_serializer.serialize(vertex.flags)} "
+            f"{self._int_serializer.serialize(vertex.point_index)} "
+            f"{self._int_serializer.serialize(vertex.normal_index)} "
+            f"{self._hex_serializer.serialize(vertex.colour1)} "
+            f"{self._hex_serializer.serialize(vertex.colour2)}\n"
+            f"{vertex_uvs_block}\n"
+            f"{indent})"
+        )
+
+
+class _VertexSetSerializer(_Serializer[shape.VertexSet]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+
+    def serialize(self, vertex_set: shape.VertexSet, depth: int = 0) -> str:
+        if not isinstance(vertex_set, shape.VertexSet):
+            raise TypeError(f"Parameter 'vertex_set' must be of type shape.VertexSet, but got {type(vertex_set).__name__}")
+
+        indent = self.get_indent(depth)
+        return (
+            f"{indent}vertex_set ( "
+            f"{self._int_serializer.serialize(vertex_set.vtx_state)} "
+            f"{self._int_serializer.serialize(vertex_set.vtx_start_index)} "
+            f"{self._int_serializer.serialize(vertex_set.vtx_count)} )"
+        )
+
+
 class _SubObjectSerializer(_Serializer[shape.SubObject]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         #self._sub_object_header_serializer = _SubObjectHeaderSerializer(indent, use_tabs)
-        #self._vertex_serializer = _VertexSerializer(indent, use_tabs)
-        #self._vertex_set_serializer = _VertexSetSerializer(indent, use_tabs)
+        self._vertex_serializer = _VertexSerializer(indent, use_tabs)
+        self._vertex_set_serializer = _VertexSetSerializer(indent, use_tabs)
         #self._primitive_serializer = _PrimitiveSerializer(indent, use_tabs)
 
     def serialize(self, sub_object: shape.SubObject, depth: int = 0) -> str:
@@ -480,8 +533,8 @@ class _SubObjectSerializer(_Serializer[shape.SubObject]):
         inner_depth = depth + 1
 
         header_block = ""#self._sub_object_header_serializer.serialize(sub_object.sub_object_header, inner_depth)
-        vertices_block = ""#self._serialize_items_in_block(sub_object.vertices, "vertices", self._vertex_serializer, inner_depth)
-        vertex_sets_block = ""#self._serialize_items_in_block(sub_object.vertex_sets, "vertex_sets", self._vertex_set_serializer, inner_depth)
+        vertices_block = self._serialize_items_in_block(sub_object.vertices, "vertices", self._vertex_serializer, inner_depth)
+        vertex_sets_block = self._serialize_items_in_block(sub_object.vertex_sets, "vertex_sets", self._vertex_set_serializer, inner_depth)
         primitives_block = ""#self._serialize_items_in_block(sub_object.primitives, "primitives", self._primitive_serializer, inner_depth)
 
         return (
@@ -530,6 +583,7 @@ class _DistanceLevelHeaderSerializer(_Serializer[shape.DistanceLevelHeader]):
             newline_after_header=False,
             newline_before_closing=False
         )
+
         return (
             f"{indent}distance_level_header (\n"
             f"{dlevel_selection_block}\n"

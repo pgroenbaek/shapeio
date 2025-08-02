@@ -810,18 +810,71 @@ class _PrimStateParser(_Parser[shape.PrimState]):
         )
 
 
+class _VertexParser(_Parser[shape.Vertex]):
+    PATTERN = re.compile(
+        r'vertex\s*\(\s*([0-9A-Fa-f]{8})\s+(\d+)\s+(\d+)\s+([0-9A-Fa-f]{8})\s+([0-9A-Fa-f]{8})',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._hex_parser = _HexParser()
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.Vertex:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid vertex format: '{text}'")
+
+        flags = self._hex_parser.parse(match.group(1))
+        point_index = self._int_parser.parse(match.group(2))
+        normal_index = self._int_parser.parse(match.group(3))
+        colour1 = self._hex_parser.parse(match.group(4))
+        colour2 = self._hex_parser.parse(match.group(5))
+        vertex_uvs = self._parse_values_in_block(text, "vertex_uvs", self._int_parser).items
+
+        return shape.Vertex(
+            flags,
+            point_index,
+            normal_index,
+            colour1,
+            colour2,
+            vertex_uvs
+        )
+
+
+class _VertexSetParser(_Parser[shape.VertexSet]):
+    PATTERN = re.compile(
+        r'vertex_set\s*\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.VertexSet:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid vertex_set format: '{text}'")
+
+        vtx_state = self._int_parser.parse(match.group(1))
+        vtx_start_index = self._int_parser.parse(match.group(2))
+        vtx_count = self._int_parser.parse(match.group(3))
+
+        return shape.VertexSet(vtx_state, vtx_start_index, vtx_count)
+
+
 class _SubObjectParser(_Parser[shape.SubObject]):
     def __init__(self):
         #self._sub_object_header_parser = _SubObjectHeaderParser()
-        #self._vertex_parser = _VertexParser()
-        #self._vertex_set_parser = _VertexSetParser()
+        self._vertex_parser = _VertexParser()
+        self._vertex_set_parser = _VertexSetParser()
         #self._primitive_parser = _PrimitiveParser()
         pass
 
     def parse(self, text: str) -> shape.SubObject:
         sub_object_header = None#self._parse_block(text, "sub_object_header", self._sub_object_header_parser)
-        vertices = []#self._parse_items_in_block(text, "vertices", "vertex", self._vertex_parser).items
-        vertex_sets = []#self._parse_items_in_block(text, "vertex_sets", "vertex_set", self._vertex_set_parser).items
+        vertices = self._parse_items_in_block(text, "vertices", "vertex", self._vertex_parser).items
+        vertex_sets = self._parse_items_in_block(text, "vertex_sets", "vertex_set", self._vertex_set_parser).items
         primitives = []#self._parse_items_in_block(text, "primitives", "primitive", self._primitive_parser).items
 
         return shape.SubObject(
