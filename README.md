@@ -19,31 +19,31 @@ See also:
 
 The following platform dependencies are **only required for shape compression and decompression**. Other parts of the module will work fine without them.
 
-This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore the Mono runtime is required on Linux and macOS, and the .NET Framework is required on Windows.
+This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore, if you wish to compress or decompress shapes, the Mono runtime is required on Linux and macOS, and the .NET Framework is required on Windows.
 
-The `TK.MSTS.Tokens.dll` library is not included with the Python module. But can be downloaded as part of the TK_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/).
+The `TK.MSTS.Tokens.dll` library is not included with the Python module. But can be downloaded as part of the TK_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). You will only need the DLL file itself from that package.
 
 See the [Usage section](#compression) for more details on how to compress and decompress shape files.
 
-How to install the Mono runtime or .NET Framework on your operating system:
+### To install the prerequisites on your operating system:
 
-### Linux
+#### Linux
 
 ```bash
 sudo apt update
 sudo apt install mono-complete
 ```
 
-### macOS
+#### macOS
 
 ```bash
 brew install mono
 ```
 
-### Windows
+#### Windows
 Download and install [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft.
 
-The .NET Framework is typically already available on most Windows systems.
+The .NET Framework is typically already available on most Windows machines.
 
 
 ## Installation
@@ -165,10 +165,10 @@ with open("./path/to/example.s", "r") as f:
 # Print the point in index 17.
 print(my_shape.points[17])
 
-# Iterate over points, print point in index 17.
-for idx, point in enumerate(my_shape.points):
-    if idx == 17:
-        print(point)
+# Iterate over points, print uv_point in index 10.
+for idx, uv_point in enumerate(my_shape.uv_points):
+    if idx == 10:
+        print(uv_point)
 ```
 
 ### Modifying shape data
@@ -183,9 +183,9 @@ with open("./path/to/example.s", "r") as f:
 # Modify an existing point.
 my_shape.points[1].x = 17
 
-# Add a new point.
-new_point = shape.Point(0.0, 5.0, 2.2)
-my_shape.points.append(new_point)
+# Add a new uv_point.
+new_uv_point = shape.UVPoint(0.2, 0.5)
+my_shape.uv_points.append(new_uv_point)
 ```
 
 ## Running Tests
