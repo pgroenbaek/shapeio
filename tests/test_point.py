@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.shape import Point
+from shapeio.shape import Point, UVPoint
 from shapeio.decoder import _PointParser, BlockFormatError
 from shapeio.encoder import _PointSerializer
 
@@ -64,6 +64,14 @@ def test_parse_point_with_whitespace(parser):
 def test_parse_invalid_point_raises(parser, bad_input):
     with pytest.raises(BlockFormatError):
         parser.parse(bad_input)
+
+
+@pytest.mark.parametrize("bad_input", [
+    UVPoint(1.0, 2.2),
+])
+def test_serialize_invalid_type_raises(serializer, bad_input):
+    with pytest.raises(TypeError):
+        serializer.serialize(bad_input)
 
 
 def test_serialize_point_with_depth_and_spaces():

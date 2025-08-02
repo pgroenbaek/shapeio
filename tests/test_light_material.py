@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.shape import LightMaterial
+from shapeio.shape import LightMaterial, Point
 from shapeio.decoder import _LightMaterialParser, BlockFormatError
 from shapeio.encoder import _LightMaterialSerializer
 
@@ -78,4 +78,12 @@ def test_serialize_light_material_with_depth(serializer):
 def test_parse_invalid_light_material_raises(parser, bad_input):
     with pytest.raises(BlockFormatError):
         parser.parse(bad_input)
+
+
+@pytest.mark.parametrize("bad_input", [
+    Point(1.0, 2.2, 3.2),
+])
+def test_serialize_invalid_type_raises(serializer, bad_input):
+    with pytest.raises(TypeError):
+        serializer.serialize(bad_input)
 

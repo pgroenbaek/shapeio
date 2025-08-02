@@ -88,7 +88,7 @@ def dump(
 def load(filepath: str) -> shape.Shape:
     if is_compressed(filepath):
         raise ValueError("""Cannot load shape while it is compressed.
-            Please use the 'decompress(ffeditc_path: str)' function or decompress it manually.""")
+            Please use the 'decompress' function or decompress it by hand.""")
     
     with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
         text = f.read()
@@ -128,23 +128,21 @@ def is_compressed(filepath: str) -> Optional[bool]:
 def compress(
     input_filepath: str,
     output_filepath: str,
-    tk_utils_dll_filepath: str
+    tkutils_dll_filepath: str
 ) -> bool:
 
     if not is_compressed(input_filepath):
-        #subprocess.call([ffeditc_path, filepath, "/o:" + filepath])
-        return compression.compress_shape(input_filepath, output_filepath, tk_utils_dll_filepath)
+        return compression.compress_shape(input_filepath, output_filepath, tkutils_dll_filepath)
 
 
 def decompress(
     input_filepath: str,
     output_filepath: str,
-    tk_utils_dll_filepath: str
+    tkutils_dll_filepath: str
 ) -> bool:
 
     if is_compressed(input_filepath):
-        #subprocess.call([ffeditc_path, filepath, "/u", "/o:" + filepath])
-        return compression.decompress_shape(input_filepath, output_filepath, tk_utils_dll_filepath)
+        return compression.decompress_shape(input_filepath, output_filepath, tkutils_dll_filepath)
 
 
 def is_shape(filepath: str) -> bool:
@@ -158,7 +156,7 @@ def copy(old_filepath: str, new_filepath: str) -> None:
 def replace(filepath: str, search_exp: str, replace_str: str) -> None:
     if is_shape(filepath) and is_compressed(filepath):
         raise ValueError("""Cannot replace text in a compressed shape.
-            Please use the 'decompress(ffeditc_path: str)' function or decompress it manually.""")
+            Please use the 'decompress' function or decompress it by hand.""")
 
     pattern = re.compile(search_exp)
     encoding = _detect_encoding(filepath)
@@ -175,7 +173,7 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
 def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None:
     if is_shape(filepath) and is_compressed(filepath):
         raise ValueError("""Cannot replace text in a compressed shape.
-            Please use the 'decompress(ffeditc_path: str)' function or decompress it manually.""")
+            Please use the 'decompress' function or decompress it by hand.""")
 
     pattern = re.compile(search_exp, re.IGNORECASE)
     encoding = _detect_encoding(filepath)

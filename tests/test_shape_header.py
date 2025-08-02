@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.shape import ShapeHeader
+from shapeio.shape import ShapeHeader, Point
 from shapeio.decoder import _ShapeHeaderParser, BlockFormatError
 from shapeio.encoder import _ShapeHeaderSerializer
 
@@ -64,6 +64,14 @@ def test_parse_shape_header_with_whitespace(parser):
 def test_parse_invalid_shape_header_raises(parser, bad_input):
     with pytest.raises(BlockFormatError):
         parser.parse(bad_input)
+
+
+@pytest.mark.parametrize("bad_input", [
+    Point(1.0, 2.2, 3.2),
+])
+def test_serialize_invalid_type_raises(serializer, bad_input):
+    with pytest.raises(TypeError):
+        serializer.serialize(bad_input)
 
 
 def test_serialize_shape_header_with_depth_and_spaces():

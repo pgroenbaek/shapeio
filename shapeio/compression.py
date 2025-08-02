@@ -31,8 +31,8 @@ def check_dependencies():
         raise EnvironmentError(f"Unsupported OS: {system}")
 
 
-def load_tk_utils_dll(tk_utils_dll_path: str):
-    dll_path = Path(tk_utils_dll_path)
+def load_tkutils_dll(tkutils_dll_path: str):
+    dll_path = Path(tkutils_dll_path)
 
     if not dll_path.exists():
         raise FileNotFoundError(f".NET DLL not found at: {dll_path}")
@@ -53,13 +53,13 @@ def load_tk_utils_dll(tk_utils_dll_path: str):
     return TokenFileHandler()
 
 
-def compress_shape(input_path: str, output_path: str, tk_utils_dll_path: str) -> bool:
+def compress_shape(input_path: str, output_path: str, tkutils_dll_path: str) -> bool:
     check_dependencies()
-    handler = load_tk_utils_dll(tk_utils_dll_path)
+    handler = load_tkutils_dll(tkutils_dll_path)
     return handler.Compress(input_path, output_path)
 
 
-def decompress_shape(input_path: str, output_path: str, tk_utils_dll_path: str) -> bool:
+def decompress_shape(input_path: str, output_path: str, tkutils_dll_path: str) -> bool:
     check_dependencies()
-    handler = load_tk_utils_dll(tk_utils_dll_path)
+    handler = load_tkutils_dll(tkutils_dll_path)
     return handler.Decompress(input_path, output_path)

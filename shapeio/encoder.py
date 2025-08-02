@@ -107,21 +107,33 @@ class _Serializer(ABC, Generic[T]):
 
 class _IntSerializer(_Serializer[int]):
     def serialize(self, value: int, depth: int = 0) -> str:
+        if not isinstance(value, int):
+            raise TypeError(f"Parameter 'value' must be of type int, but got {type(value).__name__}")
+        
         return str(value)
 
 
 class _FloatSerializer(_Serializer[float]):
     def serialize(self, value: float, depth: int = 0) -> str:
+        if not isinstance(value, float) and not isinstance(value, int):
+            raise TypeError(f"Parameter 'value' must be of type float or int, but got {type(value).__name__}")
+
         return f"{value:.6g}"
 
 
 class _StrSerializer(_Serializer[str]):
     def serialize(self, value: str, depth: int = 0) -> str:
+        if not isinstance(value, str):
+            raise TypeError(f"Parameter 'value' must be of type str, but got {type(value).__name__}")
+
         return value
 
 
 class _HexSerializer(_Serializer[str]):
     def serialize(self, value: str, depth: int = 0) -> str:
+        if not isinstance(value, str):
+            raise TypeError(f"Parameter 'value' must be of type str, but got {type(value).__name__}")
+
         return value.lower()
 
 
@@ -130,12 +142,15 @@ class _ShapeHeaderSerializer(_Serializer[shape.ShapeHeader]):
         super().__init__(indent, use_tabs)
         self._hex_serializer = _HexSerializer(indent, use_tabs)
 
-    def serialize(self, value: shape.ShapeHeader, depth: int = 0) -> str:
+    def serialize(self, shape_header: shape.ShapeHeader, depth: int = 0) -> str:
+        if not isinstance(shape_header, shape.ShapeHeader):
+            raise TypeError(f"Parameter 'shape_header' must be of type shape.ShapeHeader, but got {type(shape_header).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}shape_header ( "
-            f"{self._hex_serializer.serialize(value.flags1)} "
-            f"{self._hex_serializer.serialize(value.flags2)} )"
+            f"{self._hex_serializer.serialize(shape_header.flags1)} "
+            f"{self._hex_serializer.serialize(shape_header.flags2)} )"
         )
 
 
@@ -145,6 +160,9 @@ class _VectorSerializer(_Serializer[shape.Vector]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, vector: shape.Vector, depth: int = 0) -> str:
+        if not isinstance(vector, shape.Vector):
+            raise TypeError(f"Parameter 'vector' must be of type shape.Vector, but got {type(vector).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}vector ( "
@@ -161,6 +179,9 @@ class _VolumeSphereSerializer(_Serializer[shape.VolumeSphere]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, volume_sphere: shape.VolumeSphere, depth: int = 0) -> str:
+        if not isinstance(volume_sphere, shape.VolumeSphere):
+            raise TypeError(f"Parameter 'volume_sphere' must be of type shape.VolumeSphere, but got {type(volume_sphere).__name__}")
+
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(depth + 1)
         vector_str = self._vector_serializer.serialize(volume_sphere.vector, depth + 1).strip()
@@ -198,6 +219,9 @@ class _PointSerializer(_Serializer[shape.Point]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, point: shape.Point, depth: int = 0) -> str:
+        if not isinstance(point, shape.Point):
+            raise TypeError(f"Parameter 'point' must be of type shape.Point, but got {type(point).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}point ( "
@@ -213,6 +237,9 @@ class _UVPointSerializer(_Serializer[shape.UVPoint]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, uv_point: shape.UVPoint, depth: int = 0) -> str:
+        if not isinstance(uv_point, shape.UVPoint):
+            raise TypeError(f"Parameter 'uv_point' must be of type shape.UVPoint, but got {type(uv_point).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}uv_point ( "
@@ -227,6 +254,9 @@ class _ColourSerializer(_Serializer[shape.Colour]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, colour: shape.Colour, depth: int = 0) -> str:
+        if not isinstance(colour, shape.Colour):
+            raise TypeError(f"Parameter 'colour' must be of type shape.Colour, but got {type(colour).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}colour ( "
@@ -243,6 +273,9 @@ class _MatrixSerializer(_Serializer[shape.Matrix]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, matrix: shape.Matrix, depth: int = 0) -> str:
+        if not isinstance(matrix, shape.Matrix):
+            raise TypeError(f"Parameter 'matrix' must be of type shape.Matrix, but got {type(matrix).__name__}")
+
         indent = self.get_indent(depth)
         values = (
             matrix.ax, matrix.ay, matrix.az,
@@ -268,16 +301,18 @@ class _TextureSerializer(_Serializer[shape.Texture]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self._int_serializer = _IntSerializer(indent, use_tabs)
-        self._str_serializer = _StrSerializer(indent, use_tabs)
         self._float_serializer = _FloatSerializer(indent, use_tabs)
         self._hex_serializer = _HexSerializer(indent, use_tabs)
 
     def serialize(self, texture: shape.Texture, depth: int = 0) -> str:
+        if not isinstance(texture, shape.Texture):
+            raise TypeError(f"Parameter 'texture' must be of type shape.Texture, but got {type(texture).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}texture ( "
             f"{self._int_serializer.serialize(texture.image_index)} "
-            f"{self._str_serializer.serialize(texture.filter_mode)} "
+            f"{self._int_serializer.serialize(texture.filter_mode)} "
             f"{self._float_serializer.serialize(texture.mipmap_lod_bias)} "
             f"{self._hex_serializer.serialize(texture.border_colour)} )"
         )
@@ -291,6 +326,9 @@ class _LightMaterialSerializer(_Serializer[shape.LightMaterial]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, light_material: shape.LightMaterial, depth: int = 0) -> str:
+        if not isinstance(light_material, shape.LightMaterial):
+            raise TypeError(f"Parameter 'light_material' must be of type shape.LightMaterial, but got {type(light_material).__name__}")
+
         indent = self.get_indent(depth)
         return (
             f"{indent}light_material ( "
@@ -309,6 +347,9 @@ class _UVOpSerializer(_Serializer[shape.UVOp]):
         self._int_serializer = _IntSerializer(indent, use_tabs)
 
     def serialize(self, uv_op: shape.UVOp, depth: int = 0) -> str:
+        if not isinstance(uv_op, shape.UVOp):
+            raise TypeError(f"Parameter 'uv_op' must be of type shape.UVOp, but got {type(uv_op).__name__}")
+
         indent = self.get_indent(depth)
         s = self._int_serializer.serialize
 
@@ -346,6 +387,9 @@ class _LightModelCfgSerializer(_Serializer[shape.LightModelCfg]):
         self._uv_op_serializer = _UVOpSerializer(indent, use_tabs)
 
     def serialize(self, light_model_cfg: shape.LightModelCfg, depth: int = 0) -> str:
+        if not isinstance(light_model_cfg, shape.LightModelCfg):
+            raise TypeError(f"Parameter 'light_model_cfg' must be of type shape.LightModelCfg, but got {type(light_model_cfg).__name__}")
+
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
@@ -366,6 +410,9 @@ class _VtxStateSerializer(_Serializer[shape.VtxState]):
         self._int_serializer = _IntSerializer(indent, use_tabs)
 
     def serialize(self, vtx_state: shape.VtxState, depth: int = 0) -> str:
+        if not isinstance(vtx_state, shape.VtxState):
+            raise TypeError(f"Parameter 'vtx_state' must be of type shape.VtxState, but got {type(vtx_state).__name__}")
+
         indent = self.get_indent(depth)
         base = (
             f"{indent}vtx_state ( "
@@ -388,6 +435,9 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
         self._float_serializer = _FloatSerializer(indent, use_tabs)
 
     def serialize(self, prim_state: shape.PrimState, depth: int = 0) -> str:
+        if not isinstance(prim_state, shape.PrimState):
+            raise TypeError(f"Parameter 'prim_state' must be of type shape.PrimState, but got {type(prim_state).__name__}")
+
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
@@ -427,6 +477,9 @@ class _DistanceLevelHeaderSerializer(_Serializer[shape.DistanceLevelHeader]):
         )
 
     def serialize(self, header: shape.DistanceLevelHeader, depth: int = 0) -> str:
+        if not isinstance(header, shape.DistanceLevelHeader):
+            raise TypeError(f"Parameter 'header' must be of type shape.DistanceLevelHeader, but got {type(header).__name__}")
+
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(depth + 1)
 
@@ -454,6 +507,9 @@ class _DistanceLevelSerializer(_Serializer[shape.DistanceLevel]):
         #)
 
     def serialize(self, dlevel: shape.DistanceLevel, depth: int = 0) -> str:
+        if not isinstance(dlevel, shape.DistanceLevel):
+            raise TypeError(f"Parameter 'dlevel' must be of type shape.DistanceLevel, but got {type(dlevel).__name__}")
+
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
@@ -481,6 +537,9 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
         )
 
     def serialize(self, lod_control: shape.LodControl, depth: int = 0) -> str:
+        if not isinstance(lod_control, shape.LodControl):
+            raise TypeError(f"Parameter 'lod_control' must be of type shape.LodControl, but got {type(lod_control).__name__}")
+
         indent = self.get_indent(depth)
         inner_depth = depth + 1
         inner_indent = self.get_indent(inner_depth)
@@ -515,29 +574,32 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         self._vtx_state_serializer = _VtxStateSerializer(indent, use_tabs)
         self._prim_state_serializer = _PrimStateSerializer(indent, use_tabs)
 
-    def serialize(self, shape: shape.Shape, depth: int = 0) -> str:
+    def serialize(self, s: shape.Shape, depth: int = 0) -> str:
+        if not isinstance(s, shape.Shape):
+            raise TypeError(f"Parameter 's' must be of type shape.Shape, but got {type(s).__name__}")
+
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
         lines = [f"{indent}shape ("]
-        lines.append(self._shape_header_serializer.serialize(shape.shape_header, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.volumes, "volumes", self._volume_sphere_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.shader_names, "shader_names", self._named_shader_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.texture_filter_names, "texture_filter_names", self._named_filter_mode_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.points, "points", self._point_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.uv_points, "uv_points", self._uv_point_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.normals, "normals", self._vector_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.sort_vectors, "sort_vectors", self._vector_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.colours, "colours", self._colour_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.matrices, "matrices", self._matrix_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.images, "images", self._image_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.textures, "textures", self._texture_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.light_materials, "light_materials", self._light_material_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.light_model_cfgs, "light_model_cfgs", self._light_model_cfg_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth))
-        lines.append(self._serialize_items_in_block(shape.prim_states, "prim_states", self._prim_state_serializer, inner_depth))
+        lines.append(self._shape_header_serializer.serialize(s.shape_header, inner_depth))
+        lines.append(self._serialize_items_in_block(s.volumes, "volumes", self._volume_sphere_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.shader_names, "shader_names", self._named_shader_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.texture_filter_names, "texture_filter_names", self._named_filter_mode_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.points, "points", self._point_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.uv_points, "uv_points", self._uv_point_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.normals, "normals", self._vector_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.sort_vectors, "sort_vectors", self._vector_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.colours, "colours", self._colour_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.matrices, "matrices", self._matrix_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.images, "images", self._image_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.textures, "textures", self._texture_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.light_materials, "light_materials", self._light_material_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.light_model_cfgs, "light_model_cfgs", self._light_model_cfg_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth))
+        lines.append(self._serialize_items_in_block(s.prim_states, "prim_states", self._prim_state_serializer, inner_depth))
 
-        if shape.animations:
+        if s.animations:
             # TODO handle optional animations block
             pass
         

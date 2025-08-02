@@ -24,7 +24,8 @@ from shapeio.shape import (
     UVOpReflectMapFull,
     UVOpReflectMap,
     UVOpUniformScale,
-    UVOpNonUniformScale
+    UVOpNonUniformScale,
+    Point
 )
 from shapeio.decoder import _UVOpParser, BlockFormatError
 from shapeio.encoder import _UVOpSerializer
@@ -75,3 +76,11 @@ def test_serialize_uv_op(serializer, uv_op, expected):
 def test_parse_invalid_uv_op_raises(parser, bad_text):
     with pytest.raises(BlockFormatError):
         parser.parse(bad_text)
+
+
+@pytest.mark.parametrize("bad_input", [
+    Point(1.0, 2.2, 3.2),
+])
+def test_serialize_invalid_type_raises(serializer, bad_input):
+    with pytest.raises(TypeError):
+        serializer.serialize(bad_input)

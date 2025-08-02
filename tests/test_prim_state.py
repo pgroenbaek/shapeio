@@ -19,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from shapeio.shape import PrimState
+from shapeio.shape import PrimState, Point
 from shapeio.decoder import _PrimStateParser, BlockFormatError
 from shapeio.encoder import _PrimStateSerializer
 
@@ -81,3 +81,11 @@ def test_serialize_prim_state_depth_1(serializer):
 def test_parse_invalid_prim_state_raises(parser, bad_input):
     with pytest.raises(BlockFormatError):
         parser.parse(bad_input)
+
+
+@pytest.mark.parametrize("bad_input", [
+    Point(1.0, 2.2, 3.2),
+])
+def test_serialize_invalid_type_raises(serializer, bad_input):
+    with pytest.raises(TypeError):
+        serializer.serialize(bad_input)
