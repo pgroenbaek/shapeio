@@ -237,8 +237,8 @@ def is_compressed(filepath: str) -> Optional[bool]:
 
 
 def compress(
-    input_filepath: str,
     tkutils_dll_filepath: str,
+    input_filepath: str,
     output_filepath: Optional[str] = None
 ) -> bool:
     """
@@ -249,8 +249,8 @@ def compress(
     and the file is already compressed, it is simply copied to the destination.
 
     Args:
-        input_filepath (str): Path to the input shape file.
         tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
+        input_filepath (str): Path to the input shape file.
         output_filepath (Optional[str]): Destination path for the compressed file,
                                          or None to compress in place.
 
@@ -291,8 +291,8 @@ def compress(
 
 
 def decompress(
-    input_filepath: str,
     tkutils_dll_filepath: str,
+    input_filepath: str,
     output_filepath: Optional[str] = None
 ) -> bool:
     """
@@ -303,8 +303,8 @@ def decompress(
     and the file is already decompressed, it is simply copied to the destination.
 
     Args:
-        input_filepath (str): Path to the input shape file.
         tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
+        input_filepath (str): Path to the input shape file.
         output_filepath (Optional[str]): Destination path for the decompressed file,
                                          or None to decompress in place.
 

@@ -149,10 +149,15 @@ else:
 ```python
 import shapeio
 
-ffeditc_path = "C:/path/to/ffeditc_unicode.exe"
+tkutils_dll_path = "./path/to/TK.MSTS.Tokens.dll"
 
-shapeio.compress("./path/to/example.s", ffeditc_path)
-shapeio.decompress("./path/to/example.s", ffeditc_path)
+# Compress and decompress in-place.
+shapeio.compress(tkutils_dll_path, "./path/to/example.s")
+shapeio.decompress(tkutils_dll_path, "./path/to/example.s")
+
+# Compress and decompress to an output file.
+shapeio.compress(tkutils_dll_path, "./path/to/example.s", "./path/to/output.s")
+shapeio.decompress(tkutils_dll_path, "./path/to/example.s", "./path/to/output.s")
 ```
 
 ### Accessing shape data
@@ -160,8 +165,7 @@ shapeio.decompress("./path/to/example.s", ffeditc_path)
 ```python
 import shapeio
 
-with open("./path/to/example.s", "r") as f:
-    my_shape = shapeio.load(f)
+my_shape = shapeio.load("./path/to/example.s")
 
 # Print the point in index 17.
 print(my_shape.points[17])
@@ -178,8 +182,7 @@ for idx, uv_point in enumerate(my_shape.uv_points):
 import shapeio
 from shapeio import shape
 
-with open("./path/to/example.s", "r") as f:
-    my_shape = shapeio.load(f)
+my_shape = shapeio.load("./path/to/example.s")
 
 # Modify an existing point.
 my_shape.points[1].x = 17
