@@ -27,6 +27,22 @@ T = TypeVar('T')
 
 
 class ShapeDecoder:
+    """
+    Decoder for deserializing MSTS/ORTS shape data from a string into a shape object.
+
+    This class uses an internal parser to interpret structured shape text
+    and convert it into a `shape.Shape` instance.
+
+    Methods:
+        decode(text: str) -> shape.Shape:
+            Parses the given text and returns a shape object.
+
+    Raises:
+        BlockNotFoundError: If a required block is missing or malformed in the shape data.
+        CountMismatchError: If item counts do not match expectations in the shape data.
+        ParenthesisMismatchError: If parentheses in the shape data are unmatched.
+        BlockFormatError: If the format in a shape data block is malformed.
+    """
     def __init__(self):
         self._parser = _ShapeParser()
 

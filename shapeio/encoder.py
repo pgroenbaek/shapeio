@@ -27,6 +27,25 @@ T = TypeVar('T')
 
 
 class ShapeEncoder:
+    """
+    Encoder for serializing MSTS/ORTS shape objects into a formatted string.
+
+    This class produces shape text that includes the expected MSTS header
+    and supports indentation customization. It uses an internal serializer
+    to convert a `shape.Shape` instance into the structured text format.
+
+    Args:
+        indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
+        use_tabs (bool, optional): Whether to use tabs instead of spaces for indentation. Defaults to True.
+
+    Methods:
+        encode(shape: shape.Shape) -> str:
+            Serializes a shape object into a properly formatted shape string,
+            including the MSTS shape header.
+
+    Returns:
+        str: The complete shape text including the standard header and formatting.
+    """
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         self._serializer = _ShapeSerializer(indent=indent, use_tabs=use_tabs)
 
