@@ -77,7 +77,7 @@ class ShapeCompressedError(Exception):
 def find_directory_files(
     directory: str,
     match_files: List[str],
-    ignore_files: List[str]
+    ignore_files: Optional[List[str]] = None
 ) -> List[str]:
     """
     Return a list of filenames in the given directory that match specified patterns,
@@ -86,7 +86,7 @@ def find_directory_files(
     Args:
         directory (str): Path to the directory to search.
         match_files (List[str]): List of glob-style patterns to include (e.g., ["*.txt", "*.csv"]).
-        ignore_files (List[str]): List of glob-style patterns to exclude from the results.
+        ignore_files (Optional[List[str]]): List of glob-style patterns to exclude from the results.
 
     Returns:
         List[str]: Filenames in the directory that match the include patterns but not the exclude patterns.
@@ -100,8 +100,9 @@ def find_directory_files(
 
     for file_name in os.listdir(directory):
         if any([fnmatch.fnmatch(file_name, x) for x in match_files]):
-            if any([fnmatch.fnmatch(file_name, x) for x in ignore_files]):
-                continue
+            if ignore_files is not None:
+                if any([fnmatch.fnmatch(file_name, x) for x in ignore_files]):
+                    continue
             files.append(file_name)
 
     return files
