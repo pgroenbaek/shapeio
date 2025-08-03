@@ -22,6 +22,7 @@ import re
 import codecs
 import shutil
 import fnmatch
+import tempfile
 import subprocess
 from typing import Optional, List
 
@@ -54,6 +55,11 @@ def _detect_encoding(filepath: str) -> str:
         return 'utf-8'
 
 
+class ShapeCompressedError(Exception):
+    """Raised when attempting to load a shape file that is compressed."""
+    pass
+
+
 def find_directory_files(
     directory: str,
     match_files: List[str],
@@ -77,7 +83,18 @@ def dump(
     indent: int = 1,
     use_tabs: bool = True
 ) -> None:
+    """
+    Serialize a shape object to a file in a readable text format.
 
+    Args:
+        shape (shape.Shape): The shape object to serialize.
+        filepath (str): Path to the file where the shape will be saved.
+        indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
+        use_tabs (bool, optional): Whether to use tabs for indentation instead of spaces. Defaults to True.
+
+    Raises:
+        OSError: If the file cannot be opened or written to.
+    """
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
     text = encoder.encode(shape)
 
@@ -86,8 +103,29 @@ def dump(
 
 
 def load(filepath: str) -> shape.Shape:
+    """
+    Load a shape object from a text file.
+
+    The file must be uncompressed. If the shape file is compressed, a ValueError is raised.
+
+    Args:
+        filepath (str): Path to the shape file to load.
+
+    Returns:
+        shape.Shape: The deserialized shape object.
+
+    Raises:
+        ShapeCompressedError: If the shape file is detected as compressed.
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed.
+        OSError: If an I/O error occurs while opening the file.
+        BlockNotFoundError: If a required block is missing or malformed in the shape data.
+        CountMismatchError: If item counts do not match expectations in the shape data.
+        ParenthesisMismatchError: If parentheses in the shape data are unmatched.
+        BlockFormatError: If the format in shape data block is malformed.
+    """
     if is_compressed(filepath):
-        raise ValueError("""Cannot load shape while it is compressed.
+        raise ShapeCompressedError("""Cannot load shape while it is compressed.
             Please use the 'decompress' function or decompress it by hand.""")
     
     with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
@@ -102,12 +140,37 @@ def dumps(
     indent: int = 1,
     use_tabs: bool = True
 ) -> str:
+    """
+    Serialize a shape object to a formatted string.
 
+    Args:
+        shape (shape.Shape): The shape object to serialize.
+        indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
+        use_tabs (bool, optional): Whether to use tabs for indentation instead of spaces. Defaults to True.
+
+    Returns:
+        str: The serialized shape as a formatted string.
+    """
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
     return encoder.encode(shape)
 
 
 def loads(shape_string: str) -> shape.Shape:
+    """
+    Deserialize a shape object from a string.
+
+    Args:
+        shape_string (str): The string containing serialized shape data.
+
+    Returns:
+        shape.Shape: The deserialized shape object.
+
+    Raises:
+        BlockNotFoundError: If a required block is missing or malformed in the shape data.
+        CountMismatchError: If item counts do not match expectations in the shape data.
+        ParenthesisMismatchError: If parentheses in the shape data are unmatched.
+        BlockFormatError: If the format in shape data block is malformed.
+    """
     decoder = ShapeDecoder()
     return decoder.decode(shape_string)
 
@@ -177,15 +240,15 @@ def compress(
             return False
         
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp_path = tmp.name
+            tmp_filepath = tmp.name
         
         try:
-            compression.compress_shape(input_filepath, tmp_path, tkutils_dll_filepath)
-            os.replace(tmp_path, input_filepath)
+            compression.compress_shape(input_filepath, tmp_filepath, tkutils_dll_filepath)
+            os.replace(tmp_filepath, input_filepath)
             return True
         finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+            if os.path.exists(tmp_filepath):
+                os.remove(tmp_filepath)
     else:
         if already_compressed:
             if input_filepath != output_filepath:
@@ -231,15 +294,15 @@ def decompress(
             return False
         
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp_path = tmp.name
+            tmp_filepath = tmp.name
         
         try:
-            compression.decompress_shape(input_filepath, tmp_path, tkutils_dll_filepath)
-            os.replace(tmp_path, input_filepath)
+            compression.decompress_shape(input_filepath, tmp_filepath, tkutils_dll_filepath)
+            os.replace(tmp_filepath, input_filepath)
             return True
         finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+            if os.path.exists(tmp_filepath):
+                os.remove(tmp_filepath)
         
     else:
         if not currently_compressed:
@@ -276,7 +339,7 @@ def copy(old_filepath: str, new_filepath: str) -> None:
 
 def replace(filepath: str, search_exp: str, replace_str: str) -> None:
     if is_shape(filepath) and is_compressed(filepath):
-        raise ValueError("""Cannot replace text in a compressed shape.
+        raise ShapeCompressedError("""Cannot replace text in a compressed shape.
             Please use the 'decompress' function or decompress it by hand.""")
 
     pattern = re.compile(search_exp)
@@ -293,7 +356,7 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
 
 def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None:
     if is_shape(filepath) and is_compressed(filepath):
-        raise ValueError("""Cannot replace text in a compressed shape.
+        raise ShapeCompressedError("""Cannot replace text in a compressed shape.
             Please use the 'decompress' function or decompress it by hand.""")
 
     pattern = re.compile(search_exp, re.IGNORECASE)

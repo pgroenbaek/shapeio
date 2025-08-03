@@ -26,8 +26,9 @@ __all__ = [
     'load', 'loads', 'dump', 'dumps',
     'is_shape', 'is_compressed', 'compress', 'decompress',
     'copy', 'replace', 'replace_ignorecase'
+    'ShapeCompressedError',
     'ShapeParserError', 'BlockNotFoundError', 'CountMismatchError'
-    'ParenthesisMismatchError', 'BlockFormatError'
+    'ParenthesisMismatchError', 'BlockFormatError',
     'ShapeDecoder', 'ShapeEncoder'
 ]
 
@@ -38,6 +39,7 @@ from .shapeio import find_directory_files
 from .shapeio import load, loads, dump, dumps
 from .shapeio import is_shape, is_compressed, compress, decompress
 from .shapeio import copy, replace, replace_ignorecase
+from .shapeio import ShapeCompressedError
 from .decoder import ShapeDecoder
 from .decoder import ShapeParserError, BlockNotFoundError, CountMismatchError
 from .decoder import ParenthesisMismatchError, BlockFormatError
