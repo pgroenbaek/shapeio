@@ -134,6 +134,28 @@ class Matrix:
             ")"
         )
 
+    def to_numpy(self) -> np.ndarray:
+        """Convert to a 4x3 numpy matrix."""
+        return np.array([
+            [self.ax, self.ay, self.az],
+            [self.bx, self.by, self.bz],
+            [self.cx, self.cy, self.cz],
+            [self.dx, self.dy, self.dz],
+        ], dtype=np.float32)
+
+    @classmethod
+    def from_numpy(cls, name: str, array: np.ndarray):
+        """Create a Matrix from a 4x3 numpy array."""
+        if array.shape != (4, 3):
+            raise ValueError("Input array must have shape (4, 3).")
+        return cls(
+            name,
+            *array[0],
+            *array[1],
+            *array[2],
+            *array[3],
+        )
+
 class VertexIdx:
     def __init__(self,
         vertex1_index: int,
