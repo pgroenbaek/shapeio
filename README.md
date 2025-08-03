@@ -161,6 +161,8 @@ The compression and decompression functions in this module use the `TK.MSTS.Toke
 
 See the [Prerequisites section](#prerequisites) for instructions on how to obtain the `TK.MSTS.Tokens.dll` library and set up a CLR on your operating system.
 
+Alternatively, you can manually compress and decompress shapes using other tools, such as *ffeditc\_unicode.exe* through the [Shape File Manager](https://www.trainsim.com/forums/filelib-search-fileid?fid=78928) or the [FFEDIT\_Sub v1.2](https://www.trainsim.com/forums/filelib-search-fileid?fid=40291) utility by Ged Saunders.
+
 ```python
 import shapeio
 
