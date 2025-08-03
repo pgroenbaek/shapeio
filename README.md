@@ -8,7 +8,7 @@ This Python module provides functions to decode MSTS/ORTS shape files into Pytho
 
 The API is very similar to that of the `json` module and includes functions for handling shape compression and decompression.
 
-When modifying shapes using this module, there are no safeguards other than the data structure itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
+When modifying shapes using this module, there are no built-in safeguards beyond the structure of the data itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 
 See also:
 - [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides functions for modifying shapes while keeping them error-free and usable in MSTS/ORTS.
@@ -17,13 +17,15 @@ See also:
 
 ## Prerequisites
 
-The following platform dependencies are **only required for shape compression and decompression**. Other parts of the module will work fine without them.
+The following platform dependencies are **only required for shape compression and decompression**. Other parts of the module will function correctly without them.
 
-This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore, if you wish to compress or decompress shapes, the Mono runtime is required on Linux and macOS, and the .NET Framework is required on Windows.
+You can skip this section if you compress and decompress shapes manually using other tools, such as *ffeditc\_unicode.exe* through the [Shape File Manager](https://www.trainsim.com/forums/filelib-search-fileid?fid=78928) or the [FFEDIT\_Sub v1.2](https://www.trainsim.com/forums/filelib-search-fileid?fid=40291) utility by Ged Saunders.
 
-The `TK.MSTS.Tokens.dll` library is not included with the Python module. But can be downloaded as part of the TK_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). You will only need the DLL file itself from that package.
+This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore, a CLR is required if you wish to compress and decompress shapes programmatically through the module. You can use the Mono runtime on Linux and macOS, or the .NET Framework on Windows.
 
-See the [Usage section](#compression) for more details on how to compress and decompress shape files.
+The `TK.MSTS.Tokens.dll` library is not included with the Python module. It can be downloaded as part of the TK\_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). Only the DLL file itself is needed from that package.
+
+See the [Usage section](#compression) for more details on how to compress and decompress shape files using the module.
 
 ### To install the prerequisites on your operating system:
 
@@ -41,9 +43,10 @@ brew install mono
 ```
 
 #### Windows
-Download and install [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft.
 
-The .NET Framework is typically already available on most Windows machines.
+Download and install the [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft.
+
+The .NET Framework is typically already installed on most Windows systems.
 
 
 ## Installation

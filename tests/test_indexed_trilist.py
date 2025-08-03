@@ -72,6 +72,7 @@ def test_serialize_indexed_trilist(serializer):
         ],
         flags=["00000001", "00000002"]
     )
+    result = serializer.serialize(trilist)
     expected = (
         "indexed_trilist (\n"
         "\tvertex_idxs ( 6 1 2 3 4 5 6 )\n"
@@ -79,7 +80,6 @@ def test_serialize_indexed_trilist(serializer):
         "\tflags ( 2 00000001 00000002 )\n"
         ")"
     )
-    result = serializer.serialize(trilist)
     assert expected == result
 
 

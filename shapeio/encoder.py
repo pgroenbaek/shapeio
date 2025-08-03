@@ -61,7 +61,6 @@ class _Serializer(ABC, Generic[T]):
         newline_before_closing: bool = True
     ) -> str:
 
-
         inner_depth = depth if disable_inner_indent else depth + 1
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(inner_depth)
