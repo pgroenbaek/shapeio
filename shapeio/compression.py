@@ -140,3 +140,4 @@ def decompress_shape(input_path: str, output_path: str, tkutils_dll_path: str) -
     check_dependencies()
     handler = load_tkutils_dll(tkutils_dll_path)
     return handler.Decompress(input_path, output_path)
+

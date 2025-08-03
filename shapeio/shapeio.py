@@ -113,6 +113,23 @@ def loads(shape_string: str) -> shape.Shape:
 
 
 def is_compressed(filepath: str) -> Optional[bool]:
+    """
+    Determines whether a shape file is compressed.
+
+    Args:
+        filepath (str): Path to the shape file to inspect.
+
+    Returns:
+        bool:
+            - True if the file appears to be compressed (binary format).
+            - False if the file appears to be uncompressed (text format with a known header).
+            - None if the file is readable as text but does not match known headers.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed.
+        OSError: If an I/O error occurs while opening the file.
+    """
     with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
         try:
             header = f.read(32)
@@ -127,25 +144,129 @@ def is_compressed(filepath: str) -> Optional[bool]:
 
 def compress(
     input_filepath: str,
-    output_filepath: str,
+    output_filepath: Optional[str],
     tkutils_dll_filepath: str
 ) -> bool:
+    """
+    Compresses a shape file if it is not already compressed.
 
-    if not is_compressed(input_filepath):
+    If `output_filepath` is None, the file is compressed in place using a temporary file.
+    If the file is already compressed, no changes are made. If an output path is given
+    and the file is already compressed, it is simply copied to the destination.
+
+    Args:
+        input_filepath (str): Path to the input shape file.
+        output_filepath (Optional[str]): Destination path for the compressed file,
+                                         or None to compress in place.
+        tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
+
+    Returns:
+        bool: True if compression was performed, False if the file was already compressed
+              and was either copied or left unchanged.
+
+    Raises:
+        EnvironmentError: If required runtime dependencies (Mono or .NET) are missing.
+        FileNotFoundError: If the input file or specified DLL file is not found.
+        ImportError: If the DLL fails to load.
+        OSError: If file operations fail.
+    """
+    already_compressed = is_compressed(input_filepath)
+
+    if output_filepath is None:
+        if already_compressed:
+            return False
+        
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+        
+        try:
+            compression.compress_shape(input_filepath, tmp_path, tkutils_dll_filepath)
+            os.replace(tmp_path, input_filepath)
+            return True
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+    else:
+        if already_compressed:
+            if input_filepath != output_filepath:
+                copy(input_filepath, output_filepath)
+            
+            return False
+        
         return compression.compress_shape(input_filepath, output_filepath, tkutils_dll_filepath)
 
 
 def decompress(
     input_filepath: str,
-    output_filepath: str,
+    output_filepath: Optional[str],
     tkutils_dll_filepath: str
 ) -> bool:
+    """
+    Decompresses a shape file if it is currently compressed.
 
-    if is_compressed(input_filepath):
+    If `output_filepath` is None, the file is decompressed in place using a temporary file.
+    If the file is already decompressed, no changes are made. If an output path is given
+    and the file is already decompressed, it is simply copied to the destination.
+
+    Args:
+        input_filepath (str): Path to the input shape file.
+        output_filepath (Optional[str]): Destination path for the decompressed file,
+                                         or None to decompress in place.
+        tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
+
+    Returns:
+        bool: True if decompression was performed, False if the file was already decompressed
+              and was either copied or left unchanged.
+
+    Raises:
+        EnvironmentError: If required runtime dependencies (Mono or .NET) are missing.
+        FileNotFoundError: If the input file or specified DLL file is not found.
+        ImportError: If the DLL fails to load.
+        OSError: If file operations fail.
+    """
+    currently_compressed = is_compressed(input_filepath)
+
+    if output_filepath is None:
+        if not currently_compressed:
+            return False
+        
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+        
+        try:
+            compression.decompress_shape(input_filepath, tmp_path, tkutils_dll_filepath)
+            os.replace(tmp_path, input_filepath)
+            return True
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        
+    else:
+        if not currently_compressed:
+            if input_filepath != output_filepath:
+                copy(input_filepath, output_filepath)
+            
+            return False
+        
         return compression.decompress_shape(input_filepath, output_filepath, tkutils_dll_filepath)
 
 
 def is_shape(filepath: str) -> bool:
+    """
+    Checks if the given file is a shape file.
+
+    Args:
+        filepath (str): Path to the file to check.
+
+    Returns:
+        bool: True if the file is a shape file (compressed or uncompressed),
+              False if it cannot be identified as a shape file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed.
+        OSError: If an I/O error occurs while opening the file.
+    """
     return is_compressed(filepath) is not None
 
 
