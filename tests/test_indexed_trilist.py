@@ -84,9 +84,10 @@ def test_serialize_indexed_trilist(serializer):
 
 
 @pytest.mark.parametrize("bad_input", [
-    "indexed_trilist (\n\tnormal_idxs ( 2 1 2 3 )\n\tvertex_idxs ( 1 2 3 )\n\tflags ( 1 00000000 )\n)" # normal_idxs count is 2, but only 3 values
+    "indexed_trilist (\n\tnormal_idxs ( 2 1 2 3 )\n\tvertex_idxs ( 3 2 3 4 )\n\tflags ( 1 00000000 )\n)", # normal_idxs count is 2, but only 3 values
+    "indexed_trilist (\n\tnormal_idxs ( 1 1 2 3 3 )\n\tvertex_idxs ( 3 2 3 4 )\n\tflags ( 1 00000000 )\n)", # normal_idxs count is 1, but 4 values
 ])
-def test_parse_invalid_normal_count_raises(parser, bad_input):
+def test_parse_invalid_normal_idx_count_raises(parser, bad_input):
     with pytest.raises(CountMismatchError):
         parser.parse(bad_input)
 
