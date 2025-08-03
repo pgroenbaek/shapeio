@@ -32,6 +32,20 @@ from .encoder import ShapeEncoder
 
 
 def _detect_encoding(filepath: str) -> str:
+    """
+    Detect the text encoding of a file by inspecting its initial bytes (BOM or heuristics).
+
+    Args:
+        filepath (str): Path to the file to check.
+
+    Returns:
+        str: The detected encoding string suitable for use in `open()`.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed.
+        OSError: For other OS-related errors while reading the file.
+    """
     with open(filepath, 'rb') as f:
         b = f.read(4)
         bstartswith = b.startswith
@@ -367,7 +381,7 @@ def copy(old_filepath: str, new_filepath: str) -> None:
 
 def replace(filepath: str, search_exp: str, replace_str: str) -> None:
     """
-    Replace occurrences of a regex pattern in a text shape file with a given string.
+    Replace occurrences of a regex pattern in a text file with a given string.
 
     Args:
         filepath (str): Path to the shape file to modify.
@@ -375,7 +389,7 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
         replace_str (str): Replacement string.
 
     Raises:
-        ShapeCompressedError: If the shape file is compressed.
+        ShapeCompressedError: If the file is a shape file and it is compressed.
         FileNotFoundError: If the file does not exist.
         PermissionError: If the file cannot be accessed or written.
         OSError: For other OS-related errors during file operations.
@@ -398,7 +412,7 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
 
 def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None:
     """
-    Replace occurrences of a regex pattern (case-insensitive) in a text shape file with a given string.
+    Replace occurrences of a regex pattern (case-insensitive) in a text file with a given string.
 
     Args:
         filepath (str): Path to the shape file to modify.
@@ -406,7 +420,7 @@ def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None
         replace_str (str): Replacement string.
 
     Raises:
-        ShapeCompressedError: If the shape file is compressed.
+        ShapeCompressedError: If the file is a shape file and it is compressed.
         FileNotFoundError: If the file does not exist.
         PermissionError: If the file cannot be accessed or written.
         OSError: For other OS-related errors during file operations.
