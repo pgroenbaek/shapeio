@@ -83,6 +83,9 @@ pip install --upgrade ./shapeio
 ## Usage
 
 ### Load a shape from a file
+
+To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be uncompressed beforehand. Otherwise, you will get a `ShapeCompressedError`. See the [Compression section](#compress-or-decompress-a-shape-on-disk) for instructions on how to decompress a shape.
+
 ```python
 import shapeio
 
@@ -93,6 +96,8 @@ print(my_shape)
 
 ### Save a shape to a file
 
+To save a shape to disk, you can use the `shapeio.dump` function. This will serialize the shape object, including any changes made to it, into the structured text format and save it to the specified path.
+
 ```python
 import shapeio
 
@@ -100,6 +105,8 @@ shapeio.dump(my_shape, "./path/to/output.s")
 ```
 
 ### Serialize a shape to a string
+
+If you want to serialize the object into a string without saving it to a file on disk, you can use `shapeio.dumps`.
 
 ```python
 import shapeio
@@ -109,6 +116,8 @@ print(shape_string)
 ```
 
 ### Parse a shape from a string
+
+Similarly, you can use `shapeio.loads` to parse a shape from a string instead of reading it from a file on disk.
 
 ```python
 import shapeio
@@ -132,6 +141,8 @@ shape = shapeio.loads(shape_text)
 
 ### Check if a shape is compressed on disk
 
+To check whether a shape file on disk is compressed, you can use `shapeio.is_compressed`. This function returns `True` if the shape is compressed and `False` if it is not. If the file is empty, not a shape file, or its state cannot be determined, the function will return `None`.
+
 ```python
 import shapeio
 
@@ -145,6 +156,10 @@ else:
 ```
 
 ### Compress or decompress a shape on disk
+
+The compression and decompression functions in this module use the `TK.MSTS.Tokens.dll` library by Okrasa Ghia. This library is not included with the Python module. You will also need a CLR installed to load this file.
+
+See the [Prerequisites section](#prerequisites) for instructions on how to obtain the `TK.MSTS.Tokens.dll` library and set up a CLR on your operating system.
 
 ```python
 import shapeio
@@ -162,6 +177,10 @@ shapeio.decompress(tkutils_dll_path, "./path/to/example.s", "./path/to/output.s"
 
 ### Accessing shape data
 
+The functions that load shapes return a `Shape` object, allowing you to access all the data defined in the shape file.
+
+To explore the full data structure, see [shape.py](/shapeio/shape.py). You can also print the objects to view their attributes.
+
 ```python
 import shapeio
 
@@ -177,6 +196,14 @@ for idx, uv_point in enumerate(my_shape.uv_points):
 ```
 
 ### Modifying shape data
+
+You can modify values, add or remove items from lists, and reorder items in the lists. Serialized shapes will reflect any changes you make.
+
+There are no built-in safeguards beyond the structure of the data itself to ensure that the modifications made will result in a shape usable in MSTS or Open Rails.
+
+The module will, however, ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, preventing you from adding items to lists that are not of the expected type.
+
+For example, if you attempt to add a `shape.UVPoint` to the `shape.points` list, you will get a `TypeError` when attempting to serialize the shape.
 
 ```python
 import shapeio
