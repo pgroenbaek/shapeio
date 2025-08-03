@@ -65,7 +65,23 @@ def find_directory_files(
     match_files: List[str],
     ignore_files: List[str]
 ) -> List[str]:
+    """
+    Return a list of filenames in the given directory that match specified patterns,
+    excluding those that match ignore patterns.
 
+    Args:
+        directory (str): Path to the directory to search.
+        match_files (List[str]): List of glob-style patterns to include (e.g., ["*.txt", "*.csv"]).
+        ignore_files (List[str]): List of glob-style patterns to exclude from the results.
+
+    Returns:
+        List[str]: Filenames in the directory that match the include patterns but not the exclude patterns.
+
+    Raises:
+        FileNotFoundError: If the specified directory does not exist.
+        PermissionError: If access to the directory is denied.
+        OSError: For other OS-related errors during directory listing.
+    """
     files = []
 
     for file_name in os.listdir(directory):
@@ -207,8 +223,8 @@ def is_compressed(filepath: str) -> Optional[bool]:
 
 def compress(
     input_filepath: str,
-    output_filepath: Optional[str],
-    tkutils_dll_filepath: str
+    tkutils_dll_filepath: str,
+    output_filepath: Optional[str] = None
 ) -> bool:
     """
     Compresses a shape file if it is not already compressed.
@@ -219,9 +235,9 @@ def compress(
 
     Args:
         input_filepath (str): Path to the input shape file.
+        tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
         output_filepath (Optional[str]): Destination path for the compressed file,
                                          or None to compress in place.
-        tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
 
     Returns:
         bool: True if compression was performed, False if the file was already compressed
@@ -261,8 +277,8 @@ def compress(
 
 def decompress(
     input_filepath: str,
-    output_filepath: Optional[str],
-    tkutils_dll_filepath: str
+    tkutils_dll_filepath: str,
+    output_filepath: Optional[str] = None
 ) -> bool:
     """
     Decompresses a shape file if it is currently compressed.
@@ -273,9 +289,9 @@ def decompress(
 
     Args:
         input_filepath (str): Path to the input shape file.
+        tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
         output_filepath (Optional[str]): Destination path for the decompressed file,
                                          or None to decompress in place.
-        tkutils_dll_filepath (str): Path to the TK.MSTS.Tokens DLL.
 
     Returns:
         bool: True if decompression was performed, False if the file was already decompressed
@@ -334,10 +350,36 @@ def is_shape(filepath: str) -> bool:
 
 
 def copy(old_filepath: str, new_filepath: str) -> None:
+    """
+    Copy a file from the source path to the destination path.
+
+    Args:
+        old_filepath (str): Path to the source file.
+        new_filepath (str): Path where the file should be copied.
+
+    Raises:
+        FileNotFoundError: If the source file does not exist.
+        PermissionError: If the file cannot be accessed or written.
+        OSError: For other OS-related errors during copying.
+    """
     shutil.copyfile(old_filepath, new_filepath)
 
 
 def replace(filepath: str, search_exp: str, replace_str: str) -> None:
+    """
+    Replace occurrences of a regex pattern in a text shape file with a given string.
+
+    Args:
+        filepath (str): Path to the shape file to modify.
+        search_exp (str): Regular expression pattern to search for.
+        replace_str (str): Replacement string.
+
+    Raises:
+        ShapeCompressedError: If the shape file is compressed.
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed or written.
+        OSError: For other OS-related errors during file operations.
+    """
     if is_shape(filepath) and is_compressed(filepath):
         raise ShapeCompressedError("""Cannot replace text in a compressed shape.
             Please use the 'decompress' function or decompress it by hand.""")
@@ -355,6 +397,20 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
 
 
 def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None:
+    """
+    Replace occurrences of a regex pattern (case-insensitive) in a text shape file with a given string.
+
+    Args:
+        filepath (str): Path to the shape file to modify.
+        search_exp (str): Regular expression pattern to search for.
+        replace_str (str): Replacement string.
+
+    Raises:
+        ShapeCompressedError: If the shape file is compressed.
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed or written.
+        OSError: For other OS-related errors during file operations.
+    """
     if is_shape(filepath) and is_compressed(filepath):
         raise ShapeCompressedError("""Cannot replace text in a compressed shape.
             Please use the 'decompress' function or decompress it by hand.""")
