@@ -25,7 +25,7 @@ This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shap
 
 The `TK.MSTS.Tokens.dll` library is not included with the Python module. It can be downloaded as part of the TK\_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). Only the DLL file itself is needed from that package.
 
-See the [Usage section](#compression) for more details on how to compress and decompress shape files using the module.
+See the [Usage section](#compress-or-decompress-a-shape-on-disk) for more details on how to compress and decompress shape files using the module.
 
 ### To install the prerequisites on your operating system:
 
@@ -243,4 +243,4 @@ Modify `envlist` to match the Python versions you want to support.
 
 ## License
 
-This project was created by Peter Grønbæk Andersen and is licensed under [GNU GPL v3](/LICENSE).
+This Python module was created by Peter Grønbæk Andersen and is licensed under [GNU GPL v3](/LICENSE).
