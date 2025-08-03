@@ -157,7 +157,7 @@ def load(filepath: str) -> shape.Shape:
     """
     if is_compressed(filepath):
         raise ShapeCompressedError("""Cannot load shape while it is compressed.
-            Please use the 'decompress' function or decompress it by hand.""")
+            First use the 'decompress' function or decompress it by hand.""")
     
     with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
         text = f.read()
@@ -397,7 +397,7 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
     """
     if is_shape(filepath) and is_compressed(filepath):
         raise ShapeCompressedError("""Cannot replace text in a compressed shape.
-            Please use the 'decompress' function or decompress it by hand.""")
+            First use the 'decompress' function or decompress it by hand.""")
 
     pattern = re.compile(search_exp)
     encoding = _detect_encoding(filepath)
@@ -428,7 +428,7 @@ def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None
     """
     if is_shape(filepath) and is_compressed(filepath):
         raise ShapeCompressedError("""Cannot replace text in a compressed shape.
-            Please use the 'decompress' function or decompress it by hand.""")
+            First use the 'decompress' function or decompress it by hand.""")
 
     pattern = re.compile(search_exp, re.IGNORECASE)
     encoding = _detect_encoding(filepath)
