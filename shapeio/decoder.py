@@ -890,8 +890,12 @@ class _IndexedTrilistParser(_Parser[shape.IndexedTrilist]):
         raw_normal_idxs = self._parse_values_in_block(text, "normal_idxs", self._int_parser, verify_count=False)
         flags = self._parse_values_in_block(text, "flags", self._hex_parser).items
 
-        if raw_normal_idxs.expected_count * 2 != len(raw_normal_idxs.items):
-            raise CountMismatchException("Some error message")
+        if raw_normal_idxs.expected_count != len(raw_normal_idxs.items) // 2:
+            raise CountMismatchError(
+                "Count mismatch for 'normal_idxs' in 'IndexedTrilist': "
+                f"Expected {raw_normal_idxs.expected_count * 2} values "
+                f"(for {raw_normal_idxs.expected_count} index pairs) but found {len(raw_normal_idxs.items)}"
+            )
 
         vertex_idxs = [
             shape.VertexIdx(raw_vertex_idxs.items[i], raw_vertex_idxs.items[i + 1], raw_vertex_idxs.items[i + 2])
