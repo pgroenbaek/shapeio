@@ -86,8 +86,7 @@ pip install --upgrade ./shapeio
 ```python
 import shapeio
 
-with open("./path/to/example.s", "r") as f:
-    my_shape = shapeio.load(f)
+my_shape = shapeio.load("./path/to/example.s")
 
 print(my_shape)
 ```
@@ -97,8 +96,7 @@ print(my_shape)
 ```python
 import shapeio
 
-with open("./path/to/output.s", "w") as f:
-    shapeio.dump(my_shape, f)
+shapeio.dump(my_shape, "./path/to/output.s")
 ```
 
 ### Serialize a shape to a string
