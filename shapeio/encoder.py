@@ -645,10 +645,168 @@ class _PrimitivesSerializer(_Serializer[List[shape.Primitive]]):
         return "\n".join(lines)
 
 
+class _CullablePrimsSerializer(_Serializer[shape.CullablePrims]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+
+    def serialize(self, cullable_prims: shape.CullablePrims, depth: int = 0) -> str:
+        if not isinstance(cullable_prims, shape.CullablePrims):
+            raise TypeError(f"Parameter 'cullable_prims' must be of type shape.CullablePrims, but got {type(cullable_prims).__name__}")
+
+        indent = self.get_indent(depth)
+        
+        return (
+            f"{indent}cullable_prims ( "
+            f"{self._int_serializer.serialize(cullable_prims.num_prims)} "
+            f"{self._int_serializer.serialize(cullable_prims.num_flat_sections)} "
+            f"{self._int_serializer.serialize(cullable_prims.num_prim_indices)} )"
+        )
+
+
+class _GeometryNodeSerializer(_Serializer[shape.GeometryNode]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._cullable_prims_serializer = _CullablePrimsSerializer(indent, use_tabs)
+
+    def serialize(self, geometry_node: shape.GeometryNode, depth: int = 0) -> str:
+        if not isinstance(geometry_node, shape.GeometryNode):
+            raise TypeError(f"Parameter 'geometry_node' must be of type shape.GeometryNode, but got {type(geometry_node).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        tx_light_cmds = self._int_serializer.serialize(geometry_node.tx_light_cmds)
+        node_x_tx_light_cmds = self._int_serializer.serialize(geometry_node.node_x_tx_light_cmds)
+        trilists = self._int_serializer.serialize(geometry_node.trilists)
+        line_lists = self._int_serializer.serialize(geometry_node.line_lists)
+        pt_lists = self._int_serializer.serialize(geometry_node.pt_lists)
+        cullable_prims_block = self._cullable_prims_serializer.serialize(geometry_node.cullable_prims, inner_depth)
+        
+        return (
+            f"{indent}geometry_node ( "
+            f"{tx_light_cmds} "
+            f"{node_x_tx_light_cmds} "
+            f"{trilists} "
+            f"{line_lists} "
+            f"{pt_lists}\n"
+            f"{cullable_prims_block}\n"
+            f"{indent})"
+        )
+
+
+class _GeometryInfoSerializer(_Serializer[shape.GeometryInfo]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._geometry_node_serializer = _GeometryNodeSerializer(indent, use_tabs)
+
+    def serialize(self, geometry_info: shape.GeometryInfo, depth: int = 0) -> str:
+        if not isinstance(geometry_info, shape.GeometryInfo):
+            raise TypeError(f"Parameter 'geometry_info' must be of type shape.GeometryInfo, but got {type(geometry_info).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        face_normals = self._int_serializer.serialize(geometry_info.face_normals)
+        tx_light_cmds = self._int_serializer.serialize(geometry_info.tx_light_cmds)
+        node_x_tx_light_cmds = self._int_serializer.serialize(geometry_info.node_x_tx_light_cmds)
+        trilist_indices = self._int_serializer.serialize(geometry_info.trilist_indices)
+        line_list_indices = self._int_serializer.serialize(geometry_info.line_list_indices)
+        node_x_trilist_indices = self._int_serializer.serialize(geometry_info.node_x_trilist_indices)
+        trilists = self._int_serializer.serialize(geometry_info.trilists)
+        line_lists = self._int_serializer.serialize(geometry_info.line_lists)
+        pt_lists = self._int_serializer.serialize(geometry_info.pt_lists)
+        node_x_trilists = self._int_serializer.serialize(geometry_info.node_x_trilists)
+        geometry_nodes_block = self._serialize_items_in_block(geometry_info.geometry_nodes, "geometry_nodes", self._geometry_node_serializer, inner_depth)
+        geometry_node_map_block = self._serialize_items_in_block(
+            geometry_info.geometry_node_map,
+            "geometry_node_map",
+            self._int_serializer,
+            inner_depth,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+
+        return (
+            f"{indent}geometry_info ( "
+            f"{face_normals} "
+            f"{tx_light_cmds} "
+            f"{node_x_tx_light_cmds} "
+            f"{trilist_indices} "
+            f"{line_list_indices} "
+            f"{node_x_trilist_indices} "
+            f"{trilists} "
+            f"{line_lists} "
+            f"{pt_lists} "
+            f"{node_x_trilists}\n"
+            f"{geometry_nodes_block}\n"
+            f"{geometry_node_map_block}\n"
+            f"{indent})"
+        )
+
+
+class _SubObjectHeaderSerializer(_Serializer[shape.SubObjectHeader]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._hex_serializer = _HexSerializer(indent, use_tabs)
+        self._geometry_info_serializer = _GeometryInfoSerializer(indent, use_tabs)
+
+    def serialize(self, sub_object_header: shape.SubObjectHeader, depth: int = 0) -> str:
+        if not isinstance(sub_object_header, shape.SubObjectHeader):
+            raise TypeError(f"Parameter 'sub_object_header' must be of type shape.SubObjectHeader, but got {type(sub_object_header).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        flags = self._hex_serializer.serialize(sub_object_header.flags)
+        sort_vector_index = self._int_serializer.serialize(sub_object_header.sort_vector_index)
+        volume_index = self._int_serializer.serialize(sub_object_header.volume_index)
+        source_vtx_fmt_flags = self._hex_serializer.serialize(sub_object_header.source_vtx_fmt_flags)
+        destination_vtx_fmt_flags = self._hex_serializer.serialize(sub_object_header.destination_vtx_fmt_flags)
+        geometry_info_block = self._geometry_info_serializer.serialize(sub_object_header.geometry_info, inner_depth)
+        subobject_shaders_block = self._serialize_items_in_block(
+            sub_object_header.subobject_shaders,
+            "subobject_shaders",
+            self._int_serializer,
+            inner_depth,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+        subobject_light_cfgs_block = self._serialize_items_in_block(
+            sub_object_header.subobject_light_cfgs,
+            "subobject_light_cfgs",
+            self._int_serializer,
+            inner_depth,
+            items_per_line=None,
+            newline_after_header=False,
+            newline_before_closing=False
+        )
+        subobject_id = self._int_serializer.serialize(sub_object_header.subobject_id)
+
+        return (
+            f"{indent}sub_object_header ( "
+            f"{flags} "
+            f"{sort_vector_index} "
+            f"{volume_index} "
+            f"{source_vtx_fmt_flags} "
+            f"{destination_vtx_fmt_flags}\n"
+            f"{geometry_info_block}\n"
+            f"{subobject_shaders_block}\n"
+            f"{subobject_light_cfgs_block} "
+            f"{subobject_id}\n"
+            f"{indent})"
+        )
+
+
 class _SubObjectSerializer(_Serializer[shape.SubObject]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
-        #self._sub_object_header_serializer = _SubObjectHeaderSerializer(indent, use_tabs)
+        self._sub_object_header_serializer = _SubObjectHeaderSerializer(indent, use_tabs)
         self._vertex_serializer = _VertexSerializer(indent, use_tabs)
         self._vertex_set_serializer = _VertexSetSerializer(indent, use_tabs)
         self._primitives_serializer = _PrimitivesSerializer(indent, use_tabs)
@@ -660,7 +818,7 @@ class _SubObjectSerializer(_Serializer[shape.SubObject]):
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
-        header_block = ""#self._sub_object_header_serializer.serialize(sub_object.sub_object_header, inner_depth)
+        header_block = self._sub_object_header_serializer.serialize(sub_object.sub_object_header, inner_depth)
         vertices_block = self._serialize_items_in_block(sub_object.vertices, "vertices", self._vertex_serializer, inner_depth)
         vertex_sets_block = self._serialize_items_in_block(sub_object.vertex_sets, "vertex_sets", self._vertex_set_serializer, inner_depth)
         primitives_block = self._primitives_serializer.serialize(sub_object.primitives, inner_depth)

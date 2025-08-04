@@ -956,15 +956,159 @@ class _PrimitivesParser(_Parser[List[shape.Primitive]]):
         return results
 
 
+class _CullablePrimsParser(_Parser[shape.CullablePrims]):
+    PATTERN = re.compile(
+        r'cullable_prims\s*\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.CullablePrims:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid cullable_prims format: '{text}'")
+
+        num_prims = self._int_parser.parse(match.group(1))
+        num_flat_sections = self._int_parser.parse(match.group(2))
+        num_prim_indices = self._int_parser.parse(match.group(3))
+
+        return shape.CullablePrims(num_prims, num_flat_sections, num_prim_indices)
+
+
+class _GeometryNodeParser(_Parser[shape.GeometryNode]):
+    PATTERN = re.compile(
+        r'geometry_node\s*\(\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+        self._cullable_prims_parser = _CullablePrimsParser()
+
+    def parse(self, text: str) -> shape.CullablePrims:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid geometry_node format: '{text}'")
+
+        tx_light_cmds = self._int_parser.parse(match.group(1))
+        node_x_tx_light_cmds = self._int_parser.parse(match.group(2))
+        trilists = self._int_parser.parse(match.group(3))
+        line_lists = self._int_parser.parse(match.group(4))
+        pt_lists = self._int_parser.parse(match.group(5))
+        cullable_prims = self._parse_block(text, "cullable_prims", self._cullable_prims_parser)
+
+        return shape.GeometryNode(
+            tx_light_cmds=tx_light_cmds,
+            node_x_tx_light_cmds=node_x_tx_light_cmds,
+            trilists=trilists,
+            line_lists=line_lists,
+            pt_lists=pt_lists,
+            cullable_prims=cullable_prims
+        )
+
+
+class _GeometryInfoParser(_Parser[shape.GeometryInfo]):
+    PATTERN = re.compile(
+        r'geometry_info\s*\(\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)',
+        re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+        self._geometry_node_parser = _GeometryNodeParser()
+
+    def parse(self, text: str) -> shape.GeometryInfo:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid geometry_info format: '{text}'")
+
+        face_normals = self._int_parser.parse(match.group(1))
+        tx_light_cmds = self._int_parser.parse(match.group(2))
+        node_x_tx_light_cmds = self._int_parser.parse(match.group(3))
+        trilist_indices = self._int_parser.parse(match.group(4))
+        line_list_indices = self._int_parser.parse(match.group(5))
+        node_x_trilist_indices = self._int_parser.parse(match.group(6))
+        trilists = self._int_parser.parse(match.group(7))
+        line_lists = self._int_parser.parse(match.group(8))
+        pt_lists = self._int_parser.parse(match.group(9))
+        node_x_trilists = self._int_parser.parse(match.group(10))
+        geometry_nodes = self._parse_items_in_block(text, "geometry_nodes", "geometry_node", self._geometry_node_parser).items
+        geometry_node_map = self._parse_values_in_block(text, "geometry_node_map", self._int_parser).items
+
+        return shape.GeometryInfo(
+            face_normals=face_normals,
+            tx_light_cmds=tx_light_cmds,
+            node_x_tx_light_cmds=node_x_tx_light_cmds,
+            trilist_indices=trilist_indices,
+            line_list_indices=line_list_indices,
+            node_x_trilist_indices=node_x_trilist_indices,
+            trilists=trilists,
+            line_lists=line_lists,
+            pt_lists=pt_lists,
+            node_x_trilists=node_x_trilists,
+            geometry_nodes=geometry_nodes,
+            geometry_node_map=geometry_node_map
+        )
+
+
+class _SubObjectHeaderParser(_Parser[shape.SubObjectHeader]):
+    INITIAL_PATTERN = re.compile(
+        r"sub_object_header\s*\(\s*([0-9A-Fa-f]{8})\s+(-?\d+)\s+(-?\d+)\s+([0-9A-Fa-f]{8})\s+([0-9A-Fa-f]{8})",
+        re.IGNORECASE
+    )
+    TRAILING_PATTERN = re.compile(
+        r'(\d+)\s*\)\s*$',
+        re.DOTALL
+    )
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+        self._hex_parser = _HexParser()
+        self._geometry_info_parser = _GeometryInfoParser()
+
+    def parse(self, text: str) -> shape.SubObjectHeader:
+        initial_match = self.INITIAL_PATTERN.search(text)
+        if not initial_match:
+            raise BlockFormatError(f"Invalid sub_object_header format: '{text}'")
+        
+        trailing_match = self.TRAILING_PATTERN.search(text)
+        if not trailing_match:
+            raise BlockFormatError(f"Invalid sub_object_header format: '{text}'")
+        
+        flags = self._hex_parser.parse(initial_match.group(1))
+        sort_vector_index = self._int_parser.parse(initial_match.group(2))
+        volume_index = self._int_parser.parse(initial_match.group(3))
+        source_vtx_fmt_flags = self._hex_parser.parse(initial_match.group(4))
+        destination_vtx_fmt_flags = self._hex_parser.parse(initial_match.group(5))
+        geometry_info = self._parse_block(text, "geometry_info",self._geometry_info_parser)
+        subobject_shaders = self._parse_values_in_block(text, "subobject_shaders", self._int_parser).items
+        subobject_light_cfgs = self._parse_values_in_block(text, "subobject_light_cfgs", self._int_parser).items
+        subobject_id = self._int_parser.parse(trailing_match.group(1))
+
+        return shape.SubObjectHeader(
+            flags=flags,
+            sort_vector_index=sort_vector_index,
+            volume_index=volume_index,
+            source_vtx_fmt_flags=source_vtx_fmt_flags,
+            destination_vtx_fmt_flags=destination_vtx_fmt_flags,
+            geometry_info=geometry_info,
+            subobject_shaders=subobject_shaders,
+            subobject_light_cfgs=subobject_light_cfgs,
+            subobject_id=subobject_id
+        )
+
+
 class _SubObjectParser(_Parser[shape.SubObject]):
     def __init__(self):
-        #self._sub_object_header_parser = _SubObjectHeaderParser()
+        self._sub_object_header_parser = _SubObjectHeaderParser()
         self._vertex_parser = _VertexParser()
         self._vertex_set_parser = _VertexSetParser()
         self._primitives_parser = _PrimitivesParser()
 
     def parse(self, text: str) -> shape.SubObject:
-        sub_object_header = None#self._parse_block(text, "sub_object_header", self._sub_object_header_parser)
+        sub_object_header = self._parse_block(text, "sub_object_header", self._sub_object_header_parser)
         vertices = self._parse_items_in_block(text, "vertices", "vertex", self._vertex_parser).items
         vertex_sets = self._parse_items_in_block(text, "vertex_sets", "vertex_set", self._vertex_set_parser).items
         primitives = self._parse_block(text, "primitives", self._primitives_parser)
