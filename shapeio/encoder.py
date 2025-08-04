@@ -79,7 +79,35 @@ class _Serializer(ABC, Generic[T]):
         newline_after_header: bool = True,
         newline_before_closing: bool = True
     ) -> str:
+        """
+        Serializes a list of items into a structured text format list block.
 
+        This method produces a structured text format list block with a header line containing
+        the block name and item count, followed by serialized representations of the
+        items. Supports indentation, line wrapping, and optional newlines for improved
+        formatting flexibility.
+
+        Args:
+            items (List[T]): The list of items to serialize.
+            block_name (str): The name of the list block.
+            item_serializer (_Serializer[T]): Serializer instance capable of serializing
+                each item to a string, with optional indentation depth.
+            depth (int, optional): Indentation depth for the block. Defaults to 0.
+            items_per_line (Optional[int], optional): Number of items per output line.
+                If None, all items appear on one line. Defaults to 1.
+            disable_inner_indent (bool, optional): If True, disables additional inner indentation
+                for serialized items. Defaults to False.
+            count_multiplier (float, optional): Multiplier applied to the item count displayed
+                in the header. Defaults to 1.
+            newline_after_header (bool, optional): If True, inserts a newline after the header
+                line (before items). Defaults to True.
+            newline_before_closing (bool, optional): If True, places the closing parenthesis
+                on a new line. Otherwise, it is appended to the last line of items.
+                Defaults to True.
+
+        Returns:
+            str: The formatted, serialized list block as a string.
+        """
         inner_depth = depth if disable_inner_indent else depth + 1
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(inner_depth)

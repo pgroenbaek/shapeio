@@ -1082,7 +1082,7 @@ class _SubObjectHeaderParser(_Parser[shape.SubObjectHeader]):
         volume_index = self._int_parser.parse(initial_match.group(3))
         source_vtx_fmt_flags = self._hex_parser.parse(initial_match.group(4))
         destination_vtx_fmt_flags = self._hex_parser.parse(initial_match.group(5))
-        geometry_info = self._parse_block(text, "geometry_info",self._geometry_info_parser)
+        geometry_info = self._parse_block(text, "geometry_info", self._geometry_info_parser)
         subobject_shaders = self._parse_values_in_block(text, "subobject_shaders", self._int_parser).items
         subobject_light_cfgs = self._parse_values_in_block(text, "subobject_light_cfgs", self._int_parser).items
         subobject_id = self._int_parser.parse(trailing_match.group(1))
