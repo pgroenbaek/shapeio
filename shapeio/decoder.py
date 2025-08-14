@@ -1229,7 +1229,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         vtx_states = self._parse_items_in_block(text, "vtx_states", "vtx_state", self._vtx_state_parser).items
         prim_states = self._parse_named_items_in_block(text, "prim_states", "prim_state", self._prim_state_parser).items
         lod_controls = self._parse_items_in_block(text, "lod_controls", "lod_control", self._lod_control_parser).items
-        animations = None
+        animations = None # TODO animations block
 
         return shape.Shape(
             shape_header=shape_header,

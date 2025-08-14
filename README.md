@@ -10,8 +10,8 @@ The API is very similar to that of the `json` module and includes functions for 
 
 When modifying shapes using this module, there are no built-in safeguards beyond the structure of the data itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 
-See also:
-- [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides experimental functions for modifying shapes.
+List of companion modules:
+- [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides a wrapper for modifying the shape data structure safely.
 - [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils) - offers additional utilities for working with track shapes.
 
 
@@ -21,13 +21,13 @@ The following platform dependencies are **only required for shape compression an
 
 You can skip this section if you compress and decompress shapes manually using other tools, such as *ffeditc\_unicode.exe* through the [Shape File Manager](https://www.trainsim.com/forums/filelib-search-fileid?fid=78928) or the [FFEDIT\_Sub v1.2](https://www.trainsim.com/forums/filelib-search-fileid?fid=40291) utility by Ged Saunders.
 
-This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore, a CLR is required if you wish to compress and decompress shapes programmatically through the module. You can use the Mono runtime on Linux and macOS, or the .NET Framework on Windows.
+This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore, a Common Language Runtime (CLR) is required if you wish to compress and decompress shapes programmatically through the module. You can use the Mono runtime on Linux and macOS, or the .NET Framework on Windows.
 
 The `TK.MSTS.Tokens.dll` library is not included with the Python module. It can be downloaded as part of the TK\_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). Only the DLL file itself is needed from that package.
 
 See the [Usage section](#compress-or-decompress-a-shape-on-disk) for more details on how to compress and decompress shape files using the module.
 
-### To install the prerequisites on your operating system:
+Steps to install a CLR on your operating system:
 
 #### Linux
 
@@ -199,13 +199,7 @@ for idx, uv_point in enumerate(my_shape.uv_points):
 
 ### Modifying shape data
 
-You can modify values, add or remove items from lists, and reorder items in the lists. Serialized shapes will reflect any changes you make.
-
-There are no built-in safeguards beyond the structure of the data itself to ensure that the modifications made will result in a shape usable in MSTS or Open Rails.
-
-The module will, however, ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, preventing you from adding items to lists that are not of the expected type.
-
-For example, if you attempt to add a `shape.UVPoint` to the `shape.points` list, you will get a `TypeError` when attempting to serialize the shape.
+You can modify values, add or remove items from lists, and reorder items in the lists. The serialized shape data will reflect any changes you make.
 
 ```python
 import shapeio
@@ -219,7 +213,15 @@ my_shape.points[1].x = 17
 # Add a new uv_point.
 new_uv_point = shape.UVPoint(0.2, 0.5)
 my_shape.uv_points.append(new_uv_point)
+
+shapeio.dump(my_shape, "./path/to/output.s")
 ```
+
+When using this module on its own, there are no built-in safeguards beyond the structure of the data itself to ensure that modifications will result in a shape usable in MSTS or Open Rails. See [shapeedit](https://github.com/pgroenbaek/shapeedit) for a wrapper that allows you to perform complex operations on the data structure safely.
+
+However, the module does ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, preventing you from adding items to lists and setting values of attributes that are not of the expected type.
+
+For example, if you attempt to add a `shape.UVPoint` to the `shape.points` list, a TypeError will be raised when you try to serialize the shape.
 
 ## Running Tests
 
