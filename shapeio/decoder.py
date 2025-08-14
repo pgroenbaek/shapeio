@@ -907,8 +907,8 @@ class _IndexedTrilistParser(_Parser[shape.IndexedTrilist]):
         ]
 
         return shape.IndexedTrilist(
-            vertex_indexes=vertex_idxs,
-            normal_indexes=normal_idxs,
+            vertex_idxs=vertex_idxs,
+            normal_idxs=normal_idxs,
             flags=flags
         )
 

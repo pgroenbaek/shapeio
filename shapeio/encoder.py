@@ -582,13 +582,13 @@ class _IndexedTrilistSerializer(_Serializer[shape.IndexedTrilist]):
 
         flattened_vertex_idxs = [
             val
-            for v in indexed_trilist.vertex_indexes
+            for v in indexed_trilist.vertex_idxs
             for val in (v.vertex1_index, v.vertex2_index, v.vertex3_index)
         ]
 
         flattened_normal_idxs = [
             f"{n.index} {n.unknown2}"
-            for n in indexed_trilist.normal_indexes
+            for n in indexed_trilist.normal_idxs
         ]
 
         vertex_idxs_block = self._serialize_items_in_block(

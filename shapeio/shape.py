@@ -191,19 +191,19 @@ class NormalIdx:
 
 class IndexedTrilist:
     def __init__(self,
-        vertex_indexes: List[VertexIdx],
-        normal_indexes: List[NormalIdx],
+        vertex_idxs: List[VertexIdx],
+        normal_idxs: List[NormalIdx],
         flags: List[str]
     ):
-        self.vertex_indexes = vertex_indexes
-        self.normal_indexes = normal_indexes
+        self.vertex_idxs = vertex_idxs
+        self.normal_idxs = normal_idxs
         self.flags = flags
 
     def __repr__(self):
         return (
             "IndexedTrilist("
-            f"vertex_indexes (len={len(self.vertex_indexes)}), "
-            f"normal_indexes (len={len(self.normal_indexes)}), "
+            f"vertex_idxs (len={len(self.vertex_idxs)}), "
+            f"normal_idxs (len={len(self.normal_idxs)}), "
             f"flags (len={len(self.flags)}))"
         )
 

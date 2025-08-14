@@ -25,9 +25,9 @@ __all__ = [
     'shape', 'find_directory_files',
     'load', 'loads', 'dump', 'dumps',
     'is_shape', 'is_compressed', 'compress', 'decompress',
-    'copy', 'replace', 'replace_ignorecase'
+    'copy', 'replace', 'replace_ignorecase',
     'ShapeCompressedError',
-    'ShapeParserError', 'BlockNotFoundError', 'CountMismatchError'
+    'ShapeParserError', 'BlockNotFoundError', 'CountMismatchError',
     'ParenthesisMismatchError', 'BlockFormatError',
     'ShapeDecoder', 'ShapeEncoder'
 ]

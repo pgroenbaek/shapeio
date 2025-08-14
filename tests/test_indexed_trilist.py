@@ -41,18 +41,18 @@ def test_parse_valid_indexed_trilist(parser):
     \tflags ( 8 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 )
     )"""
     trilist = parser.parse(text)
-    assert len(trilist.vertex_indexes) == 8
-    assert trilist.vertex_indexes[0].vertex1_index == 6882
-    assert trilist.vertex_indexes[0].vertex2_index == 6884
-    assert trilist.vertex_indexes[0].vertex3_index == 6883
-    assert trilist.vertex_indexes[-1].vertex1_index == 6896
-    assert trilist.vertex_indexes[-1].vertex2_index == 6894
-    assert trilist.vertex_indexes[-1].vertex3_index == 6891
-    assert len(trilist.normal_indexes) == 8
-    assert trilist.normal_indexes[0].index == 2404
-    assert trilist.normal_indexes[0].unknown2 == 3
-    assert trilist.normal_indexes[-1].index == 2183
-    assert trilist.normal_indexes[-1].unknown2 == 3
+    assert len(trilist.vertex_idxs) == 8
+    assert trilist.vertex_idxs[0].vertex1_index == 6882
+    assert trilist.vertex_idxs[0].vertex2_index == 6884
+    assert trilist.vertex_idxs[0].vertex3_index == 6883
+    assert trilist.vertex_idxs[-1].vertex1_index == 6896
+    assert trilist.vertex_idxs[-1].vertex2_index == 6894
+    assert trilist.vertex_idxs[-1].vertex3_index == 6891
+    assert len(trilist.normal_idxs) == 8
+    assert trilist.normal_idxs[0].index == 2404
+    assert trilist.normal_idxs[0].unknown2 == 3
+    assert trilist.normal_idxs[-1].index == 2183
+    assert trilist.normal_idxs[-1].unknown2 == 3
     assert len(trilist.flags) == 8
     assert trilist.flags == [
         "00000000", "00000000", "00000000", "00000000",
@@ -62,11 +62,11 @@ def test_parse_valid_indexed_trilist(parser):
 
 def test_serialize_indexed_trilist(serializer):
     trilist = IndexedTrilist(
-        vertex_indexes=[
+        vertex_idxs=[
             VertexIdx(1, 2, 3),
             VertexIdx(4, 5, 6),
         ],
-        normal_indexes=[
+        normal_idxs=[
             NormalIdx(7, 8),
             NormalIdx(9, 10),
         ],

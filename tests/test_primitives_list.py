@@ -65,8 +65,8 @@ def test_parse_primitives_basic(parser):
     assert primitives[1].prim_state_index == 1
     assert primitives[2].prim_state_index == 2
     for prim in primitives:
-        assert prim.indexed_trilist.vertex_indexes == []
-        assert prim.indexed_trilist.normal_indexes == []
+        assert prim.indexed_trilist.vertex_idxs == []
+        assert prim.indexed_trilist.normal_idxs == []
         assert prim.indexed_trilist.flags == []
 
 
@@ -82,8 +82,8 @@ def test_serialize_then_parse_roundtrip(serializer, parser):
     assert all(isinstance(p, Primitive) for p in primitives_out)
     assert [p.prim_state_index for p in primitives_out] == [7, 7, 9]
     for prim in primitives_out:
-        assert prim.indexed_trilist.vertex_indexes == []
-        assert prim.indexed_trilist.normal_indexes == []
+        assert prim.indexed_trilist.vertex_idxs == []
+        assert prim.indexed_trilist.normal_idxs == []
         assert prim.indexed_trilist.flags == []
 
 
