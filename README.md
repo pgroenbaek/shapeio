@@ -57,7 +57,7 @@ The .NET Framework is typically already installed on most Windows systems.
 
 The Python module itself can be installed in the following ways:
 
-### Install from PyPI
+<!-- ### Install from PyPI
 
 ```sh
 pip install --upgrade shapeio
@@ -75,7 +75,7 @@ Replace `<version>` with the actual version number in the filename. For example:
 
 ```sh
 pip install path/to/shapeio-0.5.0b0-py3-none-any.whl
-```
+``` -->
 
 ### Install from source
 
