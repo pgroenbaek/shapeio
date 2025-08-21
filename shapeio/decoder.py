@@ -1192,11 +1192,78 @@ class _LodControlParser(_Parser[shape.LodControl]):
         )
 
 
+class _KeyPositionParser(_Parser[shape.KeyPosition]):
+    PATTERN = re.compile(
+        r'(\w+)\s*\(\s*([-\d.eE+\s]+)\s*\)', re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._str_parser = _StrParser()
+        self._int_parser = _IntParser()
+        self._float_parser = _FloatParser()
+
+    def parse(self, text: str) -> shape.KeyPosition:
+        match = self.PATTERN.fullmatch(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid key position format: '{text}'")
+
+        key_type = self._str_parser.parse(match.group(1))
+        key_values = match.group(2).split()
+        values = [self._float_parser.parse(v) if '.' in v or 'e' in v.lower() else self._int_parser.parse(v) for v in key_values]
+
+        if key_type == "slerp_rot":
+            if len(values) != 5:
+                raise BlockFormatError(f"SlerpRot expects 5 values, got {len(values)}")
+            return shape.SlerpRot(*values)
+
+        elif key_type == "linear_key":
+            if len(values) != 4:
+                raise BlockFormatError(f"LinearKey expects 4 values, got {len(values)}")
+            return shape.LinearKey(*values)
+
+        elif key_type == "tcb_key":
+            if len(values) != 10:
+                raise BlockFormatError(f"TCBKey expects 10 values, got {len(values)}")
+            return shape.TCBKey(*values)
+
+        else:
+            raise BlockFormatError(f"Unknown key type: '{key_type}'")
+
+
+class _ControllerParser(_Parser[shape.Controller]):
+    PATTERN = re.compile(
+        r'(\w+)\s*\(\s*(.*)\s*\)', re.DOTALL | re.IGNORECASE
+    )
+
+    def __init__(self):
+        self._str_parser = _StrParser()
+        self._key_position_parser = _KeyPositionParser()
+
+    def parse(self, text: str) -> shape.Controller:
+        match = self.PATTERN.fullmatch(text.strip())
+        if not match:
+            raise BlockFormatError(f"Invalid controller format: '{text}'")
+
+        controller_type = self._str_parser.parse(match.group(1))
+
+        key_positions = self._parse_items_in_block(text, controller_type, "(slerp_rot|linear_key|tcb_key)", self._key_position_parser, escape_regex=False).items
+
+        if controller_type == "tcb_rot":
+            return shape.TCBRot(key_positions)
+        elif controller_type == "linear_pos":
+            return shape.LinearPos(key_positions)
+        elif controller_type == "tcb_pos":
+            return shape.TCBPos(key_positions)
+        else:
+            raise BlockFormatError(f"Unknown controller type: '{controller_type}'")
+
+
 class _AnimationNodeParser(_Parser[shape.AnimationNode]):
     PATTERN = re.compile(r'anim_node\s+(\w+)\s*\(', re.IGNORECASE)
 
     def __init__(self):
         self._str_parser = _StrParser()
+        self._controller_parser = _ControllerParser()
 
     def parse(self, text: str) -> shape.AnimationNode:
         match = self.PATTERN.search(text)
@@ -1204,7 +1271,7 @@ class _AnimationNodeParser(_Parser[shape.AnimationNode]):
             raise BlockFormatError(f"Invalid anim_node format: '{text}'")
 
         name = self._str_parser.parse(match.group(1))
-        controllers = []
+        controllers = self._parse_items_in_block(text, "controllers", "(tcb_rot|linear_pos|tcb_pos)", self._controller_parser, escape_regex=False).items
 
         return shape.AnimationNode(
             name=name,

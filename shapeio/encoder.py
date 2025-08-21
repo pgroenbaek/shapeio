@@ -969,9 +969,72 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
         )
 
 
+class _KeyPositionSerializer(_Serializer[shape.KeyPosition]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer()
+        self._float_serializer = _FloatSerializer()
+
+    def serialize(self, key: shape.KeyPosition, depth: int = 0) -> str:
+        if not isinstance(key, shape.KeyPosition):
+            raise TypeError(f"Parameter 'key' must be of type shape.KeyPosition, but got {type(key).__name__}")
+
+        indent = self.get_indent(depth)
+
+        s = lambda v: self._float_serializer.serialize(v) if isinstance(v, float) else self._int_serializer.serialize(v)
+
+        if isinstance(key, shape.SlerpRot):
+            return f"{indent}slerp_rot ( {s(key.frame)} {s(key.x)} {s(key.y)} {s(key.z)} {s(key.w)} )"
+
+        elif isinstance(key, shape.LinearKey):
+            return f"{indent}linear_key ( {s(key.frame)} {s(key.x)} {s(key.y)} {s(key.z)} )"
+
+        elif isinstance(key, shape.TCBKey):
+            return (
+                f"{indent}tcb_key ( {s(key.frame)} {s(key.x)} {s(key.y)} {s(key.z)} {s(key.w)} "
+                f"{s(key.tension)} {s(key.continuity)} {s(key.bias)} {s(key.ease_in)} {s(key.ease_out)} )"
+            )
+        else:
+            raise TypeError(f"Unknown key type: {type(key)}")
+
+
+class _ControllerSerializer(_Serializer[shape.Controller]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._key_position_serializer = _KeyPositionSerializer()
+
+    def serialize(self, controller: shape.Controller, depth: int = 0) -> str:
+        if not isinstance(controller, shape.Controller):
+            raise TypeError(f"Parameter 'controller' must be of type shape.Controller, but got {type(controller).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        if isinstance(controller, shape.TCBRot):
+            name = "tcb_rot"
+
+        elif isinstance(controller, shape.LinearPos):
+            name = "linear_pos"
+
+        elif isinstance(controller, shape.TCBPos):
+            name = "tcb_pos"
+
+        else:
+            raise TypeError(f"Unknown controller type: {type(controller)}")
+
+        key_position_block = "\n".join(self._key_position_serializer.serialize(k, inner_depth) for k in controller.keyframes)
+
+        return (
+            f"{indent}{name} ( {len(controller.keyframes)}\n"
+            f"{key_position_block}\n"
+            f"{indent})"
+        )
+
+
 class _AnimationNodeSerializer(_Serializer[shape.AnimationNode]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
+        self._controller_serializer = _ControllerSerializer()
 
     def serialize(self, animation_node: shape.AnimationNode, depth: int = 0) -> str:
         if not isinstance(animation_node, shape.AnimationNode):
@@ -980,7 +1043,7 @@ class _AnimationNodeSerializer(_Serializer[shape.AnimationNode]):
         indent = self.get_indent(depth)
         inner_depth = depth + 1
 
-        controllers_block = ""
+        controllers_block = self._serialize_items_in_block(animation_node.controllers, "controllers", self._controller_serializer, inner_depth)
 
         return (
             f"{indent}anim_node {animation_node.name} (\n"

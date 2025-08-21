@@ -58,10 +58,10 @@ def test_parse_animation_with_whitespace(parser):
 
 
 @pytest.mark.parametrize("bad_input", [
-    "animation ()",             # No numbers
-    "animation ( 10 )",         # Only one number
-    "animations ( 10 20 )",     # Wrong keyword
-    "animation ( a b )",        # Non-numeric
+    "animation ( anim_nodes ( 0 ))",             # No numbers
+    "animation ( 10 anim_nodes ( 0 ) )",         # Only one number
+    "animations ( 10 20 anim_nodes ( 0 ) )",     # Wrong keyword
+    "animation ( a b anim_nodes ( 0 ) )",        # Non-numeric
 ])
 def test_parse_invalid_animation_raises(parser, bad_input):
     with pytest.raises(BlockFormatError):

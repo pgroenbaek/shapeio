@@ -42,7 +42,7 @@ def test_serialize_animation_node(serializer):
 
 
 def test_parse_animation_node(parser):
-    text = "anim_node PNT5D_L01 ("
+    text = "anim_node PNT5D_L01 (\n controllers ( 0 )\n )"
     node = parser.parse(text)
     assert isinstance(node, AnimationNode)
     assert node.name == "PNT5D_L01"
@@ -50,13 +50,13 @@ def test_parse_animation_node(parser):
 
 
 def test_parse_animation_node_with_whitespace(parser):
-    text = "   anim_node   MyNode_42   ("
+    text = "   anim_node   MyNode_42   ( \n controllers (  0 ) \n )"
     node = parser.parse(text)
     assert node.name == "MyNode_42"
 
 
 @pytest.mark.parametrize("bad_input", [
-    "anim_nodes MyNode (",   # Wrong keyword
+    "anim_nodes MyNode ( controllers ( 0 ) )",   # Wrong keyword
     "anim_node (",           # Missing name
     "anim_node",             # Incomplete
 ])
