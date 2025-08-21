@@ -13,7 +13,7 @@ This Python module provides functions to decode MSTS/ORTS shape files into Pytho
 When modifying shapes using this module, there are no built-in safeguards beyond the structure of the data itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 
 List of companion modules:
-- [shapecomp](https://github.com/pgroenbaek/shapecomp) - handles compression and decompression of shape files through the `TK.MSTS.Tokens.dll` library by Okrasa Ghia.
+- [shapecompress](https://github.com/pgroenbaek/shapecompress) - handles compression and decompression of shape files through the `TK.MSTS.Tokens.dll` library by Okrasa Ghia.
 - [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides a wrapper for modifying the shape data structure safely.
 - [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils/tree/develop) - offers additional utilities for working with track shapes.
 
@@ -56,9 +56,9 @@ pip install --upgrade ./shapeio
 To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be uncompressed beforehand. Otherwise, you will get a `ShapeCompressedError`. See the [Compression section](#compress-or-decompress-a-shape-on-disk) for instructions on how to decompress a shape.
 
 ```python
-import shapeio as sio
+import shapeio
 
-my_shape = sio.load("./path/to/example.s")
+my_shape = shapeio.load("./path/to/example.s")
 
 print(my_shape)
 ```
@@ -68,9 +68,9 @@ print(my_shape)
 To save a shape to disk, you can use the `shapeio.dump` function. This will serialize the shape object, including any changes made to it, into the structured text format and save it to the specified path.
 
 ```python
-import shapeio as sio
+import shapeio
 
-sio.dump(my_shape, "./path/to/output.s")
+shapeio.dump(my_shape, "./path/to/output.s")
 ```
 
 ### Serialize a shape to a string
@@ -78,9 +78,9 @@ sio.dump(my_shape, "./path/to/output.s")
 If you want to serialize the object into a string without saving it to a file on disk, you can use `shapeio.dumps`.
 
 ```python
-import shapeio as sio
+import shapeio
 
-shape_string = sio.dumps(my_shape)
+shape_string = shapeio.dumps(my_shape)
 print(shape_string)
 ```
 
@@ -89,7 +89,7 @@ print(shape_string)
 Similarly, you can use `shapeio.loads` to parse a shape from a string instead of reading it from a file on disk.
 
 ```python
-import shapeio as sio
+import shapeio
 
 shape_text = """
 SIMISA@@@@@@@@@@JINX0s1t______
@@ -105,7 +105,7 @@ shape (
 		)
         ...
 """
-shape = sio.loads(shape_text)
+shape = shapeio.loads(shape_text)
 ```
 
 ### Accessing shape data
@@ -115,9 +115,9 @@ The functions that load shapes return a `Shape` object, allowing you to access a
 To explore the full data structure, see [shape.py](/shapeio/shape.py). You can also print the objects to view their attributes.
 
 ```python
-import shapeio as sio
+import shapeio
 
-my_shape = sio.load("./path/to/example.s")
+my_shape = shapeio.load("./path/to/example.s")
 
 # Print the point at index 17.
 print(my_shape.points[17])
@@ -133,10 +133,10 @@ for idx, uv_point in enumerate(my_shape.uv_points):
 You can modify values, add or remove items from lists, and reorder items in the lists. The serialized shape data will reflect any changes you make.
 
 ```python
-import shapeio as sio
+import shapeio
 from shapeio import shape
 
-my_shape = sio.load("./path/to/example.s")
+my_shape = shapeio.load("./path/to/example.s")
 
 # Modify an existing point.
 my_shape.points[1].x = 17
@@ -145,7 +145,7 @@ my_shape.points[1].x = 17
 new_uv_point = shape.UVPoint(0.2, 0.5)
 my_shape.uv_points.append(new_uv_point)
 
-sio.dump(my_shape, "./path/to/output.s")
+shapeio.dump(my_shape, "./path/to/output.s")
 ```
 
 When using this module on its own, there are no built-in safeguards beyond the structure of the data itself to ensure that modifications will result in a shape usable in MSTS or Open Rails. See [shapeedit](https://github.com/pgroenbaek/shapeedit) for a wrapper that allows you to perform complex operations on the data structure safely.

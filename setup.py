@@ -5,8 +5,7 @@ setup(
     version="0.5.0b0",
     packages=find_packages(),
     install_requires=[
-        "numpy",
-        "pythonnet",
+        "numpy"
     ],
     author="Peter Grønbæk Andersen",
     author_email="peter@grnbk.io",
