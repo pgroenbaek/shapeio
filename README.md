@@ -53,7 +53,7 @@ pip install --upgrade ./shapeio
 
 ### Load a shape from a file
 
-To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be uncompressed beforehand. Otherwise, you will get a `ShapeCompressedError`. See the [shapecompress](https://github.com/pgroenbaek/shapecompress) for instructions on how to decompress a shape.
+To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be uncompressed beforehand. Otherwise, you will get a `ShapeCompressedError`. See the [shapecompress](https://github.com/pgroenbaek/shapecompress) module for instructions on how to decompress a shape.
 
 ```python
 import shapeio

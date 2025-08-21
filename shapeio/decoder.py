@@ -1192,6 +1192,28 @@ class _LodControlParser(_Parser[shape.LodControl]):
         )
 
 
+class _AnimationParser(_Parser[shape.Animation]):
+    PATTERN = re.compile(r'animation\s*\(\s*(\d+)\s+(\d+)', re.IGNORECASE)
+
+    def __init__(self):
+        self._int_parser = _IntParser()
+
+    def parse(self, text: str) -> shape.Animation:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid animation format: '{text}'")
+
+        frame_count = self._int_parser.parse(match.group(1))
+        frame_rate = self._int_parser.parse(match.group(2))
+        animation_nodes = []
+
+        return shape.Animation(
+            frame_count=frame_count,
+            frame_rate=frame_rate,
+            animation_nodes=animation_nodes
+        )
+
+
 class _ShapeParser(_Parser[shape.Shape]):
     def __init__(self):
         self._shape_header_parser = _ShapeHeaderParser()
@@ -1210,6 +1232,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         self._vtx_state_parser = _VtxStateParser()
         self._prim_state_parser = _PrimStateParser()
         self._lod_control_parser = _LodControlParser()
+        self._animation_parser = _AnimationParser()
 
     def parse(self, text: str) -> shape.Shape:
         shape_header = self._parse_block(text, "shape_header", self._shape_header_parser)
@@ -1229,7 +1252,7 @@ class _ShapeParser(_Parser[shape.Shape]):
         vtx_states = self._parse_items_in_block(text, "vtx_states", "vtx_state", self._vtx_state_parser).items
         prim_states = self._parse_named_items_in_block(text, "prim_states", "prim_state", self._prim_state_parser).items
         lod_controls = self._parse_items_in_block(text, "lod_controls", "lod_control", self._lod_control_parser).items
-        animations = None # TODO animations block
+        animations = self._parse_items_in_block(text, "animations", "animation", self._animation_parser, verify_block=False).items
 
         return shape.Shape(
             shape_header=shape_header,

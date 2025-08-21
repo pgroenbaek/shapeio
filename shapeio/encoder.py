@@ -233,11 +233,13 @@ class _VolumeSphereSerializer(_Serializer[shape.VolumeSphere]):
 
         indent = self.get_indent(depth)
         inner_indent = self.get_indent(depth + 1)
-        vector_str = self._vector_serializer.serialize(volume_sphere.vector, depth + 1).strip()
-        radius_str = self._float_serializer.serialize(volume_sphere.radius)
+
+        vector = self._vector_serializer.serialize(volume_sphere.vector, depth + 1).strip()
+        radius = self._float_serializer.serialize(volume_sphere.radius)
+
         return (
             f"{indent}vol_sphere (\n"
-            f"{inner_indent}{vector_str} {radius_str}\n"
+            f"{inner_indent}{vector} {radius}\n"
             f"{indent})"
         )
 
@@ -967,6 +969,31 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
         )
 
 
+class _AnimationSerializer(_Serializer[shape.Animation]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+        self._int_serializer = _IntSerializer(indent, use_tabs)
+
+    def serialize(self, animation: shape.Animation, depth: int = 0) -> str:
+        if not isinstance(animation, shape.Animation):
+            raise TypeError(f"Parameter 'animation' must be of type shape.Animation, but got {type(animation).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        frame_count = self._int_serializer.serialize(animation.frame_count)
+        frame_rate = self._int_serializer.serialize(animation.frame_rate)
+        animation_node_block = ""
+
+        return (
+            f"{indent}animation ( "
+            f"{frame_count} "
+            f"{frame_rate}\n"
+            f"{animation_node_block}\n"
+            f"{indent})"
+        )
+
+
 class _ShapeSerializer(_Serializer[shape.Shape]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
@@ -986,6 +1013,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         self._vtx_state_serializer = _VtxStateSerializer(indent, use_tabs)
         self._prim_state_serializer = _PrimStateSerializer(indent, use_tabs)
         self._lod_control_serializer = _LodControlSerializer(indent, use_tabs)
+        self._animation_serializer = _AnimationSerializer(indent, use_tabs)
 
     def serialize(self, s: shape.Shape, depth: int = 0) -> str:
         if not isinstance(s, shape.Shape):
@@ -1011,7 +1039,10 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         vtx_states_block = self._serialize_items_in_block(s.vtx_states, "vtx_states", self._vtx_state_serializer, inner_depth)
         prim_states_block = self._serialize_items_in_block(s.prim_states, "prim_states", self._prim_state_serializer, inner_depth)
         lod_controls_block = self._serialize_items_in_block(s.lod_controls, "lod_controls", self._lod_control_serializer, inner_depth)
-        animations_block = None
+        if s.animations:
+            animations_block = self._serialize_items_in_block(s.animations, "animations", self._animation_serializer, inner_depth)
+        else:
+            animations_block = None
 
         return (
             f"{indent}shape (\n"
