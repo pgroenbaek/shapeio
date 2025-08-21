@@ -1246,14 +1246,17 @@ class _ControllerParser(_Parser[shape.Controller]):
 
         controller_type = self._str_parser.parse(match.group(1))
 
-        key_positions = self._parse_items_in_block(text, controller_type, "(slerp_rot|linear_key|tcb_key)", self._key_position_parser, escape_regex=False).items
+        key_frames = self._parse_items_in_block(text, controller_type, "(slerp_rot|linear_key|tcb_key)", self._key_position_parser, escape_regex=False).items
 
         if controller_type == "tcb_rot":
-            return shape.TCBRot(key_positions)
+            return shape.TCBRot(key_frames)
+        
         elif controller_type == "linear_pos":
-            return shape.LinearPos(key_positions)
+            return shape.LinearPos(key_frames)
+        
         elif controller_type == "tcb_pos":
-            return shape.TCBPos(key_positions)
+            return shape.TCBPos(key_frames)
+        
         else:
             raise BlockFormatError(f"Unknown controller type: '{controller_type}'")
 

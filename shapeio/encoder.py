@@ -1022,11 +1022,11 @@ class _ControllerSerializer(_Serializer[shape.Controller]):
         else:
             raise TypeError(f"Unknown controller type: {type(controller)}")
 
-        key_position_block = "\n".join(self._key_position_serializer.serialize(k, inner_depth) for k in controller.keyframes)
+        key_frames_block = "\n".join(self._key_position_serializer.serialize(k, inner_depth) for k in controller.keyframes)
 
         return (
             f"{indent}{name} ( {len(controller.keyframes)}\n"
-            f"{key_position_block}\n"
+            f"{key_frames_block}\n"
             f"{indent})"
         )
 
