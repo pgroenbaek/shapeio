@@ -1192,11 +1192,32 @@ class _LodControlParser(_Parser[shape.LodControl]):
         )
 
 
+class _AnimationNodeParser(_Parser[shape.AnimationNode]):
+    PATTERN = re.compile(r'anim_node\s+(\w+)\s*\(', re.IGNORECASE)
+
+    def __init__(self):
+        self._str_parser = _StrParser()
+
+    def parse(self, text: str) -> shape.AnimationNode:
+        match = self.PATTERN.search(text)
+        if not match:
+            raise BlockFormatError(f"Invalid anim_node format: '{text}'")
+
+        name = self._str_parser.parse(match.group(1))
+        controllers = []
+
+        return shape.AnimationNode(
+            name=name,
+            controllers=controllers
+        )
+
+
 class _AnimationParser(_Parser[shape.Animation]):
     PATTERN = re.compile(r'animation\s*\(\s*(\d+)\s+(\d+)', re.IGNORECASE)
 
     def __init__(self):
         self._int_parser = _IntParser()
+        self._anim_node_perser = _AnimationNodeParser()
 
     def parse(self, text: str) -> shape.Animation:
         match = self.PATTERN.search(text)
@@ -1205,7 +1226,7 @@ class _AnimationParser(_Parser[shape.Animation]):
 
         frame_count = self._int_parser.parse(match.group(1))
         frame_rate = self._int_parser.parse(match.group(2))
-        animation_nodes = []
+        animation_nodes = self._parse_named_items_in_block(text, "anim_nodes", "anim_node", self._anim_node_perser).items
 
         return shape.Animation(
             frame_count=frame_count,

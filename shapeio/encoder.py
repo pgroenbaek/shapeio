@@ -969,10 +969,31 @@ class _LodControlSerializer(_Serializer[shape.LodControl]):
         )
 
 
+class _AnimationNodeSerializer(_Serializer[shape.AnimationNode]):
+    def __init__(self, indent: int = 1, use_tabs: bool = True):
+        super().__init__(indent, use_tabs)
+
+    def serialize(self, animation_node: shape.AnimationNode, depth: int = 0) -> str:
+        if not isinstance(animation_node, shape.AnimationNode):
+            raise TypeError(f"Parameter 'animation_node' must be of type shape.AnimationNode, but got {type(animation_node).__name__}")
+
+        indent = self.get_indent(depth)
+        inner_depth = depth + 1
+
+        controllers_block = ""
+
+        return (
+            f"{indent}anim_node {animation_node.name} (\n"
+            f"{controllers_block}\n"
+            f"{indent})"
+        )
+
+
 class _AnimationSerializer(_Serializer[shape.Animation]):
     def __init__(self, indent: int = 1, use_tabs: bool = True):
         super().__init__(indent, use_tabs)
         self._int_serializer = _IntSerializer(indent, use_tabs)
+        self._animation_node_serializer = _AnimationNodeSerializer(indent, use_tabs)
 
     def serialize(self, animation: shape.Animation, depth: int = 0) -> str:
         if not isinstance(animation, shape.Animation):
@@ -983,7 +1004,7 @@ class _AnimationSerializer(_Serializer[shape.Animation]):
 
         frame_count = self._int_serializer.serialize(animation.frame_count)
         frame_rate = self._int_serializer.serialize(animation.frame_rate)
-        animation_node_block = ""
+        animation_node_block = self._serialize_items_in_block(animation.animation_nodes, "anim_nodes", self._animation_node_serializer, inner_depth)
 
         return (
             f"{indent}animation ( "

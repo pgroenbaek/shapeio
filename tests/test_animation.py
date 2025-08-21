@@ -42,7 +42,7 @@ def test_serialize_animation(serializer):
 
 
 def test_parse_animation(parser):
-    text = "animation ( 2 30"
+    text = "animation ( 2 30\n    anim_nodes ( 0\n   )\n)"
     anim = parser.parse(text)
     assert isinstance(anim, Animation)
     assert anim.frame_count == 2
@@ -51,7 +51,7 @@ def test_parse_animation(parser):
 
 
 def test_parse_animation_with_whitespace(parser):
-    text = "   animation   (   42   15   "
+    text = "   animation   (   42   15   \n    anim_nodes ( 0\n   )\n)"
     anim = parser.parse(text)
     assert anim.frame_count == 42
     assert anim.frame_rate == 15
