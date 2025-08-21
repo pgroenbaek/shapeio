@@ -23,3 +23,5 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/pgroenbaek/shapeio"
+Issues = "https://github.com/pgroenbaek/shapeio/issues"
+Source = "https://github.com/pgroenbaek/shapeio"
