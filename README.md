@@ -8,49 +8,14 @@
 > This project is not feature-complete and is still being actively developed.  
 > Expect missing functionality, incomplete features, and frequent changes.
 
-This Python module provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format.
-
-The API is very similar to that of the `json` module and includes functions for handling shape compression and decompression.
+This Python module provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format. The API is very similar to that of the `json` module.
 
 When modifying shapes using this module, there are no built-in safeguards beyond the structure of the data itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
 
 List of companion modules:
+- [shapecomp](https://github.com/pgroenbaek/shapecomp) - handles compression and decompression of shape files through the `TK.MSTS.Tokens.dll` library by Okrasa Ghia.
 - [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides a wrapper for modifying the shape data structure safely.
 - [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils/tree/develop) - offers additional utilities for working with track shapes.
-
-
-## Prerequisites
-
-The following platform dependencies are **only required for shape compression and decompression**. Other parts of the module will function correctly without them.
-
-You can skip this section if you compress and decompress shapes manually using other tools, such as *ffeditc\_unicode.exe* through the [Shape File Manager](https://www.trainsim.com/forums/filelib-search-fileid?fid=78928) or the [FFEDIT\_Sub v1.2](https://www.trainsim.com/forums/filelib-search-fileid?fid=40291) utility by Ged Saunders.
-
-This module uses the `TK.MSTS.Tokens.dll` library by Okrasa Ghia to perform shape file compression and decompression. Therefore, a Common Language Runtime (CLR) is required if you wish to compress and decompress shapes programmatically through the module. You can use the Mono runtime on Linux and macOS, or the .NET Framework on Windows.
-
-The `TK.MSTS.Tokens.dll` library is not included with the Python module. It can be downloaded as part of the TK\_Utils package from [the-train.de](https://the-train.de/downloads/entry/9385-tk-utils-updated/). Only the DLL file itself is needed from that package.
-
-See the [Usage section](#compress-or-decompress-a-shape-on-disk) for more details on how to compress and decompress shape files using the module.
-
-Steps to install a CLR on your operating system:
-
-#### Linux
-
-```bash
-sudo apt update
-sudo apt install mono-complete
-```
-
-#### macOS
-
-```bash
-brew install mono
-```
-
-#### Windows
-
-Download and install the [.NET Framework 4.0 or later](https://dotnet.microsoft.com/en-us/download/dotnet-framework) from Microsoft.
-
-The .NET Framework is typically already installed on most Windows systems.
 
 
 ## Installation
@@ -91,9 +56,9 @@ pip install --upgrade ./shapeio
 To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be uncompressed beforehand. Otherwise, you will get a `ShapeCompressedError`. See the [Compression section](#compress-or-decompress-a-shape-on-disk) for instructions on how to decompress a shape.
 
 ```python
-import shapeio
+import shapeio as sio
 
-my_shape = shapeio.load("./path/to/example.s")
+my_shape = sio.load("./path/to/example.s")
 
 print(my_shape)
 ```
@@ -103,9 +68,9 @@ print(my_shape)
 To save a shape to disk, you can use the `shapeio.dump` function. This will serialize the shape object, including any changes made to it, into the structured text format and save it to the specified path.
 
 ```python
-import shapeio
+import shapeio as sio
 
-shapeio.dump(my_shape, "./path/to/output.s")
+sio.dump(my_shape, "./path/to/output.s")
 ```
 
 ### Serialize a shape to a string
@@ -113,9 +78,9 @@ shapeio.dump(my_shape, "./path/to/output.s")
 If you want to serialize the object into a string without saving it to a file on disk, you can use `shapeio.dumps`.
 
 ```python
-import shapeio
+import shapeio as sio
 
-shape_string = shapeio.dumps(my_shape)
+shape_string = sio.dumps(my_shape)
 print(shape_string)
 ```
 
@@ -124,7 +89,7 @@ print(shape_string)
 Similarly, you can use `shapeio.loads` to parse a shape from a string instead of reading it from a file on disk.
 
 ```python
-import shapeio
+import shapeio as sio
 
 shape_text = """
 SIMISA@@@@@@@@@@JINX0s1t______
@@ -140,45 +105,7 @@ shape (
 		)
         ...
 """
-shape = shapeio.loads(shape_text)
-```
-
-### Check if a shape is compressed on disk
-
-To check whether a shape file on disk is compressed, you can use `shapeio.is_compressed`. This function returns `True` if the shape is compressed and `False` if it is not. If the file is empty, not a shape file, or its state cannot be determined, the function will return `None`.
-
-```python
-import shapeio
-
-is_comp = shapeio.is_compressed("./path/to/example.s")
-if is_comp is True:
-    print("Compressed")
-elif is_comp is False:
-    print("Uncompressed")
-else:
-    print("Could not determine (possibly empty file)")
-```
-
-### Compress or decompress a shape on disk
-
-The compression and decompression functions in this module use the `TK.MSTS.Tokens.dll` library by Okrasa Ghia. This library is not included with the Python module. You will also need a CLR installed to load this file.
-
-See the [Prerequisites section](#prerequisites) for instructions on how to obtain the `TK.MSTS.Tokens.dll` library and set up a CLR on your operating system.
-
-Alternatively, you can manually compress and decompress shapes using other tools, such as *ffeditc\_unicode.exe* through the [Shape File Manager](https://www.trainsim.com/forums/filelib-search-fileid?fid=78928) or the [FFEDIT\_Sub v1.2](https://www.trainsim.com/forums/filelib-search-fileid?fid=40291) utility by Ged Saunders.
-
-```python
-import shapeio
-
-tkutils_dll_path = "./path/to/TK.MSTS.Tokens.dll"
-
-# Compress and decompress in-place.
-shapeio.compress(tkutils_dll_path, "./path/to/example.s")
-shapeio.decompress(tkutils_dll_path, "./path/to/example.s")
-
-# Compress and decompress to an output file.
-shapeio.compress(tkutils_dll_path, "./path/to/example.s", "./path/to/output.s")
-shapeio.decompress(tkutils_dll_path, "./path/to/example.s", "./path/to/output.s")
+shape = sio.loads(shape_text)
 ```
 
 ### Accessing shape data
@@ -188,9 +115,9 @@ The functions that load shapes return a `Shape` object, allowing you to access a
 To explore the full data structure, see [shape.py](/shapeio/shape.py). You can also print the objects to view their attributes.
 
 ```python
-import shapeio
+import shapeio as sio
 
-my_shape = shapeio.load("./path/to/example.s")
+my_shape = sio.load("./path/to/example.s")
 
 # Print the point at index 17.
 print(my_shape.points[17])
@@ -206,10 +133,10 @@ for idx, uv_point in enumerate(my_shape.uv_points):
 You can modify values, add or remove items from lists, and reorder items in the lists. The serialized shape data will reflect any changes you make.
 
 ```python
-import shapeio
+import shapeio as sio
 from shapeio import shape
 
-my_shape = shapeio.load("./path/to/example.s")
+my_shape = sio.load("./path/to/example.s")
 
 # Modify an existing point.
 my_shape.points[1].x = 17
@@ -218,7 +145,7 @@ my_shape.points[1].x = 17
 new_uv_point = shape.UVPoint(0.2, 0.5)
 my_shape.uv_points.append(new_uv_point)
 
-shapeio.dump(my_shape, "./path/to/output.s")
+sio.dump(my_shape, "./path/to/output.s")
 ```
 
 When using this module on its own, there are no built-in safeguards beyond the structure of the data itself to ensure that modifications will result in a shape usable in MSTS or Open Rails. See [shapeedit](https://github.com/pgroenbaek/shapeedit) for a wrapper that allows you to perform complex operations on the data structure safely.

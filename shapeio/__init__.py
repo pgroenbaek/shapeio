@@ -24,7 +24,7 @@ __version__ = '0.5.0b0'
 __all__ = [
     'shape', 'find_directory_files',
     'load', 'loads', 'dump', 'dumps',
-    'is_shape', 'is_compressed', 'compress', 'decompress',
+    'is_shape', 'is_compressed'
     'copy', 'replace', 'replace_ignorecase',
     'ShapeCompressedError',
     'ShapeParserError', 'BlockNotFoundError', 'CountMismatchError',
@@ -37,7 +37,7 @@ __author__ = 'Peter Grønbæk Andersen <peter@grnbk.io>'
 from . import shape
 from .shapeio import find_directory_files
 from .shapeio import load, loads, dump, dumps
-from .shapeio import is_shape, is_compressed, compress, decompress
+from .shapeio import is_shape, is_compressed
 from .shapeio import copy, replace, replace_ignorecase
 from .shapeio import ShapeCompressedError
 from .decoder import ShapeDecoder
