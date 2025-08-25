@@ -224,16 +224,16 @@ def is_compressed(filepath: str) -> Optional[bool]:
         PermissionError: If the file cannot be accessed.
         OSError: If an I/O error occurs while opening the file.
     """
-    with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
-        try:
-            header = f.read(32)
-            if header.startswith("SIMISA@@@@@@@@@@JINX0s1t______"):
-                return False
-            return None
-        except UnicodeDecodeError:
-            pass
-        
-        return True
+    with open(filepath, 'rb') as f:
+        header = f.read(8)
+
+        if header.startswith(b"SIMISA@F"):
+            return True
+
+        elif header.startswith(b"SIMISA@@"):
+            return False
+
+        return None
 
 
 def is_shape(filepath: str) -> bool:
