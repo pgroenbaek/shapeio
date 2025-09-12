@@ -203,6 +203,12 @@ commands = pytest
 
 Modify `envlist` to match the Python versions you want to support.
 
+## Roadmap
+
+Features yet to be added:
+- Reading compressed shapes
+- Writing compressed shapes
+
 ## License
 
 This Python module was created by Peter Grønbæk Andersen and is licensed under [GNU GPL v3](/LICENSE).

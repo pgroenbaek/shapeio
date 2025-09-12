@@ -1,5 +1,5 @@
 """
-This file is part of ShapeEdit.
+This file is part of ShapeIO.
 
 Copyright (C) 2025 Peter Grønbæk Andersen <peter@grnbk.io>
 
