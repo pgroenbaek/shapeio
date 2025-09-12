@@ -132,10 +132,11 @@ def dump(
         raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
-    text = "\ufeff" + encoder.encode(shape)
+    text = encoder.encode(shape)
+    data = codecs.BOM_UTF16_LE + text.encode('utf-16-le')
 
-    with open(filepath, 'w', encoding='utf-16-le') as f:
-        f.write(text)
+    with open(filepath, 'wb') as f:
+        f.write(data)
 
 
 def load(filepath: str) -> shape.Shape:
@@ -164,9 +165,12 @@ def load(filepath: str) -> shape.Shape:
         raise ShapeCompressedError("""Cannot load shape while it is compressed.
             First use the 'decompress' function or decompress it using another tool.""")
     
-    with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
-        text = f.read()
+    with open(filepath, 'rb') as f:
+        data = f.read()
     
+    encoding = _detect_encoding(filepath)
+    text = data.decode(encoding)
+
     decoder = ShapeDecoder()
     return decoder.decode(text)
 
