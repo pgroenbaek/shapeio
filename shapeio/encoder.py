@@ -50,7 +50,7 @@ class ShapeEncoder:
         self._serializer = _ShapeSerializer(indent=indent, use_tabs=use_tabs)
 
     def encode(self, shape: shape.Shape) -> str:
-        header = "\ufeffSIMISA@@@@@@@@@@JINX0s1t______\n\n"
+        header = "SIMISA@@@@@@@@@@JINX0s1t______\n\n"
         text = self._serializer.serialize(shape)
 
         return header + text + "\n"

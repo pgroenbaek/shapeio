@@ -16,3 +16,66 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
+
+import pytest
+import shapeio
+
+
+def test_is_compressed_uncompressed_shape(global_storage):
+    shape_path = global_storage["shape_path"]
+    is_compressed = shapeio.is_compressed(shape_path)
+    assert not is_compressed
+
+
+def test_is_compressed_compressed_shape(global_storage):
+    shape_compressed_path = global_storage["shape_compressed_path"]
+    is_compressed = shapeio.is_compressed(shape_compressed_path)
+    assert is_compressed
+
+
+def test_is_compressed_uncompressed_notashape(global_storage):
+    notashape_path = global_storage["notashape_path"]
+    is_compressed = shapeio.is_compressed(notashape_path)
+    assert not is_compressed
+
+
+def test_is_compressed_compressed_notashape(global_storage):
+    notashape_compressed_path = global_storage["notashape_compressed_path"]
+    is_compressed = shapeio.is_compressed(notashape_compressed_path)
+    assert is_compressed
+
+
+def test_is_compressed_emptyfile(global_storage):
+    empty_path = global_storage["empty_path"]
+    is_compressed = shapeio.is_compressed(empty_path)
+    assert is_compressed is None
+
+
+def test_is_shape_uncompressed_shape(global_storage):
+    shape_path = global_storage["shape_path"]
+    is_shape = shapeio.is_shape(shape_path)
+    assert is_shape
+
+
+def test_is_shape_compressed_shape(global_storage):
+    shape_compressed_path = global_storage["shape_compressed_path"]
+    is_shape = shapeio.is_shape(shape_compressed_path)
+    assert is_shape
+
+
+def test_is_shape_uncompressed_notashape(global_storage):
+    notashape_path = global_storage["notashape_path"]
+    is_shape = shapeio.is_shape(notashape_path)
+    assert not is_shape
+
+
+def test_is_shape_compressed_notashape(global_storage):
+    notashape_compressed_path = global_storage["notashape_compressed_path"]
+    is_shape = shapeio.is_shape(notashape_compressed_path)
+    assert not is_shape
+
+
+def test_is_shape_emptyfile(global_storage):
+    empty_path = global_storage["empty_path"]
+    is_shape = shapeio.is_shape(empty_path)
+    assert not is_shape

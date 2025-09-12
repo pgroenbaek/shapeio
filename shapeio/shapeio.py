@@ -17,8 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import io
 import os
 import re
+import zlib
 import codecs
 import shutil
 import fnmatch
@@ -126,8 +128,11 @@ def dump(
     Raises:
         OSError: If the file cannot be opened or written to.
     """
+    if not isinstance(shape, shape.Shape):
+        raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
+
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
-    text = encoder.encode(shape)
+    text = "\ufeff" + encoder.encode(shape)
 
     with open(filepath, 'w', encoding='utf-16-le') as f:
         f.write(text)
@@ -157,7 +162,7 @@ def load(filepath: str) -> shape.Shape:
     """
     if is_compressed(filepath):
         raise ShapeCompressedError("""Cannot load shape while it is compressed.
-            First use the 'decompress' function or decompress it by hand.""")
+            First use the 'decompress' function or decompress it using another tool.""")
     
     with open(filepath, 'r', encoding=_detect_encoding(filepath)) as f:
         text = f.read()
@@ -182,6 +187,9 @@ def dumps(
     Returns:
         str: The serialized shape as a formatted string.
     """
+    if not isinstance(shape, shape.Shape):
+        raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
+
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
     return encoder.encode(shape)
 
@@ -224,13 +232,21 @@ def is_compressed(filepath: str) -> Optional[bool]:
         PermissionError: If the file cannot be accessed.
         OSError: If an I/O error occurs while opening the file.
     """
-    with open(filepath, 'rb') as f:
-        header = f.read(8)
+    with open(filepath, "rb") as f:
+        bom = f.read(2)
+        is_unicode = (bom == b"\xFF\xFE")
 
-        if header.startswith(b"SIMISA@F"):
+        if is_unicode:
+            buffer = f.read(32)
+            header = buffer.decode("utf-16-le")
+        else:
+            buffer = bom + f.read(14)
+            header = buffer.decode("ascii", errors="ignore")
+
+        if header.startswith("SIMISA@F") or header.startswith("\r\nSIMISA@F"):
             return True
 
-        elif header.startswith(b"SIMISA@@"):
+        elif header.startswith("SIMISA@@") or header.startswith("\r\nSIMISA@@"):
             return False
 
         return None
@@ -245,14 +261,53 @@ def is_shape(filepath: str) -> bool:
 
     Returns:
         bool: True if the file is a shape file (compressed or uncompressed),
-              False if it cannot be identified as a shape file.
+              False otherwise.
 
     Raises:
         FileNotFoundError: If the file does not exist.
         PermissionError: If the file cannot be accessed.
         OSError: If an I/O error occurs while opening the file.
     """
-    return is_compressed(filepath) is not None
+    compressed = is_compressed(filepath)
+
+    if compressed is None:
+        return False
+
+    with open(filepath, "rb") as f:
+        bom = f.read(2)
+        is_unicode = (bom == b"\xFF\xFE")
+
+        if is_unicode:
+            header_bytes = f.read(32)
+            header = header_bytes[:16].decode("utf-16-le")
+        else:
+            header_bytes = bom + f.read(14)
+            header = header_bytes[:8].decode("ascii", errors="ignore")
+
+        if compressed:
+            f.read(2)
+            decompressor = zlib.decompressobj(-zlib.MAX_WBITS)
+            file_stream = io.BytesIO(decompressor.decompress(f.read()))
+        elif header.startswith("\r\n"):
+            if is_unicode:
+                f.read(4)
+            else:
+                f.read(2)
+            file_stream = f
+        else:
+            file_stream = f
+
+        if is_unicode:
+            subheader_bytes = file_stream.read(32)
+            subheader = subheader_bytes[:16].decode("utf-16-le")
+        else:
+            subheader_bytes = file_stream.read(16)
+            subheader = subheader_bytes[:8].decode("ascii", errors="ignore")
+
+        if len(subheader) < 5:
+            return False
+        
+        return subheader[5] == "s"
 
 
 def copy(old_filepath: str, new_filepath: str) -> None:
@@ -288,7 +343,7 @@ def replace(filepath: str, search_exp: str, replace_str: str) -> None:
     """
     if is_shape(filepath) and is_compressed(filepath):
         raise ShapeCompressedError("""Cannot replace text in a compressed shape.
-            First use the 'decompress' function or decompress it by hand.""")
+            First use the 'decompress' function or decompress it using another tool.""")
 
     pattern = re.compile(search_exp)
     encoding = _detect_encoding(filepath)
@@ -319,7 +374,7 @@ def replace_ignorecase(filepath: str, search_exp: str, replace_str: str) -> None
     """
     if is_shape(filepath) and is_compressed(filepath):
         raise ShapeCompressedError("""Cannot replace text in a compressed shape.
-            First use the 'decompress' function or decompress it by hand.""")
+            First use the 'decompress' function or decompress it using another tool.""")
 
     pattern = re.compile(search_exp, re.IGNORECASE)
     encoding = _detect_encoding(filepath)

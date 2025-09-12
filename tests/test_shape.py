@@ -34,14 +34,6 @@ def save_shape(filepath: str, content: str) -> None:
         f.write(content)
 
 
-@pytest.fixture(scope="module")
-def global_storage():
-    data = {
-        "shape": load_shape("./tests/data/DK10f_A1tPnt5dLft.s")
-    }
-    return data
-
-
 @pytest.fixture
 def decoder():
     return ShapeDecoder()
