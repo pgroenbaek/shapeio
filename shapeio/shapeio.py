@@ -234,7 +234,7 @@ def is_compressed(filepath: str) -> Optional[bool]:
     """
     with open(filepath, "rb") as f:
         bom = f.read(2)
-        is_unicode = (bom == b"\xFF\xFE")
+        is_unicode = (bom == codecs.BOM_UTF16_LE)
 
         if is_unicode:
             buffer = f.read(32)
@@ -275,7 +275,7 @@ def is_shape(filepath: str) -> bool:
 
     with open(filepath, "rb") as f:
         bom = f.read(2)
-        is_unicode = (bom == b"\xFF\xFE")
+        is_unicode = (bom == codecs.BOM_UTF16_LE)
 
         if is_unicode:
             header_bytes = f.read(32)
