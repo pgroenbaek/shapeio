@@ -226,6 +226,9 @@ class _Parser(ABC, Generic[T]):
         """
         block = self._extract_block(text, block_name, verify_block=verify_block)
 
+        if block is None:
+            return None
+
         items = []
 
         if escape_regex:
@@ -310,6 +313,9 @@ class _Parser(ABC, Generic[T]):
         """
         block = self._extract_block(text, block_name, verify_block=verify_block)
 
+        if block is None:
+            return None
+        
         pattern = re.compile(rf'^\s*{re.escape(item_type)}\s+\S+\s*\(', re.MULTILINE)
 
         items = []
@@ -367,6 +373,10 @@ class _Parser(ABC, Generic[T]):
             CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
         extracted_items = self._extract_items_in_block(block, block_name, item_type, verify_block, verify_count, escape_regex)
+
+        if extracted_items is None:
+            return None
+
         parsed_items = [parser.parse(item) for item in extracted_items.items]
         return _ParsedItems(parsed_items, extracted_items.expected_count)
 
@@ -389,6 +399,10 @@ class _Parser(ABC, Generic[T]):
             CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
         extracted_values = self._extract_values_in_block(block, block_name, verify_block, verify_count)
+
+        if extracted_values is None:
+            return None
+
         parsed_values = [parser.parse(value) for value in extracted_values.items]
         return _ParsedItems(parsed_values, extracted_values.expected_count)
 
@@ -412,6 +426,10 @@ class _Parser(ABC, Generic[T]):
             CountMismatchError: If extracted item count doesn't match expected (only if verify_count = True).
         """
         extracted_items = self._extract_named_items_in_block(block, block_name, item_type, verify_block, verify_count)
+
+        if extracted_items is None:
+            return None
+
         parsed_items = [parser.parse(item) for item in extracted_items.items]
         return _ParsedItems(parsed_items, extracted_items.expected_count)
 
@@ -439,7 +457,7 @@ class _FloatParser(_Parser[float]):
 
 
 class _StrParser(_Parser[str]):
-    PATTERN = re.compile(r'\w+')
+    PATTERN = re.compile(r'[\w.#-]+')
 
     def parse(self, text: str) -> str:
         match = self.PATTERN.fullmatch(text.strip())
@@ -785,7 +803,7 @@ class _VtxStateParser(_Parser[shape.VtxState]):
 
 class _PrimStateParser(_Parser[shape.PrimState]):
     PATTERN = re.compile(
-        r"""prim_state\s+(\w+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
+        r"""prim_state\s+([\w.#-]+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
             tex_idxs\s*\(\s*(?:-?\d+\s*)*\)\s+
             (-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
         \)""",
@@ -1343,7 +1361,10 @@ class _ShapeParser(_Parser[shape.Shape]):
         vtx_states = self._parse_items_in_block(text, "vtx_states", "vtx_state", self._vtx_state_parser).items
         prim_states = self._parse_named_items_in_block(text, "prim_states", "prim_state", self._prim_state_parser).items
         lod_controls = self._parse_items_in_block(text, "lod_controls", "lod_control", self._lod_control_parser).items
-        animations = self._parse_items_in_block(text, "animations", "animation", self._animation_parser, verify_block=False).items
+        animations = self._parse_items_in_block(text, "animations", "animation", self._animation_parser, verify_block=False)
+
+        if animations:
+            animations = animations.items
 
         return shape.Shape(
             shape_header=shape_header,

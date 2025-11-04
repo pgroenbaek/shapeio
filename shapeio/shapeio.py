@@ -28,7 +28,7 @@ import tempfile
 import subprocess
 from typing import Optional, List
 
-from . import shape
+from .shape import Shape
 from .decoder import ShapeDecoder
 from .encoder import ShapeEncoder
 
@@ -73,7 +73,7 @@ def find_directory_files(
 
 
 def dump(
-    shape: shape.Shape,
+    shape: Shape,
     filepath: str,
     indent: int = 1,
     use_tabs: bool = True
@@ -90,7 +90,7 @@ def dump(
     Raises:
         OSError: If the file cannot be opened or written to.
     """
-    if not isinstance(shape, shape.Shape):
+    if not isinstance(shape, Shape):
         raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
@@ -101,7 +101,7 @@ def dump(
         f.write(data)
 
 
-def load(filepath: str) -> shape.Shape:
+def load(filepath: str) -> Shape:
     """
     Load a shape object from a text file.
 
@@ -138,7 +138,7 @@ def load(filepath: str) -> shape.Shape:
 
 
 def dumps(
-    shape: shape.Shape,
+    shape: Shape,
     indent: int = 1,
     use_tabs: bool = True
 ) -> str:
@@ -153,14 +153,14 @@ def dumps(
     Returns:
         str: The serialized shape as a formatted string.
     """
-    if not isinstance(shape, shape.Shape):
+    if not isinstance(shape, Shape):
         raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
     return encoder.encode(shape)
 
 
-def loads(shape_string: str) -> shape.Shape:
+def loads(shape_string: str) -> Shape:
     """
     Deserialize a shape object from a string.
 
