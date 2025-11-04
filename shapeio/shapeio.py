@@ -73,7 +73,7 @@ def find_directory_files(
 
 
 def dump(
-    shape: shape.Shape,
+    s: shape.Shape,
     filepath: str,
     indent: int = 1,
     use_tabs: bool = True
@@ -82,7 +82,7 @@ def dump(
     Serialize a shape object to a file in a readable text format.
 
     Args:
-        shape (shape.Shape): The shape object to serialize.
+        s (shape.Shape): The shape object to serialize.
         filepath (str): Path to the file where the shape will be saved.
         indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
         use_tabs (bool, optional): Whether to use tabs for indentation instead of spaces. Defaults to True.
@@ -90,11 +90,11 @@ def dump(
     Raises:
         OSError: If the file cannot be opened or written to.
     """
-    if not isinstance(shape, shape.Shape):
-        raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
+    if not isinstance(s, shape.Shape):
+        raise TypeError(f"Parameter 's' must be of type shape.Shape, but got {type(s).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
-    text = encoder.encode(shape)
+    text = encoder.encode(s)
     data = codecs.BOM_UTF16_LE + text.encode('utf-16-le')
 
     with open(filepath, 'wb') as f:
@@ -138,7 +138,7 @@ def load(filepath: str) -> shape.Shape:
 
 
 def dumps(
-    shape: shape.Shape,
+    s: shape.Shape,
     indent: int = 1,
     use_tabs: bool = True
 ) -> str:
@@ -146,18 +146,18 @@ def dumps(
     Serialize a shape object to a formatted string.
 
     Args:
-        shape (shape.Shape): The shape object to serialize.
+        s (shape.Shape): The shape object to serialize.
         indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
         use_tabs (bool, optional): Whether to use tabs for indentation instead of spaces. Defaults to True.
 
     Returns:
         str: The serialized shape as a formatted string.
     """
-    if not isinstance(shape, shape.Shape):
-        raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
+    if not isinstance(s, shape.Shape):
+        raise TypeError(f"Parameter 's' must be of type shape.Shape, but got {type(s).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
-    return encoder.encode(shape)
+    return encoder.encode(s)
 
 
 def loads(shape_string: str) -> shape.Shape:
