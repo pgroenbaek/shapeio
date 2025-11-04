@@ -28,7 +28,7 @@ import tempfile
 import subprocess
 from typing import Optional, List
 
-from . import shape
+from .shape import Shape
 from .decoder import ShapeDecoder
 from .encoder import ShapeEncoder
 
@@ -73,7 +73,7 @@ def find_directory_files(
 
 
 def dump(
-    s: shape.Shape,
+    shape: Shape,
     filepath: str,
     indent: int = 1,
     use_tabs: bool = True
@@ -82,7 +82,7 @@ def dump(
     Serialize a shape object to a file in a readable text format.
 
     Args:
-        s (shape.Shape): The shape object to serialize.
+        shape (shape.Shape): The shape object to serialize.
         filepath (str): Path to the file where the shape will be saved.
         indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
         use_tabs (bool, optional): Whether to use tabs for indentation instead of spaces. Defaults to True.
@@ -90,18 +90,18 @@ def dump(
     Raises:
         OSError: If the file cannot be opened or written to.
     """
-    if not isinstance(s, shape.Shape):
-        raise TypeError(f"Parameter 's' must be of type shape.Shape, but got {type(s).__name__}")
+    if not isinstance(shape, Shape):
+        raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
-    text = encoder.encode(s)
+    text = encoder.encode(shape)
     data = codecs.BOM_UTF16_LE + text.encode('utf-16-le')
 
     with open(filepath, 'wb') as f:
         f.write(data)
 
 
-def load(filepath: str) -> shape.Shape:
+def load(filepath: str) -> Shape:
     """
     Load a shape object from a text file.
 
@@ -138,7 +138,7 @@ def load(filepath: str) -> shape.Shape:
 
 
 def dumps(
-    s: shape.Shape,
+    shape: Shape,
     indent: int = 1,
     use_tabs: bool = True
 ) -> str:
@@ -146,21 +146,21 @@ def dumps(
     Serialize a shape object to a formatted string.
 
     Args:
-        s (shape.Shape): The shape object to serialize.
+        shape (shape.Shape): The shape object to serialize.
         indent (int, optional): Number of indentation levels for formatting. Defaults to 1.
         use_tabs (bool, optional): Whether to use tabs for indentation instead of spaces. Defaults to True.
 
     Returns:
         str: The serialized shape as a formatted string.
     """
-    if not isinstance(s, shape.Shape):
-        raise TypeError(f"Parameter 's' must be of type shape.Shape, but got {type(s).__name__}")
+    if not isinstance(shape, Shape):
+        raise TypeError(f"Parameter 'shape' must be of type shape.Shape, but got {type(shape).__name__}")
 
     encoder = ShapeEncoder(indent=indent, use_tabs=use_tabs)
-    return encoder.encode(s)
+    return encoder.encode(shape)
 
 
-def loads(shape_string: str) -> shape.Shape:
+def loads(shape_string: str) -> Shape:
     """
     Deserialize a shape object from a string.
 
