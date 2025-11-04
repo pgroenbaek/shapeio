@@ -105,7 +105,7 @@ def load(filepath: str) -> Shape:
     """
     Load a shape object from a text file.
 
-    The file must be uncompressed. If the shape file is compressed, a ValueError is raised.
+    The file must be uncompressed. If the shape file is compressed, a ShapeCompressedError is raised.
 
     Args:
         filepath (str): Path to the shape file to load.
