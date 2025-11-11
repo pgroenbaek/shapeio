@@ -502,7 +502,7 @@ class _PrimStateSerializer(_Serializer[shape.PrimState]):
             newline_before_closing=False
         )
         return (
-            f"{indent}prim_state {prim_state.name} ( "
+            f"{indent}prim_state {prim_state.name if prim_state.name is not None else ''} ( "
             f"{self._hex_serializer.serialize(prim_state.flags)} "
             f"{self._int_serializer.serialize(prim_state.shader_index)}\n"
             f"{tex_idxs_block} "

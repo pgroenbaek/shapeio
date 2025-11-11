@@ -316,7 +316,10 @@ class _Parser(ABC, Generic[T]):
         if block is None:
             return None
         
-        pattern = re.compile(rf'^\s*{re.escape(item_type)}\s+\S+\s*\(', re.MULTILINE)
+        pattern = re.compile(
+            rf'^\s*{re.escape(item_type)}(?:\s+[\w.#-]+)?\s*\(', 
+            re.MULTILINE
+        )
 
         items = []
         for match in pattern.finditer(block):
@@ -803,7 +806,7 @@ class _VtxStateParser(_Parser[shape.VtxState]):
 
 class _PrimStateParser(_Parser[shape.PrimState]):
     PATTERN = re.compile(
-        r"""prim_state\s+([\w.#-]+)\s*\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
+        r"""prim_state\s+(?:([\w.#-]+)\s*)?\(\s*([a-fA-F0-9]+)\s+(\d+)\s+
             tex_idxs\s*\(\s*(?:-?\d+\s*)*\)\s+
             (-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*
         \)""",
@@ -821,7 +824,7 @@ class _PrimStateParser(_Parser[shape.PrimState]):
         if not match:
             raise BlockFormatError(f"Invalid prim_state format: '{text}'")
 
-        name = self._str_parser.parse(match.group(1))
+        name = self._str_parser.parse(match.group(1)) if match.group(1) else None
         flags = self._hex_parser.parse(match.group(2))
         shader_index = self._int_parser.parse(match.group(3))
         texture_indices = self._parse_values_in_block(text, "tex_idxs", self._int_parser).items
