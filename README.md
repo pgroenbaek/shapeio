@@ -151,7 +151,7 @@ When using this module by itself, there are no built-in safeguards beyond the da
 
 See [shapeedit](https://github.com/pgroenbaek/shapeedit) for a wrapper that allows performing complex operations on the data structure safely.
 
-However, this module will ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, preventing you from adding items to lists and setting values of attributes that are not of the expected type.
+However, this module will ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, which prevents adding items to lists and setting values of attributes that are not of the expected type.
 
 ## Running Tests
 
