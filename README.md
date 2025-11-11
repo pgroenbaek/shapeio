@@ -11,6 +11,7 @@ When modifying shapes using this module, there are no built-in safeguards beyond
 List of companion modules:
 - [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides a wrapper for modifying the shape data structure safely.
 - [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils) - offers additional utilities for working with track shapes.
+- [pyffeditc](https://github.com/pgroenbaek/pyffeditc) - handles compression and decompression of shape files through the `ffeditc_unicode.exe` utility found in MSTS installations.
 - [pytkutils](https://github.com/pgroenbaek/pytkutils) - handles compression and decompression of shape files through the `TK.MSTS.Tokens.dll` library by Okrasa Ghia.
 
 
@@ -36,7 +37,7 @@ Replace `<version>` with the actual version number in the filename. For example:
 
 ```sh
 pip install path/to/shapeio-0.5.0b0-py3-none-any.whl
-``` -->
+```-->
 
 ### Install from source
 
@@ -49,7 +50,9 @@ pip install --upgrade ./shapeio
 
 ### Load a shape from a file
 
-To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be uncompressed beforehand. Otherwise, you will get a `ShapeCompressedError`. See the [shapecompress](https://github.com/pgroenbaek/shapecompress) module for instructions on how to decompress a shape.
+To load a shape from disk, use the `shapeio.load` function. Note that the shape file must be decompressed beforehand. Otherwise, you will get a `ShapeCompressedError`.
+
+See the [pyffeditc](https://github.com/pgroenbaek/pyffeditc) or [pytkutils](https://github.com/pgroenbaek/pytkutils) modules for how to decompress a shape, depending on if you want to use the `ffeditc_unicode.exe` utility or the `TK.MSTS.Tokens.dll` library by Okrasa Ghia.
 
 ```python
 import shapeio
@@ -144,11 +147,11 @@ my_shape.uv_points.append(new_uv_point)
 shapeio.dump(my_shape, "./path/to/output.s")
 ```
 
-When using this module on its own, there are no built-in safeguards beyond the structure of the data itself to ensure that modifications will result in a shape usable in MSTS or Open Rails. See [shapeedit](https://github.com/pgroenbaek/shapeedit) for a wrapper that allows you to perform complex operations on the data structure safely.
+When using this module by itself, there are no built-in safeguards beyond the data structure to ensure that modifications will result in a shape usable in MSTS or Open Rails.
 
-However, the module does ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, preventing you from adding items to lists and setting values of attributes that are not of the expected type.
+See [shapeedit](https://github.com/pgroenbaek/shapeedit) for a wrapper that allows performing complex operations on the data structure safely.
 
-For example, if you attempt to add a `shape.UVPoint` to the `points` list, a TypeError will be raised when you try to serialize the shape.
+However, this module will ensure that list counts in the serialized data are correct. It also enforces strict type checking during serialization, preventing you from adding items to lists and setting values of attributes that are not of the expected type.
 
 ## Running Tests
 
@@ -201,7 +204,7 @@ Modify `envlist` to match the Python versions you want to support.
 
 ## Roadmap
 
-Features yet to be added:
+Possible future features to be added:
 - Reading compressed shapes
 - Writing compressed shapes
 
