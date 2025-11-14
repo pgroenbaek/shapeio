@@ -19,7 +19,7 @@ List of companion modules:
 
 The Python module itself can be installed in the following ways:
 
-<!-- ### Install from PyPI
+### Install from PyPI
 
 ```sh
 pip install --upgrade shapeio
@@ -33,11 +33,7 @@ If you have downloaded a `.whl` file from the [Releases](https://github.com/pgro
 pip install path/to/shapeio‑<version>‑py3‑none‑any.whl
 ```
 
-Replace `<version>` with the actual version number in the filename. For example:
-
-```sh
-pip install path/to/shapeio-0.5.0b0-py3-none-any.whl
-```-->
+Replace `<version>` with the actual version number in the filename.
 
 ### Install from source
 
