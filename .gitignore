@@ -1,3 +1,16 @@
+### FFEDITC utility files ###
+appids.tok
+coreids.tok
+ffedit.cfg
+ffeditc_unicode.exe
+forms.hdr
+loadstr.hdr
+newshape.bnf
+sidn.txt
+worldfile.bnf
+TEMPDP.S
+TEMPDPX.S
+
 ### TK_Utils DLL ###
 TK.MSTS.Tokens.dll
 
