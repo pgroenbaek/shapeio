@@ -157,8 +157,7 @@ You can run tests manually or use `tox` to test across multiple Python versions.
 First, install the required dependencies:
 
 ```sh
-pip install pytest
-pip install pytest-dependency
+pip install pytest pytest-dependency
 ```
 
 Then, run tests with:
@@ -167,36 +166,21 @@ Then, run tests with:
 pytest
 ```
 
+### Run Tests with `tox`
 
-## Run Tests with `tox`
+First, install the required dependencies:
 
-`tox` allows you to test across multiple Python environments.
-
-### **1. Install `tox`**
 ```sh
-pip install tox
+pip install tox pytest pytest-dependency
 ```
 
-### **2. Run Tests**
+Then, run tests with:
+
 ```sh
 tox
 ```
 
-This will execute tests in all specified Python versions.
-
-### **3. `tox.ini` Configuration**
-The `tox.ini` file should be in your project root:
-
-```ini
-[tox]
-envlist = py36, py37, py38, py39, py310
-
-[testenv]
-deps = pytest
-commands = pytest
-```
-
-Modify `envlist` to match the Python versions you want to support.
+This will execute tests for all Python versions specified in `tox.ini`.
 
 ## Roadmap
 
