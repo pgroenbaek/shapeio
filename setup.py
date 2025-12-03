@@ -2,14 +2,14 @@ from setuptools import setup, find_packages
 
 setup(
     name="shapeio",
-    version="0.5.0b2",
+    version="0.5.0b3",
     packages=find_packages(),
     install_requires=[
         "numpy"
     ],
     author="Peter Grønbæk Andersen",
     author_email="peter@grnbk.io",
-    description="A library that provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format.",
+    description="A Python module to read MSTS/ORTS shape files into Python data structures and write them back to text.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     project_urls={

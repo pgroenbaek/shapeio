@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shapeio"
-version = "0.5.0b2"
-description = "A library that provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format."
+version = "0.5.0b3"
+description = "A Python module to read MSTS/ORTS shape files into Python data structures and write them back to text."
 readme = "README.md"
 authors = [
     { name = "Peter Grønbæk Andersen", email = "peter@grnbk.io" }
