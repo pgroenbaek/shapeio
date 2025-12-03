@@ -1128,6 +1128,8 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
         else:
             animations_block = None
 
+        animations_block_str = f"{animations_block}\n" if animations_block else ""
+
         return (
             f"{indent}shape (\n"
             f"{shape_header_block}\n"
@@ -1147,7 +1149,7 @@ class _ShapeSerializer(_Serializer[shape.Shape]):
             f"{vtx_states_block}\n"
             f"{prim_states_block}\n"
             f"{lod_controls_block}\n"
-            f"{animations_block + '\n' if animations_block else ''}"
+            f"{animations_block_str}"
             f"{indent})"
         )
 
