@@ -11,7 +11,7 @@ authors = [
     { name = "Peter Grønbæk Andersen", email = "peter@grnbk.io" }
 ]
 license = { text = "GNU GPL v3" }
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 dependencies = [
     "numpy"
 ]
