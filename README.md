@@ -107,7 +107,7 @@ shape = shapeio.loads(shape_text)
 
 The functions that load shapes return a `Shape` object, allowing you to access all the data defined in the shape file.
 
-To explore the full data structure, see [shape.py](/shapeio/shape.py). You can also print the objects to view their attributes.
+To explore the full data structure, see [shape.py](https://github.com/pgroenbaek/shapeio/blob/master/shapeio/shape.py). You can also print the objects to view their attributes.
 
 ```python
 import shapeio
@@ -192,8 +192,8 @@ Possible future features to be added:
 
 Contributions of all kinds are welcome. These could be suggestions, issues, bug fixes, documentation improvements, or new features.
 
-For more details see the [contribution guidelines](/CONTRIBUTING.md).
+For more details see the [contribution guidelines](https://github.com/pgroenbaek/shapeio/blob/master/CONTRIBUTING.md).
 
 ## License
 
-This Python module was created by Peter Grønbæk Andersen and is licensed under [GNU GPL v3](/LICENSE).
+This Python module was created by Peter Grønbæk Andersen and is licensed under [GNU GPL v3](https://github.com/pgroenbaek/shapeio/blob/master/LICENSE).
