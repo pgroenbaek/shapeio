@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="shapeio",
-    version="0.5.0b3",
+    version="0.5.0b4",
     packages=find_packages(),
     install_requires=[
         "numpy"
