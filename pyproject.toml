@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shapeio"
-version = "0.5.0b4"
-description = "A Python module to read MSTS/ORTS shape files into Python data structures and write them back to text."
+version = "0.5.0b5"
+description = "DEPRECATED: Use 'simisa' instead."
 readme = "README.md"
 authors = [
     { name = "Peter Grønbæk Andersen", email = "peter@grnbk.io" }
