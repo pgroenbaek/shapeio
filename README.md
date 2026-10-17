@@ -6,13 +6,15 @@
 
 This Python module provides functions to decode MSTS/ORTS shape files into Python objects and to encode them back into the shape file format. The API is very similar to that of the `json` module.
 
-When modifying shapes using this module, there are no built-in safeguards beyond the structure of the data itself. If you don't know what you're doing, your changes may result in invalid shape files that won't work with Open Rails or MSTS.
+## ⚠️ Deprecation Notice ⚠️
 
-List of companion modules:
-- [shapeedit](https://github.com/pgroenbaek/shapeedit) - provides a wrapper for modifying the shape data structure safely.
-- [trackshape-utils](https://github.com/pgroenbaek/trackshape-utils) - offers additional utilities for working with track shapes.
-- [pyffeditc](https://github.com/pgroenbaek/pyffeditc) - handles compression and decompression of shape files through the `ffeditc_unicode.exe` utility found in MSTS installations.
-- [pytkutils](https://github.com/pgroenbaek/pytkutils) - handles compression and decompression of shape files through the `TK.MSTS.Tokens.dll` library by Okrasa Ghia.
+This library is deprecated and will no longer be actively maintained.
+
+**Please migrate to [simisa](https://github.com/pgroenbaek/simisa) for continued development, updates, and support.**
+
+The new `simisa` library also supports reading and writing shapes in compressed/binary format without relying upon external tools like `ffeditc_unicode.exe`.
+
+This package will remain available for existing users, but new projects should use the replacement library instead.
 
 
 ## Installation

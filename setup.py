@@ -9,7 +9,7 @@ setup(
     ],
     author="Peter Grønbæk Andersen",
     author_email="peter@grnbk.io",
-    description="A Python module to read MSTS/ORTS shape files into Python data structures and write them back to text.",
+    description="DEPRECATED: Use 'simisa' instead.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     project_urls={
