@@ -44,3 +44,14 @@ from .decoder import ShapeDecoder
 from .decoder import ShapeParserError, BlockNotFoundError, CountMismatchError
 from .decoder import ParenthesisMismatchError, BlockFormatError
 from .encoder import ShapeEncoder
+
+import warnings
+
+warnings.warn(
+    "The 'shapeio' library is deprecated and will no longer be maintained. "
+    "Please migrate to the library named 'simisa' instead. "
+    "The new library also supports reading and writing shapes in compressed/binary format without relying "
+    "upon external tools like 'ffeditc_unicode.exe'.",
+    FutureWarning,
+    stacklevel=2,
+)
